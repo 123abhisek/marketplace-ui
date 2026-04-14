@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import {
-  Box, Button, Card, CardContent, Chip, CircularProgress,
+  Box, Button, Chip, CircularProgress,
   Divider, IconButton, InputAdornment, Stack, TextField, Typography,
 } from '@mui/material'
 import HomeWorkRoundedIcon         from '@mui/icons-material/HomeWorkRounded'
@@ -16,10 +16,9 @@ import VisibilityRoundedIcon       from '@mui/icons-material/VisibilityRounded'
 import VisibilityOffRoundedIcon    from '@mui/icons-material/VisibilityOffRounded'
 import ArrowForwardRoundedIcon     from '@mui/icons-material/ArrowForwardRounded'
 import { useAppState }             from '../hooks/useAppState'
+import { extractError }            from '../utils/mappers'
 
-
-// ─── Left brand / social-proof panel ──────────────────────────────────────────
-
+// ─── Left brand panel ─────────────────────────────────────────────────────────
 
 function BrandPanel() {
   const feats = [
@@ -45,7 +44,6 @@ function BrandPanel() {
       background: 'linear-gradient(150deg,#0f766e 0%,#0e4d6a 55%,#1e1b4b 100%)',
       overflow: 'hidden',
     }}>
-      {/* Decorative blobs */}
       {[
         { top: -80,  right: -80, size: 260, opacity: 0.12 },
         { bottom: -60, left: -60, size: 220, opacity: 0.10 },
@@ -129,38 +127,57 @@ function BrandPanel() {
   )
 }
 
+// ─── Reusable input style ──────────────────────────────────────────────────────
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+const inputSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '14px',
+    '& fieldset': { borderColor: 'rgba(226,232,240,0.9)' },
+    '&:hover fieldset': { borderColor: '#0f766e' },
+    '&.Mui-focused fieldset': { borderColor: '#0f766e', borderWidth: '2px' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#0f766e' },
+}
 
+// ─── Main component ────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   const [showPw, setShowPw]   = useState(false)
+  const [loading, setLoading] = useState(false)
   const [apiErr, setApiErr]   = useState('')
-  const { login, loading }    = useAppState()
+  const { login }             = useAppState()
   const navigate              = useNavigate()
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const { control, handleSubmit } = useForm({
     defaultValues: { email: '', password: '' },
   })
 
   const onSubmit = async (data) => {
     setApiErr('')
-    const result = await login({ email: data.email, password: data.password })
-    if (result.success) {
+    setLoading(true)
+    try {
+      await login({ email: data.email, password: data.password })
       navigate('/dashboard')
-    } else {
-      setApiErr(result.error || 'Login failed.')
+    } catch (err) {
+      setApiErr(extractError(err))
+    } finally {
+      setLoading(false)
     }
   }
 
-  const inputSx = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '14px',
-      '& fieldset': { borderColor: 'rgba(226,232,240,0.9)' },
-      '&:hover fieldset': { borderColor: '#0f766e' },
-      '&.Mui-focused fieldset': { borderColor: '#0f766e', borderWidth: '2px' },
+  const btnSx = {
+    borderRadius: '14px', py: 1.5,
+    fontWeight: 800, fontSize: '0.93rem', letterSpacing: '-0.01em',
+    background: 'linear-gradient(135deg,#0f766e,#0e8e7f)', color: '#fff',
+    boxShadow: '0 10px 28px rgba(15,118,110,0.26)',
+    transition: 'all .18s ease',
+    '&:hover': {
+      background: 'linear-gradient(135deg,#0a5c55,#0c7a6e)',
+      boxShadow: '0 14px 36px rgba(15,118,110,0.32)',
+      transform: 'translateY(-1px)',
     },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#0f766e' },
+    '&:active': { transform: 'translateY(0)' },
+    '&.Mui-disabled': { background: 'rgba(15,118,110,0.40)', color: '#fff' },
   }
 
   return (
@@ -224,7 +241,7 @@ export default function LoginPage() {
             </Typography>
           </Divider>
 
-          {/* API error banner */}
+          {/* API error */}
           {apiErr && (
             <Box sx={{
               mb: 2.5, px: 2, py: 1.5, borderRadius: '12px',
@@ -239,21 +256,23 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Stack spacing={2.2}>
-              {/* Email */}
+            <Stack spacing={2}>
               <Controller
                 name="email"
                 control={control}
-                rules={{ required: 'Email is required' }}
-                render={({ field }) => (
+                rules={{
+                  required: 'Email is required',
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email' },
+                }}
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     fullWidth
                     label="Email address"
                     type="email"
                     disabled={loading}
-                    error={!!errors.email}
-                    helperText={errors.email?.message || ' '}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message || ' '}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -266,20 +285,19 @@ export default function LoginPage() {
                 )}
               />
 
-              {/* Password */}
               <Controller
                 name="password"
                 control={control}
                 rules={{ required: 'Password is required' }}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     fullWidth
                     label="Password"
                     type={showPw ? 'text' : 'password'}
                     disabled={loading}
-                    error={!!errors.password}
-                    helperText={errors.password?.message || ' '}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message || ' '}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -288,15 +306,10 @@ export default function LoginPage() {
                       ),
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton
-                            size="small" edge="end"
-                            onClick={() => setShowPw((p) => !p)}
-                            disabled={loading}
-                            sx={{ color: '#94a3b8', '&:hover': { color: '#475569' } }}
-                          >
+                          <IconButton size="small" disabled={loading} onClick={() => setShowPw((p) => !p)} sx={{ color: '#94a3b8' }}>
                             {showPw
-                              ? <VisibilityOffRoundedIcon sx={{ fontSize: 18 }} />
-                              : <VisibilityRoundedIcon sx={{ fontSize: 18 }} />}
+                              ? <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} />
+                              : <VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -306,87 +319,31 @@ export default function LoginPage() {
                 )}
               />
 
-              {/* Submit */}
               <Button
                 type="submit"
                 fullWidth
-                size="large"
                 disabled={loading}
-                endIcon={loading ? <CircularProgress size={17} color="inherit" /> : <ArrowForwardRoundedIcon />}
-                sx={{
-                  mt: 0.5, borderRadius: '14px', py: 1.55,
-                  fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.01em',
-                  background: 'linear-gradient(135deg,#0f766e,#0e8e7f)',
-                  color: '#fff',
-                  boxShadow: '0 10px 28px rgba(15,118,110,0.26)',
-                  transition: 'all .18s ease',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg,#0a5c55,#0c7a6e)',
-                    boxShadow: '0 14px 36px rgba(15,118,110,0.32)',
-                    transform: 'translateY(-1px)',
-                  },
-                  '&:active': { transform: 'translateY(0)' },
-                  '&.Mui-disabled': { background: 'rgba(15,118,110,0.40)', color: '#fff' },
-                }}
+                endIcon={loading
+                  ? <CircularProgress size={17} color="inherit" />
+                  : <ArrowForwardRoundedIcon />}
+                sx={btnSx}
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
             </Stack>
           </form>
 
-          {/* Footer link */}
-          <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5} sx={{ mt: 3 }}>
+          <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 3 }}>
             <Typography sx={{ fontSize: '0.82rem', color: '#94a3b8' }}>
-              Don't have an account?
+              Don&apos;t have an account?
             </Typography>
             <Box component={RouterLink} to="/register" sx={{
               fontSize: '0.82rem', color: '#0f766e', fontWeight: 700,
               textDecoration: 'none', '&:hover': { textDecoration: 'underline' },
             }}>
-              Register free
+              Register
             </Box>
           </Stack>
-
-          {/* Premium nudge card */}
-          <Card variant="outlined" sx={{
-            mt: 3, borderRadius: '16px',
-            border: '1px solid rgba(124,108,255,0.18)',
-            background: 'linear-gradient(135deg,rgba(124,108,255,0.05),rgba(94,135,255,0.03))',
-          }}>
-            <CardContent sx={{ p: '14px 18px !important' }}>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{
-                  width: 34, height: 34, borderRadius: '11px',
-                  background: 'linear-gradient(135deg,#7c6cff,#5e87ff)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <WorkspacePremiumRoundedIcon sx={{ fontSize: 17, color: '#fff' }} />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontWeight: 800, fontSize: '0.82rem', color: '#0f172a' }}>
-                    Unlock premium for ₹299
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.73rem', color: '#64748b', lineHeight: 1.4 }}>
-                    View prices, contacts & post your own listings.
-                  </Typography>
-                </Box>
-                <Button
-                  component={RouterLink}
-                  to="/subscription"
-                  size="small"
-                  sx={{
-                    flexShrink: 0, borderRadius: '10px', fontWeight: 800, fontSize: '0.72rem',
-                    px: 1.4, py: 0.65,
-                    background: 'linear-gradient(135deg,#7c6cff,#5e87ff)',
-                    color: '#fff', minWidth: 0,
-                    '&:hover': { background: 'linear-gradient(135deg,#6b59f5,#4c75ff)' },
-                  }}
-                >
-                  Upgrade
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
         </Box>
       </Box>
     </Box>

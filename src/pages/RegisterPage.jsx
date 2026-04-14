@@ -28,10 +28,9 @@ import LocationCityRoundedIcon      from '@mui/icons-material/LocationCityRounde
 import MarkunreadMailboxRoundedIcon from '@mui/icons-material/MarkunreadMailboxRounded'
 import WorkRoundedIcon              from '@mui/icons-material/WorkRounded'
 import { useAppState }              from '../hooks/useAppState'
-
+import { extractError }             from '../utils/mappers'
 
 // ─── Step definitions ──────────────────────────────────────────────────────────
-
 
 const STEPS = [
   { label: 'Profile',  sublabel: 'Photo & identity', icon: <PersonRoundedIcon sx={{ fontSize: 16 }} /> },
@@ -49,9 +48,7 @@ const inputSx = {
   '& .MuiInputLabel-root.Mui-focused': { color: '#0f766e' },
 }
 
-
 // ─── Step indicator ────────────────────────────────────────────────────────────
-
 
 function StepIndicator({ current }) {
   return (
@@ -128,9 +125,7 @@ function StepIndicator({ current }) {
   )
 }
 
-
 // ─── Reusable Field ────────────────────────────────────────────────────────────
-
 
 function Field({ name, label, control, rules, type = 'text', icon, select, options, endAdornment, disabled }) {
   return (
@@ -168,9 +163,7 @@ function Field({ name, label, control, rules, type = 'text', icon, select, optio
   )
 }
 
-
 // ─── Password strength ─────────────────────────────────────────────────────────
-
 
 function passwordStrength(pw = '') {
   let score = 0
@@ -184,9 +177,7 @@ function passwordStrength(pw = '') {
 const PW_LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong']
 const PW_COLORS = ['', '#ef4444', '#f59e0b', '#3b82f6', '#0f766e']
 
-
 // ─── Left brand panel ─────────────────────────────────────────────────────────
-
 
 function BrandPanel({ step }) {
   const highlights = [
@@ -195,9 +186,9 @@ function BrandPanel({ step }) {
     'Secure account credentials',
   ]
   const perks = [
-    { icon: <HomeWorkRoundedIcon sx={{ fontSize: 16 }} />,          text: 'Browse property listings' },
-    { icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />,  text: 'Upgrade to Premium for ₹299' },
-    { icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,            text: 'Post your own listings' },
+    { icon: <HomeWorkRoundedIcon sx={{ fontSize: 16 }} />,         text: 'Browse property listings' },
+    { icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />, text: 'Upgrade to Premium for ₹299' },
+    { icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,           text: 'Post your own listings' },
   ]
 
   return (
@@ -308,9 +299,7 @@ function BrandPanel({ step }) {
   )
 }
 
-
 // ─── Photo picker ──────────────────────────────────────────────────────────────
-
 
 function PhotoPicker({ value, onChange, disabled }) {
   const handleFile = (e) => {
@@ -355,9 +344,7 @@ function PhotoPicker({ value, onChange, disabled }) {
   )
 }
 
-
-// ─── Main page ────────────────────────────────────────────────────────────────
-
+// ─── Main component ────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
   const [step, setStep]       = useState(0)
@@ -365,10 +352,11 @@ export default function RegisterPage() {
   const [showPw, setShowPw]   = useState(false)
   const [showCpw, setShowCpw] = useState(false)
   const [apiErr, setApiErr]   = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate              = useNavigate()
-  const { register: registerUser, loading } = useAppState()
+  const { register: registerUser } = useAppState()
 
-  const { control, handleSubmit, watch, trigger, formState: { errors } } = useForm({
+  const { control, handleSubmit, watch, trigger } = useForm({
     defaultValues: {
       name: '', gender: '', dob: '', occupation: '',
       location: '', state: '', city: '', pincode: '',
@@ -392,14 +380,16 @@ export default function RegisterPage() {
 
   const prevStep = () => setStep((s) => s - 1)
 
-  // ── Final submit → real API ──────────────────────────────────────
   const onSubmit = async (data) => {
     setApiErr('')
-    const result = await registerUser({ ...data, photo: photo?.preview || null })
-    if (result.success) {
+    setLoading(true)
+    try {
+      await registerUser({ ...data, photo: photo?.preview || null })
       navigate('/dashboard')
-    } else {
-      setApiErr(result.error || 'Registration failed.')
+    } catch (err) {
+      setApiErr(extractError(err))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -499,7 +489,7 @@ export default function RegisterPage() {
           />
         </Box>
         <Box sx={{ gridColumn: '1/-1' }}>
-          <Field name="mobile" label="Mobile number (used as phone)" control={control} disabled={loading}
+          <Field name="mobile" label="Mobile number" control={control} disabled={loading}
             rules={{
               required: 'Mobile is required',
               minLength: { value: 10, message: 'Enter 10-digit number' },
@@ -507,8 +497,6 @@ export default function RegisterPage() {
             icon={<PhoneRoundedIcon sx={{ fontSize: 18 }} />}
           />
         </Box>
-
-        {/* Password + strength meter */}
         <Box sx={{ gridColumn: '1/-1' }}>
           <Field
             name="password" label="Password" control={control}
@@ -542,7 +530,6 @@ export default function RegisterPage() {
             </Box>
           )}
         </Box>
-
         <Box sx={{ gridColumn: '1/-1' }}>
           <Field
             name="confirmPassword" label="Confirm password" control={control}
@@ -564,7 +551,6 @@ export default function RegisterPage() {
           />
         </Box>
       </Box>
-
       <Box sx={{
         borderRadius: '12px', background: 'rgba(241,245,249,0.9)',
         border: '1px solid rgba(226,232,240,0.85)', p: '12px 14px', mt: 0.5,
@@ -574,7 +560,6 @@ export default function RegisterPage() {
           <Box component="span" sx={{ color: '#0f766e', fontWeight: 700 }}>Terms of Service</Box>
           {' '}and{' '}
           <Box component="span" sx={{ color: '#0f766e', fontWeight: 700 }}>Privacy Policy</Box>.
-          Your mobile number is sent to the server as <strong>phone</strong>.
         </Typography>
       </Box>
     </Stack>
@@ -621,7 +606,6 @@ export default function RegisterPage() {
         </Stack>
 
         <Box sx={{ width: '100%', maxWidth: 460 }}>
-          {/* Page header */}
           <Box sx={{ mb: 3.5 }}>
             <Chip
               label={`Step ${step + 1} — ${STEPS[step].label}`}
