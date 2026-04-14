@@ -1,9 +1,95 @@
 // src/services/api.js
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
+// ── In-memory token store (sandbox-safe — no localStorage) ────────────────────
+let _token = null
+
+export const tokenStore = {
+  get:   ()  => _token,
+  set:   (t) => { _token = t },
+  clear: ()  => { _token = null },
+}
+
+// ── Axios instance ─────────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: 'https://example.com/api',
-  timeout: 10000,
+  baseURL: BASE_URL,
+  timeout: 15000,
 })
+
+// Attach Bearer token automatically to every outgoing request
+api.interceptors.request.use((config) => {
+  const token = tokenStore.get()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// ── Auth service ───────────────────────────────────────────────────────────────
+export const authService = {
+  /**
+   * POST /auth/register
+   * Content-Type: application/json
+   * Body: all profile fields in one shot
+   * Returns: full user object (no token — auto-login separately)
+   */
+  register: async ({
+    email, password, name,
+    gender, dob, occupation, avatar_url,
+    location, state, city, pincode, phone,
+  }) => {
+    const { data } = await api.post('/auth/register', {
+      email,
+      password,
+      name,
+      gender:      gender      || '',
+      dob:         dob         || null,
+      occupation:  occupation  || '',
+      avatar_url:  avatar_url  || '',
+      location:    location    || '',
+      state:       state       || '',
+      city:        city        || '',
+      pincode:     pincode     || '',
+      phone:       phone       || '',
+    })
+    return data
+    // Returns: { id, name, email, phone, gender, dob, occupation,
+    //            avatar_url, location, state, city, pincode, is_premium }
+  },
+
+  /**
+   * POST /auth/login
+   * Content-Type: application/x-www-form-urlencoded
+   * Fields: username (= email), password
+   * Returns: { access_token, token_type, user: { ...all fields } }
+   *
+   * NOTE: "username" field name is required by OAuth2 — backend maps it to email.
+   * NOTE: login response now includes the full user object.
+   */
+  login: async ({ email, password }) => {
+    const form = new URLSearchParams()
+    form.append('username', email)    // ← OAuth2 spec: field must be "username"
+    form.append('password', password)
+    const { data } = await api.post('/auth/login', form, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
+    return data
+    // Returns: { access_token, token_type, user: { id, name, email, phone,
+    //            gender, dob, occupation, avatar_url, location, state,
+    //            city, pincode, is_premium } }
+  },
+
+  /**
+   * GET /auth/me
+   * Authorization: Bearer <token>  (interceptor adds it automatically)
+   * Returns: full user object
+   */
+  me: async () => {
+    const { data } = await api.get('/auth/me')
+    return data
+  },
+}
 
 export default api
