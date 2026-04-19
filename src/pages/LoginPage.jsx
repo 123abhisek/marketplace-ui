@@ -170,7 +170,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login({ email: data.email, password: data.password })
-      navigate('/dashboard')
+      navigate('/')
     } catch (err) {
       setApiErr(extractError(err))
     } finally {
