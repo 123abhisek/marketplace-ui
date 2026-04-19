@@ -407,7 +407,7 @@ function ListingCard({ item }) {
 
               <IconButton
                 component={RouterLink}
-                to={`/dashboard/${item.type === 'Property' ? 'properties' : 'vehicles'}`}
+                to={`/dashboard/${item.type === 'Property' ? 'properties' : 'vehicles'}/${item.id}`}
                 size="small"
                 sx={{
                   width: 34, height: 34, borderRadius: '11px',

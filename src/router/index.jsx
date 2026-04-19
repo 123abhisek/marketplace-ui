@@ -1,91 +1,18 @@
-// // src/router/index.jsx
-// import { Navigate } from 'react-router-dom'
-
-// // Layouts
-// import PublicLayout  from '../layouts/PublicLayout'   // ← has Navbar + Footer
-// import AuthLayout    from '../layouts/AuthLayout'     // ← new, bare layout
-// import DashboardLayout from '../layouts/DashboardLayout'
-
-// // Public pages
-// import LandingPage       from '../pages/LandingPage'
-// import SubscriptionPage  from '../pages/SubscriptionPage'
-
-// // Auth pages  (no navbar/footer needed)
-// import LoginPage    from '../pages/LoginPage'
-// import RegisterPage from '../pages/RegisterPage'
-
-// // Dashboard pages
-// import DashboardHome          from '../dashboard/DashboardHome'
-// import PropertiesPage         from '../dashboard/PropertiesPage'
-// import VehiclesPage           from '../dashboard/VehiclesPage'
-// import AddPropertyPage        from '../dashboard/AddPropertyPage'
-// import AddVehiclePage         from '../dashboard/AddVehiclePage'
-// import MyListingsPage         from '../dashboard/MyListingsPage'
-// import ProfilePage            from '../dashboard/ProfilePage'
-// import SubscriptionStatusPage from '../dashboard/SubscriptionStatusPage'
-// import LogoutPage             from '../dashboard/LogoutPage'
-
-// const routes = [
-//   // ── Public pages WITH Navbar + Footer ────────────────────────────
-//   {
-//     element: <PublicLayout />,
-//     children: [
-//       { path: '/',             element: <LandingPage /> },
-//       { path: '/subscription', element: <SubscriptionPage /> },
-//     ],
-//   },
-
-//   // ── Auth pages — NO Navbar, NO Footer ────────────────────────────
-//   {
-//     element: <AuthLayout />,
-//     children: [
-//       { path: '/login',    element: <LoginPage /> },
-//       { path: '/register', element: <RegisterPage /> },
-//     ],
-//   },
-
-//   // ── Dashboard ────────────────────────────────────────────────────
-//   {
-//     path: '/dashboard',
-//     element: <DashboardLayout />,
-//     children: [
-//       { index: true,                  element: <DashboardHome /> },
-//       { path: 'properties',           element: <PropertiesPage /> },
-//       { path: 'vehicles',             element: <VehiclesPage /> },
-//       { path: 'add-property',         element: <AddPropertyPage /> },
-//       { path: 'add-vehicle',          element: <AddVehiclePage /> },
-//       { path: 'my-listings',          element: <MyListingsPage /> },
-//       { path: 'profile',              element: <ProfilePage /> },
-//       { path: 'subscription',         element: <SubscriptionStatusPage /> },
-//       { path: 'logout',               element: <LogoutPage /> },
-//     ],
-//   },
-
-//   { path: '*', element: <Navigate to="/" replace /> },
-// ]
-
-// export default routes
-
-
-
 
 // src/router/index.jsx
 import { Navigate } from 'react-router-dom'
 
-// Layouts
 import PublicLayout    from '../layouts/PublicLayout'
 import AuthLayout      from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
+import DashboardGate   from '../layouts/DashboardGate'
 
-// Public pages
 import LandingPage      from '../pages/LandingPage'
 import SubscriptionPage from '../pages/SubscriptionPage'
+import LoginPage        from '../pages/LoginPage'
+import RegisterPage     from '../pages/RegisterPage'
+import FreeDashboard    from '../pages/FreeDashboard'
 
-// Auth pages
-import LoginPage    from '../pages/LoginPage'
-import RegisterPage from '../pages/RegisterPage'
-
-// Dashboard pages
 import DashboardHome          from '../dashboard/DashboardHome'
 import PropertiesPage         from '../dashboard/PropertiesPage'
 import VehiclesPage           from '../dashboard/VehiclesPage'
@@ -96,11 +23,9 @@ import ProfilePage            from '../dashboard/ProfilePage'
 import SubscriptionStatusPage from '../dashboard/SubscriptionStatusPage'
 import LogoutPage             from '../dashboard/LogoutPage'
 
-// Free dashboard
-import FreeDashboard from '../pages/FreeDashboard'
-
-// Gate
-import DashboardGate from '../layouts/DashboardGate'
+// ── Detail pages (new) ────────────────────────────────────────────────────────
+import PropertyDetailPage from '../pages/PropertyDetailPage'
+import VehicleDetailPage  from '../pages/VehicleDetailPage'
 
 const routes = [
   // ── Public pages WITH Navbar + Footer ────────────────────────────
@@ -112,7 +37,7 @@ const routes = [
     ],
   },
 
-  // ── Auth pages — NO Navbar, NO Footer ────────────────────────────
+  // ── Auth pages ────────────────────────────────────────────────────
   {
     element: <AuthLayout />,
     children: [
@@ -121,18 +46,27 @@ const routes = [
     ],
   },
 
-  // ── Free user dashboard (no sidebar layout) ───────────────────────
+  // ── Free dashboard ────────────────────────────────────────────────
   {
-    element: <DashboardGate />,          // redirects to /login if not logged in
+    element: <DashboardGate />,
     children: [
       { path: '/free-dashboard', element: <FreeDashboard /> },
+    ],
+  },
+
+  // ── Detail pages — accessible to any logged-in user ───────────────
+  {
+    element: <DashboardGate />,
+    children: [
+      { path: '/dashboard/properties/:id', element: <PropertyDetailPage /> },
+      { path: '/dashboard/vehicles/:id',   element: <VehicleDetailPage /> },
     ],
   },
 
   // ── Premium dashboard ─────────────────────────────────────────────
   {
     path: '/dashboard',
-    element: <DashboardGate requirePremium />,  // redirects free users to /free-dashboard
+    element: <DashboardGate requirePremium />,
     children: [
       {
         element: <DashboardLayout />,
