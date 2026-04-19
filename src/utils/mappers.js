@@ -1,64 +1,92 @@
 // src/utils/mappers.js
 
 /**
- * Maps API snake_case property response → UI camelCase shape.
- * Handles both public teaser shape (/all) and full shape (/my/listings, /add).
+ * extractError
+ * Pulls a human-readable message from:
+ *   1. Frontend-thrown errors (err.isFrontendError === true)
+ *   2. FastAPI 422 Unprocessable Entity  — detail is an array of objects
+ *   3. FastAPI plain { detail: "string" }
+ *   4. Generic Error.message fallback
  */
-export const mapProperty = (p) => ({
-  id:             p.id,
-  ownerId:        p.user_id ?? null,
-  title:          p.title ?? '',
-  propertyType:   p.property_type ?? '',
-  location:       p.location ?? '',
-  apartmentName:  p.apartment_name ?? '',
-  contactNumber:  p.contact ?? '',
-  floor:          p.floor ?? '',
-  rooms:          p.rooms ?? '',
-  bedrooms:       p.bedrooms ?? '',
-  area:           p.area ?? '',
-  landArea:       p.land_area ?? '',
-  cropsGrown:     p.crops_grown ?? '',
-  expectedPrice:  p.price ?? 0,
-  rentLease:      p.rent_lease ?? '',
-  images:         p.images ?? [],
-  message:        p.message ?? '',
-  createdAt:      p.created_at ?? null,
-})
+export function extractError(err) {
+  if (err?.isFrontendError) return err.message
 
-/**
- * Maps API user object → UI user shape.
- */
-export const mapUser = (u) => ({
-  id:           u.id,
-  name:         u.name ?? '',
-  email:        u.email ?? '',
-  mobile:       u.phone ?? '',
-  gender:       u.gender ?? '',
-  dob:          u.dob ?? '',
-  occupation:   u.occupation ?? '',
-  photo:        u.avatar_url ?? null,
-  location:     u.location ?? '',
-  state:        u.state ?? '',
-  city:         u.city ?? '',
-  pincode:      u.pincode ?? '',
-  isPremium:    u.is_premium ?? false,
-  role:         u.is_premium ? 'premium' : 'free',
-  subscription: u.is_premium ? 'active' : 'inactive',
-  loggedIn:     true,
-})
+  const detail = err?.response?.data?.detail
 
-/**
- * Extracts a human-readable error message from an Axios error.
- */
-export const extractError = (err) => {
-  if (err?.response?.data?.detail) {
-    const detail = err.response.data.detail
-    if (Array.isArray(detail)) {
-      return detail.map((d) => d.msg).join(', ')
-    }
-    return String(detail)
+  // FastAPI 422 — detail is an array: [{ loc, msg, type }, ...]
+  if (Array.isArray(detail)) {
+    return (
+      detail
+        .map((d) => {
+          const field = d.loc?.filter((l) => l !== 'body').join(' → ') || ''
+          const msg   = d.msg || ''
+          return field ? `${field}: ${msg}` : msg
+        })
+        .filter(Boolean)
+        .join('  |  ') || 'Validation error'
+    )
   }
-  if (err?.response?.statusText) return err.response.statusText
-  if (err?.message) return err.message
-  return 'An unexpected error occurred'
+
+  if (typeof detail === 'string') return detail
+
+  return err?.message || 'Something went wrong. Please try again.'
 }
+
+/**
+ * normalizeProperty / mapProperty
+ * Converts a raw API property object → the shape used by the frontend.
+ * Handles both snake_case (API) and camelCase (legacy) fields.
+ */
+export function normalizeProperty(p) {
+  return {
+    id:            p.id,
+    title:         p.title          || '',
+    propertyType:  p.property_type  || p.propertyType  || '',
+    location:      p.location       || '',
+    apartmentName: p.apartment_name || p.apartmentName || '',
+    floor:         p.floor          ?? null,
+    rooms:         p.rooms          ?? null,
+    bedrooms:      p.bedrooms       ?? null,
+    area:          p.area           ?? null,
+    landArea:      p.land_area      || p.landArea       || '',
+    cropsGrown:    p.crops_grown    || p.cropsGrown     || '',
+    price:         p.price          ?? p.expectedPrice  ?? null,
+    rentLease:     p.rent_lease     || p.rentLease      || '',
+    contactNumber: p.contact_number || p.contactNumber  || '',
+    images:        p.images         || [],
+    ownerId:       p.owner_id       || p.ownerId        || null,
+    createdAt:     p.created_at     || p.createdAt      || null,
+  }
+}
+
+// Alias — some pages import this as mapProperty
+export const mapProperty = normalizeProperty
+
+/**
+ * normalizeVehicle / mapVehicle
+ * Converts a raw API vehicle object → the shape used by the frontend.
+ */
+export function normalizeVehicle(v) {
+  return {
+    id:            v.id,
+    title:         v.title           || '',
+    vehicleType:   v.vehicle_type    || v.vehicleType   || '',
+    brand:         v.brand           || '',
+    model:         v.model           || '',
+    year:          v.year            ?? null,
+    fuelType:      v.fuel_type       || v.fuelType      || '',
+    transmission:  v.transmission    || '',
+    kmDriven:      v.km_driven       ?? v.kmDriven      ?? null,
+    color:         v.color           || '',
+    location:      v.location        || '',
+    price:         v.price           ?? null,
+    description:   v.description     || '',
+    contactNumber: v.contact_number  || v.contactNumber || '',
+    images:        v.images          || [],
+    ownerId:       v.owner_id        || v.ownerId       || null,
+    createdAt:     v.created_at      || v.createdAt     || null,
+  }
+}
+
+// Alias — some pages import this as mapVehicle
+export const mapVehicle = normalizeVehicle

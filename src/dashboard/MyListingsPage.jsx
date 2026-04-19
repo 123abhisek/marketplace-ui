@@ -34,6 +34,7 @@ export default function MyListingsPage() {
     setError('')
     try {
       const raw = await propertyService.myListings()
+      console.log('Fetched my listings:', raw)
       setListings(raw.map(mapProperty))
     } catch (err) {
       if (err?.name === 'CanceledError' || err?.name === 'AbortError') return

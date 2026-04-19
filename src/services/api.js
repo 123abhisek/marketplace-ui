@@ -1,284 +1,280 @@
-// // src/services/api.js
-// import axios from "axios";
-
-// const BASE_PATH = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-// const API_VERSION = "v1";
-// const BASE_URL = `${BASE_PATH}/${API_VERSION}/api`;
-
-// // ── In-memory token store (sandbox-safe — no localStorage) ────────────────────
-// let _token = null;
-
-// export const tokenStore = {
-//   get: () => _token,
-//   set: (t) => {
-//     _token = t;
-//   },
-//   clear: () => {
-//     _token = null;
-//   },
-// };
-
-// // ── Axios instance ─────────────────────────────────────────────────────────────
-// const api = axios.create({
-//   baseURL: BASE_URL,
-//   timeout: 15000,
-// });
-
-// // Attach Bearer token automatically to every outgoing request
-// api.interceptors.request.use((config) => {
-//   const token = tokenStore.get();
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
-
-// // ── Auth service ───────────────────────────────────────────────────────────────
-// export const authService = {
-//   /**
-//    * POST /auth/register
-//    * Content-Type: application/json
-//    * Body: all profile fields in one shot
-//    * Returns: full user object (no token — auto-login separately)
-//    */
-//   register: async ({
-//     email,
-//     password,
-//     name,
-//     gender,
-//     dob,
-//     occupation,
-//     avatar_url,
-//     location,
-//     state,
-//     city,
-//     pincode,
-//     phone,
-//   }) => {
-//     const { data } = await api.post("/auth/register", {
-//       email,
-//       password,
-//       name,
-//       gender: gender || "",
-//       dob: dob || null,
-//       occupation: occupation || "",
-//       avatar_url: avatar_url || "",
-//       location: location || "",
-//       state: state || "",
-//       city: city || "",
-//       pincode: pincode || "",
-//       phone: phone || "",
-//     });
-//     return data;
-//     // Returns: { id, name, email, phone, gender, dob, occupation,
-//     //            avatar_url, location, state, city, pincode, is_premium }
-//   },
-
-//   /**
-//    * POST /auth/login
-//    * Content-Type: application/x-www-form-urlencoded
-//    * Fields: username (= email), password
-//    * Returns: { access_token, token_type, user: { ...all fields } }
-//    *
-//    * NOTE: "username" field name is required by OAuth2 — backend maps it to email.
-//    * NOTE: login response now includes the full user object.
-//    */
-//   login: async ({ email, password }) => {
-//     const form = new URLSearchParams();
-//     form.append("username", email); // ← OAuth2 spec: field must be "username"
-//     form.append("password", password);
-//     const { data } = await api.post("/auth/login", form, {
-//       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//     });
-//     return data;
-//     // Returns: { access_token, token_type, user: { id, name, email, phone,
-//     //            gender, dob, occupation, avatar_url, location, state,
-//     //            city, pincode, is_premium } }
-//   },
-
-//   /**
-//    * GET /auth/me
-//    * Authorization: Bearer <token>  (interceptor adds it automatically)
-//    * Returns: full user object
-//    */
-//   me: async () => {
-//     const { data } = await api.get("/auth/me");
-//     return data;
-//   },
-// };
-
-// export default api;
-
-
-
-
-
-
-
-
-
 
 // src/services/api.js
-import axios from 'axios'
+// ─────────────────────────────────────────────────────────────────────────────
+// Central API layer. All HTTP calls go through here.
+// Base URL is read from the Vite env variable VITE_API_URL.
+// ─────────────────────────────────────────────────────────────────────────────
 
-const BASE_PATH    = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-const API_VERSION  = 'v1'
-const BASE_URL     = `${BASE_PATH}/${API_VERSION}/api`
+const BASE_URL = (import.meta.env?.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+const API      = `${BASE_URL}/v1/api`
 
-// ── In-memory token store (sandbox-safe — no localStorage) ───────────────────
-let _token = null
 
-export const tokenStore = {
-  get:   ()  => _token,
-  set:   (t) => { _token = t },
-  clear: ()  => { _token = null },
+// ── Token store ───────────────────────────────────────────────────────────────
+export const tokenStore = (() => {
+  let _token = null
+  return {
+    get:   ()  => _token,
+    set:   (t) => { _token = t },
+    clear: ()  => { _token = null },
+  }
+})()
+
+
+// ── Core fetch wrapper ────────────────────────────────────────────────────────
+async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
+  const headers = {}
+
+  if (body !== undefined) {
+    headers['Content-Type'] = isFormEncoded
+      ? 'application/x-www-form-urlencoded'
+      : 'application/json'
+  }
+
+  const token = tokenStore.get()
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(`${API}/${path}`, {
+    method,
+    headers,
+    body: body === undefined
+      ? undefined
+      : isFormEncoded
+        ? new URLSearchParams(body).toString()
+        : JSON.stringify(body),
+  })
+
+  let data
+  const ct = res.headers.get('content-type') ?? ''
+  if (ct.includes('application/json')) {
+    data = await res.json()
+  } else {
+    data = await res.text()
+  }
+
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`)
+    err.status   = res.status
+    err.response = { data }
+    throw err
+  }
+
+  return data
 }
 
-// ── Axios instance ────────────────────────────────────────────────────────────
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 15000,
-})
+// Convenience helpers
+const get  = (path)                            => apiFetch('GET',    path)
+const post = (path, body, isForm = false)      => apiFetch('POST',   path, body, isForm)
+const del  = (path)                            => apiFetch('DELETE', path)
+const put  = (path, body)                      => apiFetch('PUT',    path, body)
 
-// Attach Bearer token automatically to every outgoing request
-api.interceptors.request.use((config) => {
-  const token = tokenStore.get()
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-// Global response interceptor — 401 clears token
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err?.response?.status === 401) {
-      tokenStore.clear()
-    }
-    return Promise.reject(err)
-  },
-)
 
 // ── Auth service ──────────────────────────────────────────────────────────────
 export const authService = {
   /**
-   * POST /auth/register
-   * Returns full user object (no token — auto-login separately)
-   */
-  register: async ({
-    email, password, name, gender, dob, occupation,
-    avatar_url, location, state, city, pincode, phone,
-  }) => {
-    const { data } = await api.post('/auth/register', {
-      email,
-      password,
-      name,
-      gender:      gender      || '',
-      dob:         dob         || null,
-      occupation:  occupation  || '',
-      avatar_url:  avatar_url  || '',
-      location:    location    || '',
-      state:       state       || '',
-      city:        city        || '',
-      pincode:     pincode     || '',
-      phone:       phone       || '',
-    })
-    return data
-  },
-
-  /**
-   * POST /auth/login
-   * Content-Type: application/x-www-form-urlencoded
-   * Returns { access_token, token_type, user }
+   * Login
+   * Sends JSON { identifier, password } to FastAPI custom login endpoint.
    */
   login: async ({ email, password }) => {
-    const form = new URLSearchParams()
-    form.append('username', email) // OAuth2 spec: field must be "username"
-    form.append('password', password)
-    const { data } = await api.post('/auth/login', form, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    })
-    return data // { access_token, token_type, user: { ...all fields } }
+    const data = await post('auth/login', { identifier: email, password })
+    if (data?.access_token) tokenStore.set(data.access_token)
+    return data  // { access_token, token_type, user: {...} }
   },
 
   /**
-   * GET /auth/me
-   * Returns full user object
+   * Register
+   * REQUIRED by API: name, email, password
+   * OPTIONAL: phone, gender, dob, occupation, avatar_b64,
+   *           location, state, city, pincode
+   *
+   * FIX: name is explicitly trimmed before sending so an accidental
+   * trailing-space or empty string never reaches FastAPI as "" which
+   * Pydantic rejects for min_length=1 fields.
    */
-  me: async () => {
-    const { data } = await api.get('/auth/me')
-    return data
+  register: async ({
+    name,
+    email,
+    password,
+    phone,
+    gender,
+    dob,
+    occupation,
+    avatar_b64,
+    location,
+    state,
+    city,
+    pincode,
+  }) => {
+    const trimmedName = (name ?? '').trim()
+    if (!trimmedName) throw new Error('Full name is required')
+
+    // Build payload — required fields always present, optional only when truthy
+    const payload = {
+      name:     trimmedName,  // ← required, trimmed
+      email:    email.trim(), // ← required
+      password,               // ← required
+    }
+
+    if (phone)      payload.phone      = phone
+    if (gender)     payload.gender     = gender
+    if (dob)        payload.dob        = dob
+    if (occupation) payload.occupation = occupation
+    if (avatar_b64) payload.avatar_b64 = avatar_b64
+    if (location)   payload.location   = location
+    if (state)      payload.state      = state
+    if (city)       payload.city       = city
+    if (pincode)    payload.pincode    = pincode
+
+    return post('auth/register', payload)
+    // Returns: { message, user: {...} }
   },
+
+  /** Fetch the currently-authenticated user's profile */
+  me: () => get('auth/me'),
+
+  /** Logout — clears server session + local token */
+  logout: async () => {
+    try {
+      await post('auth/logout')
+    } catch (_) {
+      // Ignore 401/404 — we clear locally regardless
+    } finally {
+      tokenStore.clear()
+    }
+  },
+
+  /** Update user profile */
+  updateProfile: (payload) => put('auth/profile', payload),
 }
+
 
 // ── Property service ──────────────────────────────────────────────────────────
 export const propertyService = {
-  /**
-   * GET /property/all
-   * Public. Returns teaser cards: id, title, property_type, location, price, images, message.
-   * Optional query params: skip, limit, property_type
-   */
-  getAll: async ({ skip = 0, limit = 50, propertyType = '' } = {}) => {
-    const params = { skip, limit }
-    if (propertyType && propertyType !== 'All') params.property_type = propertyType
-    const { data } = await api.get('/property/all', { params })
-    return data // array of teaser objects
-  },
+  /** GET all public property listings */
+  getAll: () => get('property/all'),
+
+  /** GET a single property by ID */
+  getOne: (id) => get(`property/${id}`),
 
   /**
-   * POST /property/add
-   * Premium only. Body is camelCase (as per API spec).
-   * Returns full PropertyFull object.
+   * POST a new property listing.
+   * Maps camelCase fields → snake_case as the backend expects.
    */
   add: async ({
-    title, propertyType, location, apartmentName,
-    contactNumber, floor, rooms, bedrooms, area,
-    landArea, cropsGrown, expectedPrice, rentLease, images,
+    title,
+    propertyType,
+    location,
+    apartmentName,
+    floor,
+    rooms,
+    bedrooms,
+    area,
+    landArea,
+    cropsGrown,
+    expectedPrice,
+    rentLease,
+    contactNumber,
+    images = [],
   }) => {
-    const { data } = await api.post('/property/add', {
+    const price = parseFloat(String(expectedPrice ?? '').trim())
+    if (!String(expectedPrice ?? '').trim() || isNaN(price) || price <= 0) {
+      const err = new Error('Expected price is required and must be a number greater than 0.')
+      err.isFrontendError = true
+      throw err
+    }
+
+    const payload = {
       title,
-      propertyType,
-      location,
-      apartmentName,
-      contactNumber,
-      floor,
-      rooms,
-      bedrooms,
-      area,
-      landArea,
-      cropsGrown,
-      expectedPrice: Number(expectedPrice) || 0,
-      rentLease,
-      images: images || [],
-    })
-    return data
+      property_type:  propertyType,
+      location:       location       || undefined,
+      apartment_name: apartmentName  || undefined,
+      floor:          floor          ? Number(floor)    : undefined,
+      rooms:          rooms          ? Number(rooms)    : undefined,
+      bedrooms:       bedrooms       ? Number(bedrooms) : undefined,
+      area:           area           ? Number(area)     : undefined,
+      land_area:      landArea       || undefined,
+      crops_grown:    cropsGrown     || undefined,
+      price,
+      rent_lease:     rentLease      || undefined,
+      contact_number: contactNumber,
+      images,
+    }
+
+    // Strip undefined keys so FastAPI doesn't receive null for Optional fields
+    Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k])
+
+    return post('property/add', payload)
   },
 
-  /**
-   * GET /property/my/listings
-   * Auth required. Returns full objects for the logged-in user.
-   */
-  myListings: async () => {
-    const { data } = await api.get('/property/my/listings')
-    return data
-  },
+  /** GET my listings (authenticated) */
+  myListings: () => get('property/my/listings'),
 
-  /**
-   * GET /property/{prop_id}
-   * Free → PropertyPublic (no contact)
-   * Premium → PropertyFull (all fields including contact)
-   */
-  getOne: async (id) => {
-    const { data } = await api.get(`/property/${id}`)
-    return data
-  },
+  /** DELETE a property listing by ID */
+  deleteOne: (id) => del(`property/${id}`),
 
-  /**
-   * DELETE /property/{prop_id}
-   * Owner only. Returns 204.
-   */
-  deleteOne: async (id) => {
-    await api.delete(`/property/${id}`)
-  },
+  /** PUT — update a property listing */
+  update: (id, payload) => put(`property/${id}`, payload),
 }
 
-export default api
+
+// ── Vehicle service ───────────────────────────────────────────────────────────
+export const vehicleService = {
+  /** GET all public vehicle listings */
+  getAll: () => get('vehicle/all'),
+
+  /** GET a single vehicle by ID */
+  getOne: (id) => get(`vehicle/${id}`),
+
+  /**
+   * POST a new vehicle listing.
+   * Maps camelCase → snake_case and coerces numeric fields.
+   */
+  add: async ({
+    title,
+    vehicleNumber,
+    brand,
+    model,
+    year,
+    rtoCode,
+    kmDriven,
+    state,
+    location,
+    expectedPrice,
+    contactNumber,
+    images = [],
+  }) => {
+    const price = parseFloat(String(expectedPrice ?? '').trim())
+    if (!String(expectedPrice ?? '').trim() || isNaN(price) || price <= 0) {
+      const err = new Error('Price is required and must be a number greater than 0.')
+      err.isFrontendError = true
+      throw err
+    }
+
+    const payload = {
+      title,
+      vehicle_number: vehicleNumber  || undefined,
+      brand,
+      model,
+      year:           year           ? Number(year)     : undefined,
+      rto_code:       rtoCode        || undefined,
+      km_driven:      kmDriven       ? Number(kmDriven) : undefined,
+      state:          state          || undefined,
+      location:       location       || undefined,
+      price,
+      contact_number: contactNumber,
+      images,
+    }
+
+    Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k])
+
+    return post('vehicle/add', payload)
+  },
+
+  /** GET my listings (authenticated) */
+  myListings: () => get('vehicle/my/listings'),
+
+  /** DELETE a vehicle listing by ID */
+  deleteOne: (id) => del(`vehicle/${id}`),
+
+  /** PUT — update a vehicle listing */
+  update: (id, payload) => put(`vehicle/${id}`, payload),
+}

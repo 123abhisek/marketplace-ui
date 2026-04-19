@@ -19,7 +19,6 @@ import { useAppState }             from '../hooks/useAppState'
 import { extractError }            from '../utils/mappers'
 
 // ─── Left brand panel ─────────────────────────────────────────────────────────
-
 function BrandPanel() {
   const feats = [
     { icon: <HomeWorkRoundedIcon sx={{ fontSize: 17 }} />,         text: 'Properties & land listings' },
@@ -44,6 +43,7 @@ function BrandPanel() {
       background: 'linear-gradient(150deg,#0f766e 0%,#0e4d6a 55%,#1e1b4b 100%)',
       overflow: 'hidden',
     }}>
+      {/* Background blobs */}
       {[
         { top: -80,  right: -80, size: 260, opacity: 0.12 },
         { bottom: -60, left: -60, size: 220, opacity: 0.10 },
@@ -110,7 +110,7 @@ function BrandPanel() {
         ))}
       </Stack>
 
-      {/* Stats row */}
+      {/* Stats */}
       <Box sx={{
         position: 'relative', zIndex: 1,
         display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1,
@@ -127,8 +127,7 @@ function BrandPanel() {
   )
 }
 
-// ─── Reusable input style ──────────────────────────────────────────────────────
-
+// ─── Shared input style ────────────────────────────────────────────────────────
 const inputSx = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '14px',
@@ -139,12 +138,26 @@ const inputSx = {
   '& .MuiInputLabel-root.Mui-focused': { color: '#0f766e' },
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+const btnSx = {
+  borderRadius: '14px', py: 1.5,
+  fontWeight: 800, fontSize: '0.93rem', letterSpacing: '-0.01em',
+  background: 'linear-gradient(135deg,#0f766e,#0e8e7f)', color: '#fff',
+  boxShadow: '0 10px 28px rgba(15,118,110,0.26)',
+  transition: 'all .18s ease',
+  '&:hover': {
+    background: 'linear-gradient(135deg,#0a5c55,#0c7a6e)',
+    boxShadow: '0 14px 36px rgba(15,118,110,0.32)',
+    transform: 'translateY(-1px)',
+  },
+  '&:active': { transform: 'translateY(0)' },
+  '&.Mui-disabled': { background: 'rgba(15,118,110,0.40)', color: '#fff' },
+}
 
+// ─── Main component ────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const [showPw, setShowPw]   = useState(false)
+  const [showPw,  setShowPw]  = useState(false)
   const [loading, setLoading] = useState(false)
-  const [apiErr, setApiErr]   = useState('')
+  const [apiErr,  setApiErr]  = useState('')
   const { login }             = useAppState()
   const navigate              = useNavigate()
 
@@ -163,21 +176,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const btnSx = {
-    borderRadius: '14px', py: 1.5,
-    fontWeight: 800, fontSize: '0.93rem', letterSpacing: '-0.01em',
-    background: 'linear-gradient(135deg,#0f766e,#0e8e7f)', color: '#fff',
-    boxShadow: '0 10px 28px rgba(15,118,110,0.26)',
-    transition: 'all .18s ease',
-    '&:hover': {
-      background: 'linear-gradient(135deg,#0a5c55,#0c7a6e)',
-      boxShadow: '0 14px 36px rgba(15,118,110,0.32)',
-      transform: 'translateY(-1px)',
-    },
-    '&:active': { transform: 'translateY(0)' },
-    '&.Mui-disabled': { background: 'rgba(15,118,110,0.40)', color: '#fff' },
   }
 
   return (
@@ -241,7 +239,7 @@ export default function LoginPage() {
             </Typography>
           </Divider>
 
-          {/* API error */}
+          {/* API error banner */}
           {apiErr && (
             <Box sx={{
               mb: 2.5, px: 2, py: 1.5, borderRadius: '12px',
@@ -262,7 +260,7 @@ export default function LoginPage() {
                 control={control}
                 rules={{
                   required: 'Email is required',
-                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email' },
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email address' },
                 }}
                 render={({ field, fieldState }) => (
                   <TextField
@@ -270,6 +268,7 @@ export default function LoginPage() {
                     fullWidth
                     label="Email address"
                     type="email"
+                    autoComplete="email"
                     disabled={loading}
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message || ' '}
@@ -295,6 +294,7 @@ export default function LoginPage() {
                     fullWidth
                     label="Password"
                     type={showPw ? 'text' : 'password'}
+                    autoComplete="current-password"
                     disabled={loading}
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message || ' '}
@@ -306,10 +306,15 @@ export default function LoginPage() {
                       ),
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton size="small" disabled={loading} onClick={() => setShowPw((p) => !p)} sx={{ color: '#94a3b8' }}>
+                          <IconButton
+                            size="small"
+                            disabled={loading}
+                            onClick={() => setShowPw((p) => !p)}
+                            sx={{ color: '#94a3b8' }}
+                          >
                             {showPw
                               ? <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} />
-                              : <VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
+                              : <VisibilityRoundedIcon   sx={{ fontSize: 17 }} />}
                           </IconButton>
                         </InputAdornment>
                       ),

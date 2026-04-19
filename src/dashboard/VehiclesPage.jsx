@@ -1,38 +1,41 @@
 
-// src/dashboard/VehiclesPage.jsx
-import { useEffect, useState } from 'react'
 import {
   Box, Button, Chip, Grid, InputAdornment,
   MenuItem, Stack, TextField, Typography,
 } from '@mui/material'
-import SearchRoundedIcon           from '@mui/icons-material/SearchRounded'
-import TuneRoundedIcon             from '@mui/icons-material/TuneRounded'
-import DirectionsCarRoundedIcon    from '@mui/icons-material/DirectionsCarRounded'
-import NoteAddRoundedIcon          from '@mui/icons-material/NoteAddRounded'
-import { Link as RouterLink }      from 'react-router-dom'
-import VehicleCard                 from '../components/VehicleCard'
-import Loader                      from '../components/Loader'
-import EmptyState                  from '../components/EmptyState'
-import { useAppState }             from '../hooks/useAppState'
+import SearchRoundedIcon        from '@mui/icons-material/SearchRounded'
+import TuneRoundedIcon          from '@mui/icons-material/TuneRounded'
+import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
+import NoteAddRoundedIcon       from '@mui/icons-material/NoteAddRounded'
+import RefreshRoundedIcon       from '@mui/icons-material/RefreshRounded'
+import { Link as RouterLink }   from 'react-router-dom'
+import { useState }             from 'react'
+import VehicleCard              from '../components/VehicleCard'
+import Loader                   from '../components/Loader'
+import EmptyState               from '../components/EmptyState'
+import { useAppState }          from '../hooks/useAppState'
 
 const BRANDS = ['All', 'Maruti', 'Hyundai', 'Honda', 'Toyota', 'Royal Enfield', 'Bajaj', 'Hero']
 
 export default function VehiclesPage() {
-  const { vehicles } = useAppState()
-  const [loading, setLoading]  = useState(true)
-  const [search, setSearch]    = useState('')
-  const [brand, setBrand]      = useState('All')
-  const [sortBy, setSortBy]    = useState('latest')
+  const { vehicles = [], vehiclesLoading, refreshVehicles } = useAppState()
+  const [search,  setSearch]  = useState('')
+  const [brand,   setBrand]   = useState('All')
+  const [sortBy,  setSortBy]  = useState('latest')
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 900)
-    return () => clearTimeout(t)
-  }, [])
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try { await refreshVehicles() } finally { setRefreshing(false) }
+  }
 
   const filtered = vehicles
     .filter((v) => {
-      const q = search.toLowerCase()
-      const matchQ = !q || v.title?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q) || v.brand?.toLowerCase().includes(q)
+      const q      = search.toLowerCase()
+      const matchQ = !q
+        || v.title?.toLowerCase().includes(q)
+        || v.location?.toLowerCase().includes(q)
+        || v.brand?.toLowerCase().includes(q)
       const matchB = brand === 'All' || v.brand === brand
       return matchQ && matchB
     })
@@ -46,47 +49,59 @@ export default function VehiclesPage() {
   return (
     <Stack spacing={3}>
       {/* ── Header ── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ sm: 'center' }}
+        spacing={2}
+      >
         <Box>
-          <Typography
-            variant="h5"
-            fontWeight={900}
-            sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}
-          >
+          <Typography variant="h5" fontWeight={900} sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}>
             Vehicle Listings
           </Typography>
           <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', mt: 0.25 }}>
-            {vehicles.length} vehicles available
+            {vehiclesLoading ? 'Loading…' : `${vehicles.length} vehicles available`}
           </Typography>
         </Box>
-        <Button
-          component={RouterLink}
-          to="/dashboard/add-vehicle"
-          variant="contained"
-          startIcon={<NoteAddRoundedIcon />}
-          sx={{
-            borderRadius: '12px',
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #7C3AED 0%, #4361EE 100%)',
-            boxShadow: '0 4px 16px rgba(124,58,237,0.30)',
-            alignSelf: { xs: 'flex-start', sm: 'auto' },
-          }}
-        >
-          Add Vehicle
-        </Button>
+
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing || vehiclesLoading}
+            startIcon={<RefreshRoundedIcon />}
+            sx={{
+              borderRadius: '12px',
+              fontWeight: 700,
+              color: '#64748B',
+              '&:hover': { background: '#F1F5F9' },
+            }}
+          >
+            Refresh
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/dashboard/add-vehicle"
+            variant="contained"
+            startIcon={<NoteAddRoundedIcon />}
+            sx={{
+              borderRadius: '12px',
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #7C3AED 0%, #4361EE 100%)',
+              boxShadow: '0 4px 16px rgba(124,58,237,0.30)',
+              alignSelf: { xs: 'flex-start', sm: 'auto' },
+            }}
+          >
+            Add Vehicle
+          </Button>
+        </Stack>
       </Stack>
 
       {/* ── Filters Bar ── */}
       <Box
         sx={{
-          p: 2,
-          borderRadius: '16px',
-          background: '#fff',
+          p: 2, borderRadius: '16px', background: '#fff',
           boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
-          display: 'flex',
-          gap: 2,
-          flexWrap: 'wrap',
-          alignItems: 'center',
+          display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center',
         }}
       >
         <TextField
@@ -95,8 +110,7 @@ export default function VehiclesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{
-            flex: 1,
-            minWidth: 200,
+            flex: 1, minWidth: 200,
             '& .MuiOutlinedInput-root': { borderRadius: '12px', background: '#F8FAFC', fontSize: '0.875rem' },
           }}
           InputProps={{
@@ -139,28 +153,25 @@ export default function VehiclesPage() {
             label={b}
             onClick={() => setBrand(b)}
             sx={{
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              borderRadius: '10px',
-              height: 32,
-              cursor: 'pointer',
+              fontWeight: 700, fontSize: '0.78rem',
+              borderRadius: '10px', height: 32, cursor: 'pointer',
               background: brand === b ? '#7C3AED' : '#F1F5F9',
               color: brand === b ? '#fff' : '#64748B',
-              border: 'none',
-              transition: 'all 0.15s',
+              border: 'none', transition: 'all 0.15s',
               '&:hover': { background: brand === b ? '#5B21B6' : '#E2E8F0' },
             }}
           />
         ))}
       </Stack>
 
-      {!loading && (
+      {!vehiclesLoading && (
         <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8' }}>
           Showing <strong style={{ color: '#1E293B' }}>{filtered.length}</strong> of {vehicles.length} vehicles
         </Typography>
       )}
 
-      {loading ? (
+      {/* ── Grid ── */}
+      {vehiclesLoading ? (
         <Loader count={6} />
       ) : filtered.length === 0 ? (
         <EmptyState
