@@ -1,4 +1,3 @@
-
 // src/pages/RegisterPage.jsx
 import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -109,10 +108,14 @@ function StepIndicator({ current }) {
           alignItems="center"
           sx={{ mb: 1 }}
         >
-          <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b" }}>
+          <Typography
+            sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b" }}
+          >
             Step {current + 1} of {STEPS.length}
           </Typography>
-          <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#0f766e" }}>
+          <Typography
+            sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#0f766e" }}
+          >
             {Math.round(((current + 1) / STEPS.length) * 100)}%
           </Typography>
         </Stack>
@@ -148,13 +151,13 @@ function StepIndicator({ current }) {
                 border: active
                   ? "1.5px solid #0f766e"
                   : done
-                  ? "1.5px solid rgba(15,118,110,0.25)"
-                  : "1.5px solid rgba(226,232,240,0.9)",
+                    ? "1.5px solid rgba(15,118,110,0.25)"
+                    : "1.5px solid rgba(226,232,240,0.9)",
                 background: active
                   ? "rgba(15,118,110,0.06)"
                   : done
-                  ? "rgba(15,118,110,0.03)"
-                  : "transparent",
+                    ? "rgba(15,118,110,0.03)"
+                    : "transparent",
                 transition: "all .18s ease",
               }}
             >
@@ -170,20 +173,27 @@ function StepIndicator({ current }) {
                   background: done
                     ? "#0f766e"
                     : active
-                    ? "rgba(15,118,110,0.12)"
-                    : "rgba(226,232,240,0.8)",
+                      ? "rgba(15,118,110,0.12)"
+                      : "rgba(226,232,240,0.8)",
                   color: done ? "#fff" : active ? "#0f766e" : "#94a3b8",
                 }}
               >
                 {done ? (
                   <CheckRoundedIcon sx={{ fontSize: 13 }} />
                 ) : (
-                  <Typography sx={{ fontSize: "0.67rem", fontWeight: 900, lineHeight: 1 }}>
+                  <Typography
+                    sx={{ fontSize: "0.67rem", fontWeight: 900, lineHeight: 1 }}
+                  >
                     {i + 1}
                   </Typography>
                 )}
               </Box>
-              <Box sx={{ display: { xs: "none", sm: "block" }, overflow: "hidden" }}>
+              <Box
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                  overflow: "hidden",
+                }}
+              >
                 <Typography
                   sx={{
                     fontSize: "0.72rem",
@@ -205,7 +215,18 @@ function StepIndicator({ current }) {
 }
 
 // ─── Reusable controlled field ────────────────────────────────────────────────
-function Field({ name, label, control, rules, type = "text", icon, select, options, endAdornment, disabled }) {
+function Field({
+  name,
+  label,
+  control,
+  rules,
+  type = "text",
+  icon,
+  select,
+  options,
+  endAdornment,
+  disabled,
+}) {
   return (
     <Controller
       name={name}
@@ -224,7 +245,15 @@ function Field({ name, label, control, rules, type = "text", icon, select, optio
           InputProps={{
             startAdornment: icon ? (
               <InputAdornment position="start">
-                <Box sx={{ color: "#94a3b8", display: "flex", alignItems: "center" }}>{icon}</Box>
+                <Box
+                  sx={{
+                    color: "#94a3b8",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {icon}
+                </Box>
               </InputAdornment>
             ) : undefined,
             endAdornment,
@@ -252,7 +281,8 @@ function PhotoPicker({ value, onChange, disabled }) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => onChange({ name: file.name, preview: reader.result });
+    reader.onloadend = () =>
+      onChange({ name: file.name, preview: reader.result });
     reader.readAsDataURL(file);
   };
 
@@ -260,40 +290,65 @@ function PhotoPicker({ value, onChange, disabled }) {
     <Stack alignItems="center" spacing={1.5}>
       <Box
         onClick={() => !disabled && inputRef.current?.click()}
-        sx={{ position: "relative", cursor: disabled ? "default" : "pointer", width: 88, height: 88 }}
+        sx={{
+          position: "relative",
+          cursor: disabled ? "default" : "pointer",
+          width: 88,
+          height: 88,
+        }}
       >
         <Avatar
           src={value?.preview || undefined}
           sx={{
             width: 88,
             height: 88,
-            background: "linear-gradient(135deg,rgba(15,118,110,0.12),rgba(14,77,106,0.12))",
+            background:
+              "linear-gradient(135deg,rgba(15,118,110,0.12),rgba(14,77,106,0.12))",
             border: "2px dashed rgba(15,118,110,0.30)",
             fontSize: "2rem",
             color: "#0f766e",
           }}
         >
           {!value?.preview && (
-            <CameraAltRoundedIcon sx={{ fontSize: 28, color: "#0f766e", opacity: 0.55 }} />
+            <CameraAltRoundedIcon
+              sx={{ fontSize: 28, color: "#0f766e", opacity: 0.55 }}
+            />
           )}
         </Avatar>
         {!disabled && (
           <Box
             sx={{
-              position: "absolute", bottom: 0, right: 0,
-              width: 26, height: 26, borderRadius: "50%",
-              background: "#0f766e", border: "2px solid #fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: "#0f766e",
+              border: "2px solid #fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <CameraAltRoundedIcon sx={{ fontSize: 13, color: "#fff" }} />
           </Box>
         )}
       </Box>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFile} />
-      <Typography sx={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleFile}
+      />
+      <Typography
+        sx={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}
+      >
         {value?.name ? (
-          <span style={{ color: "#0f766e", fontWeight: 700 }}>{value.name}</span>
+          <span style={{ color: "#0f766e", fontWeight: 700 }}>
+            {value.name}
+          </span>
         ) : (
           "Click to add a profile photo (optional)"
         )}
@@ -310,9 +365,18 @@ function BrandPanel({ step }) {
     "Secure account credentials",
   ];
   const perks = [
-    { icon: <HomeWorkRoundedIcon sx={{ fontSize: 16 }} />, text: "Browse property listings" },
-    { icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />, text: "Upgrade to Premium for ₹299" },
-    { icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />, text: "Post your own listings" },
+    {
+      icon: <HomeWorkRoundedIcon sx={{ fontSize: 16 }} />,
+      text: "Browse property listings",
+    },
+    {
+      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />,
+      text: "Upgrade to Premium for ₹299",
+    },
+    {
+      icon: <PersonRoundedIcon sx={{ fontSize: 16 }} />,
+      text: "Post your own listings",
+    },
   ];
 
   return (
@@ -324,7 +388,8 @@ function BrandPanel({ step }) {
         flexDirection: "column",
         justifyContent: "space-between",
         p: "48px 44px",
-        background: "linear-gradient(155deg,#1e1b4b 0%,#0e4d6a 45%,#0f766e 100%)",
+        background:
+          "linear-gradient(155deg,#1e1b4b 0%,#0e4d6a 45%,#0f766e 100%)",
         overflow: "hidden",
       }}
     >
@@ -338,47 +403,73 @@ function BrandPanel({ step }) {
           aria-hidden
           sx={{
             position: "absolute",
-            width: b.size, height: b.size,
-            top: b.top ?? "auto", bottom: b.bottom ?? "auto",
-            left: b.left ?? "auto", right: b.right ?? "auto",
+            width: b.size,
+            height: b.size,
+            top: b.top ?? "auto",
+            bottom: b.bottom ?? "auto",
+            left: b.left ?? "auto",
+            right: b.right ?? "auto",
             borderRadius: "50%",
             background: `rgba(255,255,255,${b.opacity})`,
-            filter: "blur(2px)", pointerEvents: "none",
+            filter: "blur(2px)",
+            pointerEvents: "none",
           }}
         />
       ))}
 
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ position: "relative", zIndex: 1 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        sx={{ position: "relative", zIndex: 1 }}
+      >
         <Box
-          sx={{
-            width: 40, height: 40, borderRadius: "14px",
-            background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.22)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <HomeWorkRoundedIcon sx={{ color: "#fff", fontSize: 22 }} />
-        </Box>
-        <Typography sx={{ fontWeight: 900, fontSize: "1.15rem", color: "#fff", letterSpacing: "-0.02em" }}>
-          Easydeal
-        </Typography>
+          component="img"
+          src="/logo.png"
+          alt="Easydeal Logo"
+          sx={{ height: 55, width: "auto", objectFit: "contain" }}
+        />
       </Stack>
 
       <Box sx={{ position: "relative", zIndex: 1 }}>
         <Typography
-          sx={{ fontWeight: 900, fontSize: "2rem", color: "#fff", lineHeight: 1.1, letterSpacing: "-0.04em", mb: 1.5 }}
+          sx={{
+            fontWeight: 900,
+            fontSize: "2rem",
+            color: "#fff",
+            lineHeight: 1.1,
+            letterSpacing: "-0.04em",
+            mb: 1.5,
+          }}
         >
-          Join India's<br />fastest-growing<br />marketplace
+          Join India's
+          <br />
+          fastest-growing
+          <br />
+          marketplace
         </Typography>
-        <Typography sx={{ color: "rgba(255,255,255,0.62)", fontSize: "0.88rem", lineHeight: 1.72, maxWidth: 300 }}>
-          Create your free account in 3 quick steps and start browsing thousands of property and vehicle listings today.
+        <Typography
+          sx={{
+            color: "rgba(255,255,255,0.62)",
+            fontSize: "0.88rem",
+            lineHeight: 1.72,
+            maxWidth: 300,
+          }}
+        >
+          Create your free account in 3 quick steps and start browsing thousands
+          of property and vehicle listings today.
         </Typography>
       </Box>
 
       <Stack spacing={1.2} sx={{ position: "relative", zIndex: 1 }}>
         <Typography
           sx={{
-            fontSize: "0.71rem", fontWeight: 800, color: "rgba(255,255,255,0.45)",
-            textTransform: "uppercase", letterSpacing: "0.09em", mb: 0.4,
+            fontSize: "0.71rem",
+            fontWeight: 800,
+            color: "rgba(255,255,255,0.45)",
+            textTransform: "uppercase",
+            letterSpacing: "0.09em",
+            mb: 0.4,
           }}
         >
           3 steps to get started
@@ -390,25 +481,46 @@ function BrandPanel({ step }) {
             <Stack key={i} direction="row" spacing={1.3} alignItems="center">
               <Box
                 sx={{
-                  width: 26, height: 26, borderRadius: "8px", flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: done ? "#0f766e" : active ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.08)",
-                  border: active ? "1.5px solid rgba(255,255,255,0.40)" : "1px solid transparent",
+                  width: 26,
+                  height: 26,
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: done
+                    ? "#0f766e"
+                    : active
+                      ? "rgba(255,255,255,0.20)"
+                      : "rgba(255,255,255,0.08)",
+                  border: active
+                    ? "1.5px solid rgba(255,255,255,0.40)"
+                    : "1px solid transparent",
                   transition: "all .22s ease",
                 }}
               >
                 {done ? (
                   <CheckRoundedIcon sx={{ fontSize: 14, color: "#fff" }} />
                 ) : (
-                  <Typography sx={{ fontSize: "0.68rem", fontWeight: 900, color: active ? "#fff" : "rgba(255,255,255,0.35)" }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontWeight: 900,
+                      color: active ? "#fff" : "rgba(255,255,255,0.35)",
+                    }}
+                  >
                     {i + 1}
                   </Typography>
                 )}
               </Box>
               <Typography
                 sx={{
-                  fontSize: "0.84rem", fontWeight: active ? 700 : 500,
-                  color: done || active ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.42)",
+                  fontSize: "0.84rem",
+                  fontWeight: active ? 700 : 500,
+                  color:
+                    done || active
+                      ? "rgba(255,255,255,0.90)"
+                      : "rgba(255,255,255,0.42)",
                   transition: "color .22s ease",
                 }}
               >
@@ -419,20 +531,40 @@ function BrandPanel({ step }) {
         })}
       </Stack>
 
-      <Stack spacing={1.1} sx={{ position: "relative", zIndex: 1, pt: 2, borderTop: "1px solid rgba(255,255,255,0.11)" }}>
+      <Stack
+        spacing={1.1}
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          pt: 2,
+          borderTop: "1px solid rgba(255,255,255,0.11)",
+        }}
+      >
         {perks.map((p, i) => (
           <Stack key={i} direction="row" spacing={1.2} alignItems="center">
             <Box
               sx={{
-                width: 30, height: 30, borderRadius: "9px", flexShrink: 0,
-                background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.16)",
-                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 30,
+                height: 30,
+                borderRadius: "9px",
+                flexShrink: 0,
+                background: "rgba(255,255,255,0.10)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 color: "rgba(255,255,255,0.80)",
               }}
             >
               {p.icon}
             </Box>
-            <Typography sx={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.72)", fontWeight: 600 }}>
+            <Typography
+              sx={{
+                fontSize: "0.82rem",
+                color: "rgba(255,255,255,0.72)",
+                fontWeight: 600,
+              }}
+            >
               {p.text}
             </Typography>
           </Stack>
@@ -490,18 +622,18 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerUser({
-        name:       (data.name       || "").trim(),
-        email:      (data.email      || "").trim(),
-        password:   data.password,
-        mobile:     data.mobile,
-        gender:     data.gender      || "",
-        dob:        data.dob         || null,
-        occupation: data.occupation  || "",
-        location:   data.location    || "",
-        state:      data.state       || "",
-        city:       data.city        || "",
-        pincode:    data.pincode     || "",
-        photo:      photo?.preview   || "",
+        name: (data.name || "").trim(),
+        email: (data.email || "").trim(),
+        password: data.password,
+        mobile: data.mobile,
+        gender: data.gender || "",
+        dob: data.dob || null,
+        occupation: data.occupation || "",
+        location: data.location || "",
+        state: data.state || "",
+        city: data.city || "",
+        pincode: data.pincode || "",
+        photo: photo?.preview || "",
       });
       navigate("/dashboard");
     } catch (err) {
@@ -518,28 +650,43 @@ export default function RegisterPage() {
     <Stack spacing={2}>
       <PhotoPicker value={photo} onChange={setPhoto} disabled={loading} />
       <Field
-        name="name" label="Full name" control={control} disabled={loading}
+        name="name"
+        label="Full name"
+        control={control}
+        disabled={loading}
         rules={{
           required: "Full name is required",
           minLength: { value: 2, message: "At least 2 characters" },
-          validate: (v) => (v ?? "").trim().length >= 2 || "At least 2 characters",
+          validate: (v) =>
+            (v ?? "").trim().length >= 2 || "At least 2 characters",
         }}
         icon={<PersonRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="gender" label="Gender" control={control} select disabled={loading}
+        name="gender"
+        label="Gender"
+        control={control}
+        select
+        disabled={loading}
         options={[
-          { label: "Male",   value: "male"   },
+          { label: "Male", value: "male" },
           { label: "Female", value: "female" },
-          { label: "Other",  value: "other"  },
+          { label: "Other", value: "other" },
         ]}
       />
       <Field
-        name="dob" label="Date of birth" control={control} type="date" disabled={loading}
+        name="dob"
+        label="Date of birth"
+        control={control}
+        type="date"
+        disabled={loading}
         icon={<CalendarMonthRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="occupation" label="Occupation" control={control} disabled={loading}
+        name="occupation"
+        label="Occupation"
+        control={control}
+        disabled={loading}
         icon={<WorkRoundedIcon sx={{ fontSize: 18 }} />}
       />
     </Stack>
@@ -548,24 +695,39 @@ export default function RegisterPage() {
   const step1 = (
     <Stack spacing={2}>
       <Field
-        name="location" label="Address / locality" control={control} disabled={loading}
+        name="location"
+        label="Address / locality"
+        control={control}
+        disabled={loading}
         rules={{ required: "Location is required" }}
         icon={<PlaceRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="state" label="State" control={control} disabled={loading}
+        name="state"
+        label="State"
+        control={control}
+        disabled={loading}
         rules={{ required: "State is required" }}
         icon={<LocationCityRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="city" label="City" control={control} disabled={loading}
+        name="city"
+        label="City"
+        control={control}
+        disabled={loading}
         rules={{ required: "City is required" }}
         icon={<LocationCityRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="pincode" label="Pincode" control={control} disabled={loading}
+        name="pincode"
+        label="Pincode"
+        control={control}
+        disabled={loading}
         rules={{
-          pattern: { value: /^[1-9][0-9]{5}$/, message: "Enter a valid 6-digit pincode" },
+          pattern: {
+            value: /^[1-9][0-9]{5}$/,
+            message: "Enter a valid 6-digit pincode",
+          },
         }}
         icon={<MarkunreadMailboxRoundedIcon sx={{ fontSize: 18 }} />}
       />
@@ -575,7 +737,11 @@ export default function RegisterPage() {
   const step2 = (
     <Stack spacing={2}>
       <Field
-        name="email" label="Email address" control={control} type="email" disabled={loading}
+        name="email"
+        label="Email address"
+        control={control}
+        type="email"
+        disabled={loading}
         rules={{
           required: "Email is required",
           pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" },
@@ -583,10 +749,16 @@ export default function RegisterPage() {
         icon={<EmailRoundedIcon sx={{ fontSize: 18 }} />}
       />
       <Field
-        name="mobile" label="Mobile number" control={control} disabled={loading}
+        name="mobile"
+        label="Mobile number"
+        control={control}
+        disabled={loading}
         rules={{
           required: "Mobile number is required",
-          pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit mobile number" },
+          pattern: {
+            value: /^[6-9]\d{9}$/,
+            message: "Enter a valid 10-digit mobile number",
+          },
         }}
         icon={<PhoneRoundedIcon sx={{ fontSize: 18 }} />}
       />
@@ -617,8 +789,17 @@ export default function RegisterPage() {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton size="small" disabled={loading} onClick={() => setShowPw((p) => !p)} sx={{ color: "#94a3b8" }}>
-                      {showPw ? <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} /> : <VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
+                    <IconButton
+                      size="small"
+                      disabled={loading}
+                      onClick={() => setShowPw((p) => !p)}
+                      sx={{ color: "#94a3b8" }}
+                    >
+                      {showPw ? (
+                        <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} />
+                      ) : (
+                        <VisibilityRoundedIcon sx={{ fontSize: 17 }} />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -633,7 +814,8 @@ export default function RegisterPage() {
               variant="determinate"
               value={(pwScore / 4) * 100}
               sx={{
-                height: 4, borderRadius: 999,
+                height: 4,
+                borderRadius: 999,
                 backgroundColor: "rgba(226,232,240,0.8)",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 999,
@@ -642,7 +824,13 @@ export default function RegisterPage() {
                 },
               }}
             />
-            <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: PW_COLORS[pwScore] || "#94a3b8" }}>
+            <Typography
+              sx={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                color: PW_COLORS[pwScore] || "#94a3b8",
+              }}
+            >
               {PW_LABELS[pwScore]}
             </Typography>
           </Stack>
@@ -654,7 +842,8 @@ export default function RegisterPage() {
         control={control}
         rules={{
           required: "Please confirm your password",
-          validate: (val) => val === getValues("password") || "Passwords do not match",
+          validate: (val) =>
+            val === getValues("password") || "Passwords do not match",
         }}
         render={({ field, fieldState }) => (
           <TextField
@@ -674,8 +863,17 @@ export default function RegisterPage() {
               ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton size="small" disabled={loading} onClick={() => setShowCpw((p) => !p)} sx={{ color: "#94a3b8" }}>
-                    {showCpw ? <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} /> : <VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
+                  <IconButton
+                    size="small"
+                    disabled={loading}
+                    onClick={() => setShowCpw((p) => !p)}
+                    sx={{ color: "#94a3b8" }}
+                  >
+                    {showCpw ? (
+                      <VisibilityOffRoundedIcon sx={{ fontSize: 17 }} />
+                    ) : (
+                      <VisibilityRoundedIcon sx={{ fontSize: 17 }} />
+                    )}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -703,18 +901,18 @@ export default function RegisterPage() {
         }}
       >
         {/* Mobile logo */}
-        <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 4, display: { md: "none" } }}>
+        <Stack
+          direction="row"
+          spacing={1.2}
+          alignItems="center"
+          sx={{ mb: 4, display: { md: "none" } }}
+        >
           <Box
-            sx={{
-              width: 36, height: 36, borderRadius: "12px", background: "#0f766e",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <HomeWorkRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
-          </Box>
-          <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#0f172a" }}>
-            Easydeal
-          </Typography>
+            component="img"
+            src="/logo.png"
+            alt="Easydeal Logo"
+            sx={{ height: 70, width: "auto", objectFit: "contain" }}
+          />
         </Stack>
 
         <Box sx={{ width: "100%", maxWidth: 460 }}>
@@ -724,9 +922,13 @@ export default function RegisterPage() {
               label={`Step ${step + 1} — ${STEPS[step].label}`}
               size="small"
               sx={{
-                mb: 1.4, height: 27, borderRadius: "999px",
-                fontWeight: 800, fontSize: "0.71rem",
-                background: "rgba(15,118,110,0.09)", color: "#0f766e",
+                mb: 1.4,
+                height: 27,
+                borderRadius: "999px",
+                fontWeight: 800,
+                fontSize: "0.71rem",
+                background: "rgba(15,118,110,0.09)",
+                color: "#0f766e",
                 border: "1px solid rgba(15,118,110,0.16)",
               }}
             />
@@ -734,17 +936,42 @@ export default function RegisterPage() {
               sx={{
                 fontWeight: 900,
                 fontSize: { xs: "1.55rem", sm: "1.85rem" },
-                color: "#0f172a", lineHeight: 1.1, letterSpacing: "-0.035em", mb: 0.8,
+                color: "#0f172a",
+                lineHeight: 1.1,
+                letterSpacing: "-0.035em",
+                mb: 0.8,
               }}
             >
-              {step === 0 && (<>Your profile<br />& identity</>)}
-              {step === 1 && (<>Where are<br />you based?</>)}
-              {step === 2 && (<>Create your<br />account</>)}
+              {step === 0 && (
+                <>
+                  Your profile
+                  <br />& identity
+                </>
+              )}
+              {step === 1 && (
+                <>
+                  Where are
+                  <br />
+                  you based?
+                </>
+              )}
+              {step === 2 && (
+                <>
+                  Create your
+                  <br />
+                  account
+                </>
+              )}
             </Typography>
-            <Typography sx={{ color: "#64748b", fontSize: "0.87rem", lineHeight: 1.65 }}>
-              {step === 0 && "Tell us a little about yourself. Your name and photo appear on your listings."}
-              {step === 1 && "Your location helps match you with nearby property and vehicle listings."}
-              {step === 2 && "Secure your account. Email, phone, and password are required to continue."}
+            <Typography
+              sx={{ color: "#64748b", fontSize: "0.87rem", lineHeight: 1.65 }}
+            >
+              {step === 0 &&
+                "Tell us a little about yourself. Your name and photo appear on your listings."}
+              {step === 1 &&
+                "Your location helps match you with nearby property and vehicle listings."}
+              {step === 2 &&
+                "Secure your account. Email, phone, and password are required to continue."}
             </Typography>
           </Box>
 
@@ -757,12 +984,17 @@ export default function RegisterPage() {
           {apiErr && (
             <Box
               sx={{
-                mb: 2.5, px: 2, py: 1.5, borderRadius: "12px",
+                mb: 2.5,
+                px: 2,
+                py: 1.5,
+                borderRadius: "12px",
                 background: "rgba(239,68,68,0.06)",
                 border: "1px solid rgba(239,68,68,0.20)",
               }}
             >
-              <Typography sx={{ fontSize: "0.83rem", color: "#dc2626", fontWeight: 700 }}>
+              <Typography
+                sx={{ fontSize: "0.83rem", color: "#dc2626", fontWeight: 700 }}
+              >
                 {apiErr}
               </Typography>
             </Box>
@@ -784,10 +1016,18 @@ export default function RegisterPage() {
                   disabled={loading}
                   startIcon={<ArrowBackRoundedIcon />}
                   sx={{
-                    borderRadius: "14px", py: 1.4, px: 2.5,
-                    fontWeight: 700, fontSize: "0.88rem",
-                    borderColor: "rgba(226,232,240,0.9)", color: "#475569",
-                    "&:hover": { borderColor: "#0f766e", color: "#0f766e", background: "rgba(15,118,110,0.03)" },
+                    borderRadius: "14px",
+                    py: 1.4,
+                    px: 2.5,
+                    fontWeight: 700,
+                    fontSize: "0.88rem",
+                    borderColor: "rgba(226,232,240,0.9)",
+                    color: "#475569",
+                    "&:hover": {
+                      borderColor: "#0f766e",
+                      color: "#0f766e",
+                      background: "rgba(15,118,110,0.03)",
+                    },
                   }}
                 >
                   Back
@@ -795,13 +1035,27 @@ export default function RegisterPage() {
               )}
 
               {step < STEPS.length - 1 ? (
-                <Button onClick={nextStep} fullWidth disabled={loading} endIcon={<ArrowForwardRoundedIcon />} sx={btnSx}>
+                <Button
+                  onClick={nextStep}
+                  fullWidth
+                  disabled={loading}
+                  endIcon={<ArrowForwardRoundedIcon />}
+                  sx={btnSx}
+                >
                   Continue to {STEPS[step + 1].label}
                 </Button>
               ) : (
                 <Button
-                  type="submit" fullWidth disabled={loading}
-                  endIcon={loading ? <CircularProgress size={17} color="inherit" /> : <CheckRoundedIcon />}
+                  type="submit"
+                  fullWidth
+                  disabled={loading}
+                  endIcon={
+                    loading ? (
+                      <CircularProgress size={17} color="inherit" />
+                    ) : (
+                      <CheckRoundedIcon />
+                    )
+                  }
                   sx={btnSx}
                 >
                   {loading ? "Creating account…" : "Create account"}
@@ -810,7 +1064,12 @@ export default function RegisterPage() {
             </Stack>
           </form>
 
-          <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 3 }}>
+          <Stack
+            direction="row"
+            justifyContent="center"
+            spacing={0.5}
+            sx={{ mt: 3 }}
+          >
             <Typography sx={{ fontSize: "0.82rem", color: "#94a3b8" }}>
               Already have an account?
             </Typography>
@@ -818,8 +1077,11 @@ export default function RegisterPage() {
               component={RouterLink}
               to="/login"
               sx={{
-                fontSize: "0.82rem", color: "#0f766e", fontWeight: 700,
-                textDecoration: "none", "&:hover": { textDecoration: "underline" },
+                fontSize: "0.82rem",
+                color: "#0f766e",
+                fontWeight: 700,
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
               }}
             >
               Sign in
