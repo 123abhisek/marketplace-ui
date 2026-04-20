@@ -18,7 +18,7 @@ import ArrowForwardRoundedIcon     from '@mui/icons-material/ArrowForwardRounded
 import { useAppState }             from '../hooks/useAppState'
 import { extractError }            from '../utils/mappers'
 
-// ─── Left brand panel ─────────────────────────────────────────────────────────
+// ── Left brand panel ──────────────────────────────────────────────────────────
 function BrandPanel() {
   const feats = [
     { icon: <HomeWorkRoundedIcon sx={{ fontSize: 17 }} />,         text: 'Properties & land listings' },
@@ -127,7 +127,7 @@ function BrandPanel() {
   )
 }
 
-// ─── Shared input style ────────────────────────────────────────────────────────
+// ── Shared styles ─────────────────────────────────────────────────────────────
 const inputSx = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '14px',
@@ -153,7 +153,15 @@ const btnSx = {
   '&.Mui-disabled': { background: 'rgba(15,118,110,0.40)', color: '#fff' },
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// ── Role-based redirect helper ────────────────────────────────────────────────
+function getRedirectPath(normalizedUser) {
+  if (!normalizedUser?.loggedIn) return '/'
+  if (normalizedUser.role === 'admin')   return '/admin'
+  if (normalizedUser.isPremium)          return '/dashboard'
+  return '/free-dashboard'
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [showPw,  setShowPw]  = useState(false)
   const [loading, setLoading] = useState(false)
@@ -169,8 +177,9 @@ export default function LoginPage() {
     setApiErr('')
     setLoading(true)
     try {
-      await login({ email: data.email, password: data.password })
-      navigate('/')
+      // login() now returns the normalized user so we can route by role
+      const normalizedUser = await login({ email: data.email, password: data.password })
+      navigate(getRedirectPath(normalizedUser), { replace: true })
     } catch (err) {
       setApiErr(extractError(err))
     } finally {
