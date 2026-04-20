@@ -555,7 +555,7 @@ export default function SubscriptionStatusPage() {
 
               <Grid container spacing={2}>
                 {[
-                  { step: '01', title: 'Pay via UPI', desc: 'Send ₹299 to marketplus@upi. Add your registered mobile in the payment note.' },
+                  { step: '01', title: 'Pay via UPI', desc: 'Send ₹299 to easydeal@upi. Add your registered mobile in the payment note.' },
                   { step: '02', title: 'Upload screenshot', desc: 'Go to the Payment page and upload your UPI payment screenshot.' },
                   { step: '03', title: 'Instant activation', desc: 'Once verified, your Premium access is activated immediately.' },
                 ].map((s) => (

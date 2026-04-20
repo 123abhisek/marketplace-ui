@@ -72,7 +72,7 @@ function BrandPanel() {
           <HomeWorkRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
         </Box>
         <Typography sx={{ fontWeight: 900, fontSize: '1.15rem', color: '#fff', letterSpacing: '-0.02em' }}>
-          MarketPlus
+          Easydeal
         </Typography>
       </Stack>
 
@@ -198,7 +198,7 @@ export default function LoginPage() {
             <HomeWorkRoundedIcon sx={{ color: '#fff', fontSize: 20 }} />
           </Box>
           <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', color: '#0f172a' }}>
-            MarketPlus
+            Easydeal
           </Typography>
         </Stack>
 
@@ -220,7 +220,7 @@ export default function LoginPage() {
               fontSize: { xs: '1.65rem', sm: '2rem' },
               color: '#0f172a', lineHeight: 1.1, letterSpacing: '-0.035em', mb: 0.9,
             }}>
-              Sign in to<br />MarketPlus
+              Sign in to<br />Easydeal
             </Typography>
             <Typography sx={{ color: '#64748b', fontSize: '0.89rem', lineHeight: 1.65 }}>
               New here?{' '}

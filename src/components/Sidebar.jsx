@@ -32,7 +32,7 @@
 //       <Stack spacing={2}>
 //         <Box>
 //           <Typography variant="h6" fontWeight={800}>
-//             MarketPlus
+//             Easydeal
 //           </Typography>
 //           <Typography variant="body2" color="text.secondary">
 //             Marketplace dashboard
@@ -193,7 +193,7 @@ export default function Sidebar() {
               lineHeight: 1,
             }}
           >
-            MarketPlus
+            Easydeal
           </Typography>
           <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 500 }}>
             Marketplace

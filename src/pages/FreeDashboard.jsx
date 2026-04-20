@@ -131,7 +131,7 @@ export default function FreeDashboard() {
               <HomeWorkRoundedIcon sx={{ color: '#fff', fontSize: 18 }} />
             </Box>
             <Typography sx={{ fontWeight: 900, fontSize: '1rem', color: '#0f172a', letterSpacing: '-0.02em' }}>
-              MarketPlus
+              Easydeal
             </Typography>
             <Chip
               label="Free"

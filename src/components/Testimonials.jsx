@@ -322,7 +322,7 @@ export default function Testimonials() {
             sx={{ color: '#64748b', fontSize: '0.95rem', maxWidth: 440, lineHeight: 1.7 }}
           >
             Real experiences from people who found their property and vehicle deals
-            through MarketPlus premium access.
+            through Easydeal premium access.
           </Typography>
         </Stack>
 

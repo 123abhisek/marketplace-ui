@@ -359,7 +359,7 @@ function BrandPanel({ step }) {
           <HomeWorkRoundedIcon sx={{ color: "#fff", fontSize: 22 }} />
         </Box>
         <Typography sx={{ fontWeight: 900, fontSize: "1.15rem", color: "#fff", letterSpacing: "-0.02em" }}>
-          MarketPlus
+          Easydeal
         </Typography>
       </Stack>
 
@@ -713,7 +713,7 @@ export default function RegisterPage() {
             <HomeWorkRoundedIcon sx={{ color: "#fff", fontSize: 20 }} />
           </Box>
           <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#0f172a" }}>
-            MarketPlus
+            Easydeal
           </Typography>
         </Stack>
 

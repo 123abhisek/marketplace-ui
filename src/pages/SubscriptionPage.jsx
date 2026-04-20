@@ -29,7 +29,7 @@ export default function SubscriptionPage() {
               <CardContent>
                 <Typography fontWeight={800}>UPI Payment Instructions</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Pay ₹299 to: marketplus@upi
+                  Pay ₹299 to: easydeal@upi
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Add your mobile number in payment note, then upload the screenshot below.
