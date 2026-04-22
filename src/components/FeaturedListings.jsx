@@ -405,9 +405,11 @@ function ListingCard({ item }) {
                 </Typography>
               </Box>
 
+             
+
               <IconButton
                 component={RouterLink}
-                to={`/dashboard/${item.type === 'Property' ? 'properties' : 'vehicles'}/${item.id}`}
+                to={`/dashboard/${item.type === 'Property' ? 'property' : 'vehicle'}/${item.id}`}
                 size="small"
                 sx={{
                   width: 34, height: 34, borderRadius: '11px',
@@ -476,6 +478,10 @@ export default function FeaturedListings() {
         propertyService.getAll({ limit: 6 }),
         vehicleService.getAll({ limit: 6 }),
       ])
+
+console.log('Featured props:', props)
+console.log('Featured vehs:', vehs)
+
       setProperties(props)
       setVehicles(vehs)
       setStatus('success')
