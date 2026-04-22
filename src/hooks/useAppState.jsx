@@ -13,6 +13,7 @@ import {
   authService,
   propertyService,
   vehicleService,
+  tokenStore,
 } from '../services/api'
 
 const AppContext = createContext(null)
@@ -36,11 +37,7 @@ const DEFAULT_USER = {
   loggedIn:     false,
 }
 
-// ── Normalize API response → unified app user shape ──────────────────────────
-// API login response user fields (from console log):
-//   id, name, email, phone, gender, dob, location, state, city, pincode,
-//   occupation, avatar_b64 (with underscore), is_premium (with underscore),
-//   is_logged_in, username, created_at, updated_at, last_login_at, last_logout_at
+// ── Normalize API response → unified app user shape ───────────────────────────
 const normalizeUser = (u) => {
   const isPremium = u.is_premium === true || u.ispremium === true || false
   return {
@@ -55,7 +52,7 @@ const normalizeUser = (u) => {
     city:         u.city         || '',
     pincode:      u.pincode      || '',
     occupation:   u.occupation   || '',
-    photo:        u.avatar_b64   || u.avatarb64 || null,  // handles both underscore variants
+    photo:        u.avatar_b64   || u.avatarb64 || null,
     isPremium,
     role:         isPremium ? 'premium' : 'free',
     subscription: isPremium ? 'active'  : 'inactive',
@@ -63,26 +60,27 @@ const normalizeUser = (u) => {
   }
 }
 
-// ── Persist / hydrate from localStorage ──────────────────────────────────────
-const LS_KEY = 'userData'
+// ── localStorage helpers ──────────────────────────────────────────────────────
+const LS_USER_KEY = 'userData'
 
-function saveToStorage(user) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(user)) } catch {}
+function saveUserToStorage(user) {
+  try { localStorage.setItem(LS_USER_KEY, JSON.stringify(user)) } catch {}
 }
-function clearStorage() {
-  try { localStorage.removeItem(LS_KEY) } catch {}
+
+function clearUserFromStorage() {
+  try { localStorage.removeItem(LS_USER_KEY) } catch {}
 }
-function loadFromStorage() {
+
+function loadUserFromStorage() {
   try {
-    const raw = localStorage.getItem(LS_KEY)
+    const raw = localStorage.getItem(LS_USER_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    // Only restore if actually logged in
     return parsed?.loggedIn ? parsed : null
   } catch { return null }
 }
 
-// ── blob URL → base64 data URI (for avatar upload) ───────────────────────────
+// ── blob URL → base64 data URI (for avatar upload) ────────────────────────────
 async function blobUrlToBase64(blobUrl) {
   if (!blobUrl) return undefined
   if (blobUrl.startsWith('data:')) return blobUrl
@@ -98,13 +96,31 @@ async function blobUrlToBase64(blobUrl) {
 }
 
 export function AppProvider({ children }) {
-  // Hydrate user from localStorage on first render
-  const [user,            setUser]            = useState(() => loadFromStorage() ?? DEFAULT_USER)
+  // ── Hydrate user from localStorage on first render ────────────────────────
+  const [user, setUser] = useState(() => loadUserFromStorage() ?? DEFAULT_USER)
+
   const [properties,      setProperties]      = useState([])
   const [vehicles,        setVehicles]        = useState([])
   const [loading,         setLoading]         = useState(false)
   const [listingsLoading, setListingsLoading] = useState(true)
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' })
+
+  // ── Re-hydrate tokenStore from localStorage on mount ─────────────────────
+  // tokenStore already reads localStorage on module load, but this effect
+  // acts as a safety net for cases where the module loaded before the token
+  // was written (e.g. SSR hydration edge cases).
+  useEffect(() => {
+    const storedToken = localStorage.getItem('access_token')
+    if (storedToken && !tokenStore.get()) {
+      tokenStore.set(storedToken)
+    }
+    // If user is marked loggedIn but no token exists, clear the stale session
+    const storedUser = loadUserFromStorage()
+    if (storedUser?.loggedIn && !tokenStore.get()) {
+      clearUserFromStorage()
+      setUser(DEFAULT_USER)
+    }
+  }, [])
 
   const notify = useCallback(
     (message, severity = 'success') => setToast({ open: true, message, severity }),
@@ -115,7 +131,7 @@ export function AppProvider({ children }) {
     [],
   )
 
-  // ── Fetch public listings on mount ─────────────────────────────────────────
+  // ── Fetch public listings on mount ────────────────────────────────────────
   useEffect(() => {
     setListingsLoading(true)
     Promise.allSettled([
@@ -127,20 +143,20 @@ export function AppProvider({ children }) {
     }).finally(() => setListingsLoading(false))
   }, [])
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
+  // ── Auth ──────────────────────────────────────────────────────────────────
   const login = useCallback(
     async ({ email, password }) => {
       setLoading(true)
       try {
+        // authService.login already calls tokenStore.set(access_token) internally
         const responseData = await authService.login({ email, password })
         console.log('Login response:', responseData)
 
         const normalizedUser = normalizeUser(responseData.user ?? {})
         setUser(normalizedUser)
-        saveToStorage(normalizedUser)             // ← persist to localStorage
-        notify(`Welcome back, ${normalizedUser.name || email}!`)
+        saveUserToStorage(normalizedUser)
 
-        // Return the normalized user so LoginPage can redirect based on role
+        notify(`Welcome back, ${normalizedUser.name || email}!`)
         return normalizedUser
       } finally {
         setLoading(false)
@@ -174,10 +190,11 @@ export function AppProvider({ children }) {
           pincode:    pincode    || undefined,
         })
 
+        // Login immediately after register to get the token
         const responseData = await authService.login({ email, password })
         const normalizedUser = normalizeUser(responseData.user ?? {})
         setUser(normalizedUser)
-        saveToStorage(normalizedUser)             // ← persist to localStorage
+        saveUserToStorage(normalizedUser)
         notify('Account created successfully!')
 
         return normalizedUser
@@ -190,12 +207,13 @@ export function AppProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await authService.logout() } catch {}
+    // authService.logout already calls tokenStore.clear()
     setUser(DEFAULT_USER)
-    clearStorage()                                // ← clear localStorage on logout
+    clearUserFromStorage()
     notify('Logged out', 'info')
   }, [notify])
 
-  // ── Listings ───────────────────────────────────────────────────────────────
+  // ── Listings ──────────────────────────────────────────────────────────────
   const addVehicle = useCallback(
     async (payload) => {
       if (!user.isPremium) {
@@ -261,7 +279,7 @@ export function AppProvider({ children }) {
         role:         'premium',
         subscription: 'active',
       }
-      saveToStorage(updated)                      // ← persist premium upgrade
+      saveUserToStorage(updated)
       return updated
     })
     notify('Premium subscription activated!')
@@ -271,7 +289,7 @@ export function AppProvider({ children }) {
     (data) => {
       setUser((prev) => {
         const updated = { ...prev, ...data }
-        saveToStorage(updated)                    // ← persist profile updates
+        saveUserToStorage(updated)
         return updated
       })
       notify('Profile updated')
