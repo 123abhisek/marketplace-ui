@@ -165,7 +165,7 @@ function Lightbox({ images, active, onClose, onPrev, onNext }) {
 export default function PropertyDetailPage() {
   const { id }       = useParams()
   const navigate     = useNavigate()
-  const { user }     = useAppState()
+const { user, logout } = useAppState()
 
   const [property,     setProperty]     = useState(null)
   const [activeImg,    setActiveImg]    = useState(0)
@@ -174,13 +174,35 @@ export default function PropertyDetailPage() {
   const [bookingOpen,  setBookingOpen]  = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
+  // useEffect(() => {
+  //   setLoading(true)
+  //   propertyService.getOne(id)
+  //     .then((data) => { setProperty(data); setActiveImg(0) })
+  //     .catch(() => setError('Could not load property. Please try again.'))
+  //     .finally(() => setLoading(false))
+  // }, [id])
+
+
+
   useEffect(() => {
-    setLoading(true)
-    propertyService.getOne(id)
-      .then((data) => { setProperty(data); setActiveImg(0) })
-      .catch(() => setError('Could not load property. Please try again.'))
-      .finally(() => setLoading(false))
-  }, [id])
+  setLoading(true)
+  propertyService.getOne(id)
+    .then((data) => {
+      setProperty(data)
+      setActiveImg(0)
+    })
+    .catch((err) => {
+      if (err?.status === 401) {
+        // Token expired — clear session and send to login
+        logout()
+        navigate('/login', { replace: true })
+      } else {
+        setError('Could not load property. Please try again.')
+      }
+    })
+    .finally(() => setLoading(false))
+}, [id])
+
 
   const images = property?.images?.filter(Boolean) ?? []
   const price  = property?.price ?? property?.expected_price

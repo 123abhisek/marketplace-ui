@@ -222,7 +222,7 @@ function Lightbox({ images, active, onClose, onPrev, onNext }) {
 export default function VehicleDetailPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
-  const { user } = useAppState()
+  const { user, logout } = useAppState()
 
   const [vehicle,     setVehicle]     = useState(null)
   const [lightboxIdx, setLightboxIdx] = useState(null)
@@ -231,13 +231,31 @@ export default function VehicleDetailPage() {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [saved,       setSaved]       = useState(false)
 
+  // useEffect(() => {
+  //   setLoading(true)
+  //   vehicleService.getOne(id)
+  //     .then((data) => setVehicle(data))
+  //     .catch(() => setError('Could not load vehicle. Please try again.'))
+  //     .finally(() => setLoading(false))
+  // }, [id])
+
+
+
   useEffect(() => {
-    setLoading(true)
-    vehicleService.getOne(id)
-      .then((data) => setVehicle(data))
-      .catch(() => setError('Could not load vehicle. Please try again.'))
-      .finally(() => setLoading(false))
-  }, [id])
+  setLoading(true)
+  vehicleService.getOne(id)
+    .then((data) => setVehicle(data))
+    .catch((err) => {
+      if (err?.status === 401) {
+        // Token expired — clear session and send to login
+        logout()
+        navigate('/login', { replace: true })
+      } else {
+        setError('Could not load vehicle. Please try again.')
+      }
+    })
+    .finally(() => setLoading(false))
+}, [id])
 
   const images    = vehicle?.images?.filter(Boolean) ?? []
   const price     = vehicle?.price ?? vehicle?.expected_price
