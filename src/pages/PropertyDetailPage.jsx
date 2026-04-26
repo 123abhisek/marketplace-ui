@@ -644,12 +644,12 @@ const { user, logout } = useAppState()
                     </Stack>
                     <Stack direction="row" justifyContent="space-between">
                       <Typography sx={{ fontSize: '0.81rem', color: '#64748b', fontWeight: 500 }}>Booking Fee</Typography>
-                      <Typography sx={{ fontSize: '0.81rem', color: '#0f172a', fontWeight: 700 }}>₹499</Typography>
+                      <Typography sx={{ fontSize: '0.81rem', color: '#0f172a', fontWeight: 700 }}>₹1</Typography>
                     </Stack>
                     <Divider sx={{ my: 0.4, borderColor: 'rgba(226,232,240,0.8)' }} />
                     <Stack direction="row" justifyContent="space-between">
                       <Typography sx={{ fontSize: '0.87rem', color: '#0f172a', fontWeight: 800 }}>Total Now</Typography>
-                      <Typography sx={{ fontSize: '0.87rem', color: '#0f766e', fontWeight: 900 }}>₹499</Typography>
+                      <Typography sx={{ fontSize: '0.87rem', color: '#0f766e', fontWeight: 900 }}>₹1</Typography>
                     </Stack>
                   </Stack>
                 </Box>
@@ -724,7 +724,7 @@ const { user, logout } = useAppState()
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
         listing={{ id, title: property.title, type: 'property' }}
-        amount={499}
+        amount={1}
       />
     </Box>
   )

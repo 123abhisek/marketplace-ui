@@ -1,31 +1,25 @@
 
-// src/dashboard/AddPropertyPage.jsx
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useForm }              from 'react-hook-form'
+import { useNavigate }          from 'react-router-dom'
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
+  Alert, Box, Button, Card, CardContent, Chip,
+  CircularProgress, Divider, Grid, Stack, Typography,
 } from '@mui/material'
 import AddHomeRoundedIcon   from '@mui/icons-material/AddHomeRounded'
 import SaveRoundedIcon      from '@mui/icons-material/SaveRounded'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import FormInput       from '../components/FormInput'
-import SelectInput     from '../components/SelectInput'
-import ImageUploader   from '../components/ImageUploader'
-import PremiumLockCard from '../components/PremiumLockCard'
-import { useAppState }     from '../hooks/useAppState'
-import { propertyService } from '../services/api'
-import { extractError }    from '../utils/mappers'
+import FormInput            from '../components/FormInput'
+import SelectInput          from '../components/SelectInput'
+import ImageUploader        from '../components/ImageUploader'
+import PremiumLockCard      from '../components/PremiumLockCard'
+import { useAppState }      from '../hooks/useAppState'
+import { propertyService }  from '../services/api'
+import { extractError }     from '../utils/mappers'
+import { filesToBase64, revokePreviewUrls } from '../utils/imageUtils'
+
+// ── blobUrlToBase64 removed — replaced by filesToBase64 from imageUtils ───────
+
 
 const PROPERTY_TYPES = [
   { label: 'Residential',  value: 'Residential'  },
@@ -38,22 +32,6 @@ const PROPERTY_TYPES = [
   { label: 'Land',         value: 'Land'         },
 ]
 
-// ── blob URL → base64 data-URI (for image uploads) ─────────────────────────
-async function blobUrlToBase64(blobUrl) {
-  if (!blobUrl) return undefined
-  if (blobUrl.startsWith('data:')) return blobUrl
-  try {
-    const res  = await fetch(blobUrl)
-    const blob = await res.blob()
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result)
-      reader.readAsDataURL(blob)
-    })
-  } catch {
-    return undefined
-  }
-}
 
 function SectionHeader({ icon, title, description }) {
   return (
@@ -80,30 +58,27 @@ function SectionHeader({ icon, title, description }) {
   )
 }
 
+
 export default function AddPropertyPage() {
   const { user, notify } = useAppState()
   const navigate         = useNavigate()
 
+  // files = array of { file: File, preview: string } from ImageUploader
   const [files,      setFiles]      = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [apiError,   setApiError]   = useState('')
 
+  // ── Revoke blob preview URLs on unmount ──────────────────────────────────────
+  useEffect(() => {
+    return () => revokePreviewUrls(files.map(f => f.preview))
+  }, [files])
+
   const { control, handleSubmit, watch } = useForm({
     mode: 'onTouched',
     defaultValues: {
-      title:         '',
-      propertyType:  '',
-      location:      '',
-      apartmentName: '',
-      floor:         '',
-      rooms:         '',
-      bedrooms:      '',
-      area:          '',
-      landArea:      '',
-      cropsGrown:    '',
-      expectedPrice: '',
-      rentLease:     '',
-      contactNumber: '',
+      title: '', propertyType: '', location: '', apartmentName: '',
+      floor: '', rooms: '', bedrooms: '', area: '', landArea: '',
+      cropsGrown: '', expectedPrice: '', rentLease: '', contactNumber: '',
     },
   })
 
@@ -121,18 +96,11 @@ export default function AddPropertyPage() {
     setApiError('')
 
     try {
-      // Convert all blob URLs → base64 data URIs before sending to API
-      const imageB64s = await Promise.all(
-        files.map((f) => blobUrlToBase64(f.preview))
-      )
+      // ✅ Extract raw File objects → convert to base64 data URIs
+      // Replaces the old: files.map(f => blobUrlToBase64(f.preview))
+      // which re-fetched blob: URLs (fragile, can fail on tab restore)
+      const base64Images = await filesToBase64(files.map(f => f.file ?? f))
 
-      // ── Build payload exactly matching the Postman-verified API contract ──
-      // Field types confirmed from successful Postman test:
-      //   area          → string  ("1800 sqft")   ← keep as-is, NOT Number()
-      //   landArea      → string  ("")             ← keep as-is
-      //   floor/rooms/bedrooms → string ("5","3") ← API accepts strings here
-      //   expectedPrice → number  (75000)          ← must be Number
-      //   images        → array of base64 strings
       const payload = {
         title:         data.title,
         propertyType:  data.propertyType,
@@ -145,9 +113,9 @@ export default function AddPropertyPage() {
         area:          data.area          || '',   // string — e.g. "1800 sqft"
         landArea:      data.landArea      || '',
         cropsGrown:    data.cropsGrown    || '',
-        expectedPrice: Number(data.expectedPrice), // MUST be a number
+        expectedPrice: Number(data.expectedPrice), // must be number
         rentLease:     data.rentLease     || '',
-        images:        imageB64s.filter(Boolean),
+        images:        base64Images,               // ✅ base64 — persists forever
       }
 
       await propertyService.add(payload)
@@ -168,14 +136,10 @@ export default function AddPropertyPage() {
         <Button
           startIcon={<ArrowBackRoundedIcon />}
           onClick={() => navigate(-1)}
-          sx={{
-            borderRadius: '12px', color: '#64748B', fontWeight: 700,
-            fontSize: '0.82rem', '&:hover': { background: '#F1F5F9' },
-          }}
+          sx={{ borderRadius: '12px', color: '#64748B', fontWeight: 700, fontSize: '0.82rem', '&:hover': { background: '#F1F5F9' } }}
         >
           Back
         </Button>
-
         <Box>
           <Typography variant="h5" fontWeight={900} sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}>
             Add Property
@@ -184,7 +148,6 @@ export default function AddPropertyPage() {
             Fill in the details to create a new listing
           </Typography>
         </Box>
-
         <Chip
           label={user.isPremium ? 'Posting Enabled' : 'Premium Required'}
           size="small"
@@ -196,10 +159,8 @@ export default function AddPropertyPage() {
         />
       </Stack>
 
-      {/* Premium lock banner */}
       {!user.isPremium && <PremiumLockCard />}
 
-      {/* API / validation error */}
       {apiError && (
         <Alert severity="error" sx={{ borderRadius: '14px' }} onClose={() => setApiError('')}>
           {apiError}
@@ -221,38 +182,29 @@ export default function AddPropertyPage() {
               <Grid container spacing={2.5}>
                 <Grid item xs={12}>
                   <FormInput
-                    name="title"
-                    label="Listing Title *"
-                    control={control}
+                    name="title" label="Listing Title *" control={control}
                     rules={{ required: 'Title is required' }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <SelectInput
-                    name="propertyType"
-                    label="Property Type *"
-                    control={control}
+                    name="propertyType" label="Property Type *" control={control}
                     rules={{ required: 'Property type is required' }}
                     options={PROPERTY_TYPES}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <FormInput name="location" label="Location / Address" control={control} />
+                  <FormInput name="location"      label="Location / Address"         control={control} />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <FormInput name="apartmentName" label="Apartment / Society Name" control={control} />
+                  <FormInput name="apartmentName" label="Apartment / Society Name"   control={control} />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <FormInput
-                    name="contactNumber"
-                    label="Contact Number *"
-                    control={control}
+                    name="contactNumber" label="Contact Number *" control={control}
                     rules={{
                       required: 'Contact number is required',
-                      pattern: {
-                        value:   /^[6-9]\d{9}$/,
-                        message: 'Enter a valid 10-digit mobile number',
-                      },
+                      pattern: { value: /^[6-9]\d{9}$/, message: 'Enter a valid 10-digit mobile number' },
                     }}
                   />
                 </Grid>
@@ -284,7 +236,6 @@ export default function AddPropertyPage() {
                   </>
                 )}
                 <Grid item xs={12} sm={6} md={4}>
-                  {/* area is a free-text string: "1800 sqft", "200 sq.m", etc. */}
                   <FormInput name="area"     label="Built-up Area (e.g. 1800 sqft)" control={control} />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -311,16 +262,14 @@ export default function AddPropertyPage() {
               <Grid container spacing={2.5}>
                 <Grid item xs={12} sm={6} md={4}>
                   <FormInput
-                    name="expectedPrice"
-                    label="Expected Price (₹) *"
-                    control={control}
+                    name="expectedPrice" label="Expected Price (₹) *" control={control}
                     rules={{
                       required: 'Expected price is required',
                       validate: (v) => {
                         const n = parseFloat(String(v ?? '').trim())
                         if (!String(v ?? '').trim()) return 'Expected price is required'
-                        if (isNaN(n)) return 'Price must be a valid number (e.g. 5000000)'
-                        if (n <= 0)   return 'Price must be greater than ₹0'
+                        if (isNaN(n))  return 'Price must be a valid number (e.g. 5000000)'
+                        if (n <= 0)    return 'Price must be greater than ₹0'
                         return true
                       },
                     }}
@@ -358,17 +307,11 @@ export default function AddPropertyPage() {
               type="submit"
               variant="contained"
               disabled={submitting}
-              startIcon={
-                submitting
-                  ? <CircularProgress size={16} color="inherit" />
-                  : <SaveRoundedIcon />
-              }
+              startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
               sx={{
-                borderRadius: '12px',
-                fontWeight: 800,
+                borderRadius: '12px', fontWeight: 800, px: 4,
                 background: 'linear-gradient(135deg, #4361EE 0%, #7C3AED 100%)',
                 boxShadow: '0 4px 16px rgba(67,97,238,0.30)',
-                px: 4,
                 '&:hover': { boxShadow: '0 6px 24px rgba(67,97,238,0.40)' },
                 '&.Mui-disabled': { opacity: 0.55, background: '#CBD5E1' },
               }}
