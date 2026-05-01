@@ -1,4 +1,3 @@
-
 // src/components/Navbar.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
@@ -21,9 +20,6 @@ import {
 
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
-import ExploreRoundedIcon from "@mui/icons-material/ExploreRounded";
-import SellRoundedIcon from "@mui/icons-material/SellRounded";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
@@ -39,42 +35,36 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
+import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 
 import { useAppState } from "../hooks/useAppState";
 
-const COLORS = {
-  bg: "#f8fafc",
-  surface: "rgba(255,255,255,0.9)",
-  surfaceStrong: "rgba(255,255,255,0.98)",
-  border: "rgba(148,163,184,0.22)",
-  borderStrong: "rgba(148,163,184,0.32)",
+const C = {
+  surface: "rgba(255,255,255,0.92)",
+  surfaceStrong: "rgba(255,255,255,0.99)",
+  border: "rgba(15,23,42,0.08)",
+  borderHover: "rgba(15,23,42,0.16)",
   text: "#0f172a",
   muted: "#64748b",
+  faint: "#94a3b8",
   primary: "#0f766e",
-  primaryHover: "#0d665d",
-  primarySoft: "rgba(15,118,110,0.08)",
-  premium: "#b45309",
-  premiumSoft: "rgba(245,158,11,0.10)",
-  admin: "#b91c1c",
-  adminSoft: "rgba(239,68,68,0.10)",
-  shadow: "0 18px 48px rgba(15,23,42,0.08)",
-  shadowStrong: "0 24px 60px rgba(15,23,42,0.12)",
+  primaryHover: "#0d6b63",
+  primarySoft: "rgba(15,118,110,0.07)",
+  premiumGold: "#b45309",
+  premiumSoft: "rgba(180,83,9,0.08)",
+  adminRed: "#b91c1c",
+  adminSoft: "rgba(185,28,28,0.07)",
+  freePurple: "#6d28d9",
+  freeSoft: "rgba(109,40,217,0.08)",
+  shadow: "0 1px 3px rgba(15,23,42,0.06), 0 8px 32px rgba(15,23,42,0.06)",
+  shadowLifted: "0 2px 8px rgba(15,23,42,0.08), 0 20px 48px rgba(15,23,42,0.10)",
 };
 
-// ── Role resolver — covers all actual localStorage field combinations ────────
-//
-//  localStorage "userData" shape:
-//    { loggedIn, role, isPremium, subscription, ... }
-//
-//  Priority:
-//    1. Not logged in                    → "guest"
-//    2. role === "admin"                 → "admin"
-//    3. isPremium === true               → "premium"
-//       OR role === "premium"            → "premium"
-//       OR subscription === "active"     → "premium"
-//    4. Everything else (free / inactive)→ "free"
-//
 function resolveRole(user) {
   if (!user?.loggedIn) return "guest";
   if (user?.role === "admin") return "admin";
@@ -82,98 +72,108 @@ function resolveRole(user) {
     user?.isPremium === true ||
     user?.role === "premium" ||
     user?.subscription === "active"
-  ) return "premium";
+  ) {
+    return "premium";
+  }
   return "free";
 }
 
-// ── Nav config — routes aligned with src/router/index.jsx ───────────────────
-// Public:           /   /subscription   /login   /register
-// Free gate:        /free-dashboard
-// Any logged-in:    /dashboard/properties/:id   /dashboard/vehicles/:id
-// Premium only:     /dashboard  /dashboard/properties  /dashboard/vehicles
-//                   /dashboard/add-property  /dashboard/add-vehicle
-//                   /dashboard/my-listings   /dashboard/profile
-//                   /dashboard/subscription  /dashboard/logout
-// Admin (future):   /admin  /admin/users  /admin/listings  /admin/reports  /admin/settings
-
 function getNavConfig() {
   return {
-    // ── Guest ────────────────────────────────────────────────────────────
     guest: {
       desktop: [
-        { label: "Home",    to: "/" },
         { label: "Pricing", to: "/subscription" },
+        { label: "About Us", to: "/about" },
+        { label: "How It Works", to: "/how-it-works" },
+        { label: "FAQ", to: "/faq" },
+        { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Home",         to: "/",             icon: <HomeWorkRoundedIcon fontSize="small" /> },
-        { label: "Pricing",      to: "/subscription", icon: <CurrencyRupeeRoundedIcon fontSize="small" /> },
-        { label: "Post Listing", to: "/register",     icon: <SellRoundedIcon fontSize="small" /> },
-        { label: "Login",        to: "/login",        icon: <LoginRoundedIcon fontSize="small" /> },
-        { label: "Register",     to: "/register",     icon: <PersonAddAlt1RoundedIcon fontSize="small" /> },
+        { label: "Pricing", to: "/subscription", icon: <CurrencyRupeeRoundedIcon fontSize="small" /> },
+        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
+        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
+        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
+        { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
+        { label: "Login", to: "/login", icon: <LoginRoundedIcon fontSize="small" /> },
+        { label: "Register", to: "/register", icon: <PersonAddAlt1RoundedIcon fontSize="small" /> },
       ],
       dropdown: [],
     },
 
-    // ── Free user — only /free-dashboard is accessible ───────────────────
     free: {
       desktop: [
-        { label: "Home",         to: "/" },
-        { label: "My Dashboard", to: "/free-dashboard" },
-        { label: "Upgrade ₹299", to: "/subscription" },
+        { label: "Dashboard", to: "/free-dashboard" },
+        { label: "Pricing", to: "/subscription" },
+        { label: "About Us", to: "/about" },
+        { label: "How It Works", to: "/how-it-works" },
+        { label: "FAQ", to: "/faq" },
+        { label: "Blog", to: "/blog" },
+        { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Home",         to: "/",               icon: <ExploreRoundedIcon fontSize="small" /> },
-        { label: "My Dashboard", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Upgrade ₹299", to: "/subscription",   icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
+        { label: "Dashboard", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Upgrade", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
+        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
+        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
+        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
+        { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "My Dashboard",       to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Upgrade to Premium", to: "/subscription",   icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
+        { label: "My Dashboard", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Upgrade Premium", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
       ],
     },
 
-    // ── Premium user — full /dashboard/* access ──────────────────────────
     premium: {
       desktop: [
-        { label: "Home",      to: "/" },
         { label: "Dashboard", to: "/dashboard" },
+        { label: "My Listings", to: "/dashboard/my-listings" },
+        { label: "About Us", to: "/about" },
+        { label: "How It Works", to: "/how-it-works" },
+        { label: "FAQ", to: "/faq" },
+        { label: "Blog", to: "/blog" },
+        { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Home",         to: "/",                       icon: <ExploreRoundedIcon fontSize="small" /> },
-        { label: "Post Listing", to: "/dashboard/add-property", icon: <SellRoundedIcon fontSize="small" /> },
-        { label: "Dashboard",    to: "/dashboard",              icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Properties",   to: "/dashboard/properties",   icon: <HomeWorkRoundedIcon fontSize="small" /> },
-        { label: "My Listings",  to: "/dashboard/my-listings",  icon: <ListAltRoundedIcon fontSize="small" /> },
-        { label: "Profile",      to: "/dashboard/profile",      icon: <PersonRoundedIcon fontSize="small" /> },
+        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Post Listing", to: "/dashboard/add-property", icon: <AddCircleOutlineRoundedIcon fontSize="small" /> },
+        { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
+        { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
+        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
+        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
+        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
+        { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "Dashboard",    to: "/dashboard",              icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "My Listings",  to: "/dashboard/my-listings",  icon: <ListAltRoundedIcon fontSize="small" /> },
+        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
         { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
-        { label: "Profile",      to: "/dashboard/profile",      icon: <PersonRoundedIcon fontSize="small" /> },
+        { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
       ],
     },
 
-    // ── Admin ─────────────────────────────────────────────────────────────
     admin: {
       desktop: [
         { label: "Overview", to: "/admin" },
-        { label: "Users",    to: "/admin/users" },
+        { label: "Users", to: "/admin/users" },
         { label: "Listings", to: "/admin/listings" },
-        { label: "Reports",  to: "/admin/reports" },
+        { label: "Reports", to: "/admin/reports" },
       ],
       mobile: [
-        { label: "Overview", to: "/admin",          icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
-        { label: "Users",    to: "/admin/users",    icon: <PeopleAltRoundedIcon fontSize="small" /> },
+        { label: "Overview", to: "/admin", icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
+        { label: "Users", to: "/admin/users", icon: <PeopleAltRoundedIcon fontSize="small" /> },
         { label: "Listings", to: "/admin/listings", icon: <ListAltRoundedIcon fontSize="small" /> },
-        { label: "Reports",  to: "/admin/reports",  icon: <BarChartRoundedIcon fontSize="small" /> },
+        { label: "Reports", to: "/admin/reports", icon: <BarChartRoundedIcon fontSize="small" /> },
         { label: "Settings", to: "/admin/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "Admin Panel",  to: "/admin",          icon: <AdminPanelSettingsRoundedIcon fontSize="small" /> },
-        { label: "Manage Users", to: "/admin/users",    icon: <PeopleAltRoundedIcon fontSize="small" /> },
-        { label: "Reports",      to: "/admin/reports",  icon: <BarChartRoundedIcon fontSize="small" /> },
-        { label: "Settings",     to: "/admin/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
+        { label: "Admin Panel", to: "/admin", icon: <AdminPanelSettingsRoundedIcon fontSize="small" /> },
+        { label: "Manage Users", to: "/admin/users", icon: <PeopleAltRoundedIcon fontSize="small" /> },
+        { label: "Reports", to: "/admin/reports", icon: <BarChartRoundedIcon fontSize="small" /> },
+        { label: "Settings", to: "/admin/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
       ],
     },
   };
@@ -183,62 +183,65 @@ const ROLE_BADGE = {
   guest: null,
   free: {
     label: "Free",
-    color: "#5b4cf0",
-    bg: "rgba(91,76,240,0.10)",
-    border: "rgba(91,76,240,0.18)",
+    color: C.freePurple,
+    bg: C.freeSoft,
+    border: "rgba(109,40,217,0.15)",
   },
   premium: {
-    label: "Premium Active",
-    color: COLORS.premium,
-    bg: COLORS.premiumSoft,
-    border: "rgba(180,83,9,0.18)",
+    label: "Premium",
+    color: C.premiumGold,
+    bg: C.premiumSoft,
+    border: "rgba(180,83,9,0.15)",
   },
   admin: {
-    label: "Admin",
-    color: COLORS.admin,
-    bg: COLORS.adminSoft,
-    border: "rgba(185,28,28,0.18)",
+    label: "Administrator",
+    color: C.adminRed,
+    bg: C.adminSoft,
+    border: "rgba(185,28,28,0.15)",
   },
 };
 
-const AVATAR_STYLE = {
-  guest:   { bg: "#94a3b8", color: "#ffffff" },
-  free:    { bg: "#5b4cf0", color: "#ffffff" },
-  premium: { bg: "#d97706", color: "#ffffff" },
-  admin:   { bg: "#dc2626", color: "#ffffff" },
+const AVATAR_COLORS = {
+  guest: { bg: "#e2e8f0", color: "#64748b" },
+  free: { bg: C.freePurple, color: "#fff" },
+  premium: { bg: "#d97706", color: "#fff" },
+  admin: { bg: "#dc2626", color: "#fff" },
 };
 
 function RoleBadge({ roleKey }) {
   const cfg = ROLE_BADGE[roleKey];
   if (!cfg) return null;
-  const icon =
-    roleKey === "admin" ? (
-      <VerifiedUserRoundedIcon sx={{ fontSize: 14 }} />
-    ) : (
-      <WorkspacePremiumRoundedIcon sx={{ fontSize: 14 }} />
-    );
+
   return (
     <Chip
       size="small"
-      icon={icon}
+      icon={
+        roleKey === "admin" ? (
+          <VerifiedUserRoundedIcon sx={{ fontSize: "12px !important" }} />
+        ) : (
+          <WorkspacePremiumRoundedIcon sx={{ fontSize: "12px !important" }} />
+        )
+      }
       label={cfg.label}
       sx={{
-        height: 30,
-        borderRadius: "999px",
+        height: 22,
+        borderRadius: "6px",
         px: 0.5,
-        fontWeight: 800,
-        fontSize: "0.74rem",
+        fontWeight: 700,
+        fontSize: "0.68rem",
+        letterSpacing: "0.02em",
         color: cfg.color,
         backgroundColor: cfg.bg,
         border: `1px solid ${cfg.border}`,
-        "& .MuiChip-icon": { color: cfg.color },
+        "& .MuiChip-icon": { color: cfg.color, ml: "6px" },
+        "& .MuiChip-label": { px: "6px" },
       }}
     />
   );
 }
 
-function UserAvatar({ initials, photo, roleKey, size = 38 }) {
-  const tone = AVATAR_STYLE[roleKey] || AVATAR_STYLE.free;
+function UserAvatar({ initials, photo, roleKey, size = 36 }) {
+  const tone = AVATAR_COLORS[roleKey] || AVATAR_COLORS.free;
   return (
     <Avatar
       src={photo || undefined}
@@ -247,12 +250,12 @@ function UserAvatar({ initials, photo, roleKey, size = 38 }) {
         height: size,
         bgcolor: tone.bg,
         color: tone.color,
-        fontWeight: 900,
-        fontSize: size * 0.34,
-        boxShadow: "0 8px 18px rgba(15,23,42,0.12)",
+        fontWeight: 800,
+        fontSize: size * 0.36,
+        letterSpacing: "-0.01em",
       }}
     >
-      {initials}
+      {!photo && initials}
     </Avatar>
   );
 }
@@ -264,51 +267,49 @@ function Logo() {
       to="/"
       direction="row"
       alignItems="center"
-      spacing={1.3}
-      sx={{ textDecoration: "none", minWidth: 0, flexShrink: 0 }}
+      spacing={1}
+      sx={{ textDecoration: "none", flexShrink: 0 }}
     >
       <Box
         component="img"
         src="/logo.png"
-        alt="Easydeal Logo"
-        sx={{ height: 46, width: "auto", objectFit: "contain" }}
+        alt="EasyDeal"
+        sx={{ height: 36, width: "auto", objectFit: "contain" }}
       />
     </Stack>
   );
 }
 
-function DesktopNavLink({ to, label, active }) {
+function NavLink({ to, label, active }) {
   return (
     <Box
       component={RouterLink}
       to={to}
       sx={{
-        position: "relative",
         display: "inline-flex",
         alignItems: "center",
-        justifyContent: "center",
-        px: 2,
-        py: 1,
-        minHeight: 42,
-        borderRadius: "999px",
+        px: 1.5,
+        py: 0.875,
+        borderRadius: "8px",
         textDecoration: "none",
-        fontWeight: 800,
-        fontSize: "0.9rem",
-        color: active ? COLORS.primary : COLORS.muted,
-        backgroundColor: active ? COLORS.primarySoft : "transparent",
-        transition: "all .2s ease",
-        "&:hover": { color: COLORS.text, backgroundColor: "rgba(15,23,42,0.05)" },
+        fontWeight: active ? 700 : 500,
+        fontSize: "0.875rem",
+        color: active ? C.text : C.muted,
+        backgroundColor: active ? "rgba(15,23,42,0.05)" : "transparent",
+        transition: "all 0.15s ease",
+        whiteSpace: "nowrap",
+        "&:hover": {
+          color: C.text,
+          backgroundColor: "rgba(15,23,42,0.04)",
+        },
       }}
     >
       {label}
-      {active && (
-        <Box sx={{ position: "absolute", bottom: 6, width: 4, height: 4, borderRadius: "50%", bgcolor: COLORS.primary }} />
-      )}
     </Box>
   );
 }
 
-function MobileNavLink({ item, active, onClick }) {
+function MobileNavItem({ item, active, onClick }) {
   return (
     <Box
       component={RouterLink}
@@ -317,107 +318,57 @@ function MobileNavLink({ item, active, onClick }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
-        px: 1.6,
-        py: 1.35,
-        borderRadius: "18px",
+        gap: 1.5,
+        px: 1.25,
+        py: 1,
+        borderRadius: "10px",
         textDecoration: "none",
-        fontWeight: 800,
-        fontSize: "0.92rem",
-        color: active ? COLORS.primary : "#334155",
-        backgroundColor: active ? COLORS.primarySoft : "transparent",
-        border: active ? "1px solid rgba(15,118,110,0.14)" : "1px solid transparent",
-        transition: "all .2s ease",
-        "&:hover": { backgroundColor: "rgba(15,118,110,0.06)", color: COLORS.primary },
+        fontWeight: active ? 700 : 500,
+        fontSize: "0.9rem",
+        color: active ? C.primary : C.text,
+        backgroundColor: active ? C.primarySoft : "transparent",
+        transition: "all 0.15s ease",
+        "&:hover": { backgroundColor: "rgba(15,23,42,0.04)", color: C.text },
       }}
     >
       <Box
         sx={{
-          width: 36, height: 36, borderRadius: "12px",
-          display: "grid", placeItems: "center", flexShrink: 0,
-          bgcolor: active ? COLORS.primary : "#f1f5f9",
-          color: active ? "#ffffff" : COLORS.muted,
-          boxShadow: active ? "0 8px 18px rgba(15,118,110,0.18)" : "none",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          display: "grid",
+          placeItems: "center",
+          flexShrink: 0,
+          bgcolor: active ? C.primary : "rgba(15,23,42,0.05)",
+          color: active ? "#fff" : C.muted,
+          "& svg": { fontSize: 16 },
         }}
       >
         {item.icon}
       </Box>
-      <Box sx={{ minWidth: 0 }}>{item.label}</Box>
-      {active && (
-        <ChevronRightRoundedIcon sx={{ ml: "auto", fontSize: 18, color: COLORS.primary }} />
-      )}
-    </Box>
-  );
-}
-
-function AnnouncementBar({ onClose }) {
-  return (
-    <Box sx={{ backgroundColor: COLORS.primary, color: "#ffffff", px: { xs: 2, md: 3 }, py: 0.9 }}>
-      <Container maxWidth="xl" disableGutters>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          spacing={1}
-          sx={{ position: "relative", minHeight: 28 }}
-        >
-          <LocalOfferRoundedIcon sx={{ fontSize: 16, color: "rgba(255,255,255,0.9)" }} />
-          <Typography sx={{ fontSize: { xs: "0.74rem", sm: "0.78rem" }, fontWeight: 800, textAlign: "center", pr: { xs: 4, sm: 0 } }}>
-            Unlock full marketplace access for just ₹299 — one-time premium upgrade.
-          </Typography>
-          <Box
-            component={RouterLink}
-            to="/subscription"
-            sx={{
-              display: { xs: "none", sm: "inline-flex" },
-              alignItems: "center", gap: 0.2, ml: 1, px: 1.25, py: 0.45,
-              borderRadius: "999px", textDecoration: "none",
-              fontSize: "0.75rem", fontWeight: 900,
-              color: COLORS.primary, bgcolor: "#ffffff",
-              "&:hover": { bgcolor: "#f8fafc" },
-            }}
-          >
-            Upgrade now <ChevronRightRoundedIcon sx={{ fontSize: 14 }} />
-          </Box>
-          <IconButton
-            size="small"
-            onClick={onClose}
-            sx={{
-              position: "absolute", right: 0,
-              color: "rgba(255,255,255,0.82)",
-              "&:hover": { color: "#ffffff", bgcolor: "rgba(255,255,255,0.10)" },
-            }}
-          >
-            <CloseRoundedIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Stack>
-      </Container>
+      <span style={{ flex: 1 }}>{item.label}</span>
+      {active && <ChevronRightRoundedIcon sx={{ fontSize: 16, color: C.primary, opacity: 0.6 }} />}
     </Box>
   );
 }
 
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen]             = useState(false);
-  const [anchorEl, setAnchorEl]                 = useState(null);
-  const [scrolled, setScrolled]                 = useState(false);
-  const [showAnnouncement, setShowAnnouncement] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
 
   const location = useLocation();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const { user, logout } = useAppState();
 
-  // ── Derive role from actual localStorage userData fields ─────────────────
-  // Handles: { role, isPremium, subscription, loggedIn }
-  const roleKey       = resolveRole(user);
-  const loggedIn      = roleKey !== "guest";
-  const menuOpen      = Boolean(anchorEl);
-  const navCfg        = useMemo(() => getNavConfig()[roleKey], [roleKey]);
+  const roleKey = resolveRole(user);
+  const loggedIn = roleKey !== "guest";
+  const menuOpen = Boolean(anchorEl);
+  const navCfg = useMemo(() => getNavConfig()[roleKey], [roleKey]);
   const dropdownItems = navCfg?.dropdown ?? [];
 
-  const showBar = showAnnouncement && (roleKey === "guest" || roleKey === "free");
-
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 18);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -429,20 +380,22 @@ export default function Navbar() {
   }, [location.pathname]);
 
   const initials = useMemo(() => {
-    const name  = user?.name?.trim() || "User";
+    const name = user?.name?.trim() || "U";
     const parts = name.split(" ").filter(Boolean);
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return `${parts[0][0] || "U"}`.toUpperCase();
+    return parts.length >= 2
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+      : parts[0][0].toUpperCase();
   }, [user?.name]);
 
   const isActive = (path) => {
     if (path === "/") return location.pathname === "/";
-    if (["/dashboard", "/admin", "/free-dashboard"].includes(path))
+    if (["/dashboard", "/admin", "/free-dashboard"].includes(path)) {
       return location.pathname === path;
+    }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  const closeMenu   = () => setAnchorEl(null);
+  const closeMenu = () => setAnchorEl(null);
   const closeMobile = () => setMobileOpen(false);
 
   const handleLogout = () => {
@@ -454,209 +407,212 @@ export default function Navbar() {
 
   return (
     <>
-      {showBar && <AnnouncementBar onClose={() => setShowAnnouncement(false)} />}
-
       <Box
+        component="header"
         sx={{
-          position: "sticky", top: 8, zIndex: 1200,
-          px: { xs: 1.5, md: 2.5 }, pt: 1.2, pb: 0.5,
-          pointerEvents: "none", backgroundColor: "transparent",
+          position: "sticky",
+          top: 0,
+          zIndex: 1200,
+          backgroundColor: scrolled ? C.surfaceStrong : C.surface,
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: `1px solid ${scrolled ? C.border : "transparent"}`,
+          boxShadow: scrolled ? C.shadow : "none",
+          transition: "all 0.2s ease",
         }}
       >
-        <Container maxWidth="xl" disableGutters sx={{ pointerEvents: "auto" }}>
-          <Box
-            sx={{
-              minHeight: { xs: 64, md: 72 },
-              px: { xs: 1.6, sm: 2.2, md: 2.8 }, py: 1,
-              display: "flex", alignItems: "center", gap: 1.5,
-              borderRadius: "999px",
-              backgroundColor: scrolled ? COLORS.surfaceStrong : COLORS.surface,
-              backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
-              border: `1px solid ${scrolled ? COLORS.borderStrong : COLORS.border}`,
-              boxShadow: scrolled ? COLORS.shadowStrong : COLORS.shadow,
-              transition: "all .28s cubic-bezier(.16,1,.3,1)",
-            }}
-          >
-            {/* Logo */}
-            <Box sx={{ flex: "1 1 0", display: "flex", alignItems: "center", minWidth: 0 }}>
-              <Logo />
-            </Box>
+        <Container maxWidth="xl">
+          <Stack direction="row" alignItems="center" sx={{ minHeight: { xs: 60, md: 66 }, gap: { xs: 1, md: 2 } }}>
+            <Logo />
 
-            {/* Desktop nav pills */}
             <Stack
-              direction="row" alignItems="center" spacing={0.4}
+              direction="row"
+              alignItems="center"
+              spacing={0.25}
               sx={{
                 display: { xs: "none", lg: "flex" },
-                px: 0.6, py: 0.6, borderRadius: "999px",
-                backgroundColor: "rgba(248,250,252,0.96)",
-                border: `1px solid ${COLORS.border}`, flex: "0 0 auto",
+                flex: 1,
+                px: 2,
+                overflowX: "auto",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
               }}
             >
               {navCfg.desktop.map((item) => (
-                <DesktopNavLink key={item.to} to={item.to} label={item.label} active={isActive(item.to)} />
+                <NavLink key={item.to + item.label} to={item.to} label={item.label} active={isActive(item.to)} />
               ))}
             </Stack>
 
-            {/* Right CTAs */}
-            <Stack
-              direction="row" alignItems="center" justifyContent="flex-end" spacing={1}
-              sx={{ flex: "1 1 0", display: { xs: "none", md: "flex" }, minWidth: 0 }}
-            >
+            <Box sx={{ flex: 1, display: { xs: "flex", lg: "none" } }} />
 
-              {/* ── Guest ─────────────────────────────────────────────────── */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ display: { xs: "none", md: "flex" }, flexShrink: 0 }}
+            >
               {roleKey === "guest" && (
                 <>
                   <Button
-                    component={RouterLink} to="/register" variant="text"
-                    startIcon={<SellRoundedIcon />}
+                    component={RouterLink}
+                    to="/login"
+                    variant="text"
                     sx={{
-                      minHeight: 44, px: 2, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 800, fontSize: "0.88rem",
-                      color: COLORS.muted,
-                      "&:hover": { backgroundColor: "rgba(15,23,42,0.05)", color: COLORS.text },
+                      minHeight: 38,
+                      px: 1.75,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      color: C.muted,
+                      "&:hover": { bgcolor: "rgba(15,23,42,0.04)", color: C.text },
                     }}
                   >
-                    Post Listing
+                    Log in
                   </Button>
                   <Button
-                    component={RouterLink} to="/login" variant="outlined"
+                    component={RouterLink}
+                    to="/register"
+                    variant="outlined"
                     sx={{
-                      minHeight: 44, px: 2.2, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 800, fontSize: "0.88rem",
-                      borderColor: COLORS.borderStrong, color: COLORS.muted,
-                      "&:hover": { borderColor: COLORS.primary, backgroundColor: COLORS.primarySoft, color: COLORS.primary },
+                      minHeight: 38,
+                      px: 1.75,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      borderColor: C.border,
+                      color: C.text,
+                      "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
                     }}
                   >
-                    Login
-                  </Button>
-                  <Button
-                    component={RouterLink} to="/register" variant="contained"
-                    sx={{
-                      minHeight: 44, px: 2.4, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 900, fontSize: "0.88rem",
-                      backgroundColor: COLORS.text,
-                      boxShadow: "0 12px 24px rgba(15,23,42,0.16)",
-                      "&:hover": { backgroundColor: "#1e293b", boxShadow: "0 16px 28px rgba(15,23,42,0.22)" },
-                    }}
-                  >
-                    Register
+                    Sign up
                   </Button>
                 </>
               )}
 
-              {/* ── Free user (isPremium:false, subscription:inactive) ─────── */}
               {roleKey === "free" && (
                 <>
                   <RoleBadge roleKey="free" />
                   <Button
-                    component={RouterLink} to="/subscription" variant="contained"
-                    startIcon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />}
+                    component={RouterLink}
+                    to="/subscription"
+                    variant="contained"
+                    startIcon={<WorkspacePremiumRoundedIcon sx={{ fontSize: "15px !important" }} />}
                     sx={{
-                      minHeight: 44, px: 2.3, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 900, fontSize: "0.86rem",
-                      backgroundColor: "#111827",
-                      boxShadow: "0 12px 24px rgba(17,24,39,0.14)",
-                      "&:hover": { backgroundColor: "#0f172a", boxShadow: "0 16px 28px rgba(17,24,39,0.20)" },
+                      minHeight: 38,
+                      px: 2,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      bgcolor: C.freePurple,
+                      boxShadow: "none",
+                      "&:hover": { bgcolor: "#5b21b6", boxShadow: "none" },
                     }}
                   >
                     Upgrade ₹299
                   </Button>
-                  <Tooltip title="Account menu" arrow>
+                  <Tooltip title="Account" arrow placement="bottom">
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
-                      sx={{
-                        p: 0.45, borderRadius: "999px",
-                        border: `2px solid ${COLORS.border}`, backgroundColor: "#ffffff",
-                        "&:hover": { borderColor: COLORS.primary, boxShadow: "0 0 0 4px rgba(15,118,110,0.10)" },
-                      }}
+                      size="small"
+                      sx={{ p: 0.375, borderRadius: "10px", border: `1.5px solid ${C.border}`, "&:hover": { borderColor: C.borderHover } }}
                     >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="free" size={36} />
+                      <UserAvatar initials={initials} photo={user?.photo} roleKey="free" size={32} />
                     </IconButton>
                   </Tooltip>
                 </>
               )}
 
-              {/* ── Premium user (isPremium:true OR subscription:active) ─────── */}
               {roleKey === "premium" && (
                 <>
                   <RoleBadge roleKey="premium" />
                   <Button
-                    component={RouterLink} to="/dashboard/add-property" variant="outlined"
-                    startIcon={<SellRoundedIcon />}
+                    component={RouterLink}
+                    to="/dashboard/add-property"
+                    variant="contained"
+                    startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
                     sx={{
-                      minHeight: 44, px: 2, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 800, fontSize: "0.88rem",
-                      borderColor: COLORS.borderStrong, color: COLORS.muted,
-                      "&:hover": { borderColor: COLORS.primary, backgroundColor: COLORS.primarySoft, color: COLORS.primary },
+                      minHeight: 38,
+                      px: 2,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      bgcolor: C.primary,
+                      boxShadow: "none",
+                      "&:hover": { bgcolor: C.primaryHover, boxShadow: "none" },
                     }}
                   >
                     Post Listing
                   </Button>
-                  <Tooltip title="Account menu" arrow>
+                  <Tooltip title="Account" arrow placement="bottom">
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
-                      sx={{
-                        p: 0.45, borderRadius: "999px",
-                        border: `2px solid ${COLORS.border}`, backgroundColor: "#ffffff",
-                        "&:hover": { borderColor: COLORS.primary, boxShadow: "0 0 0 4px rgba(15,118,110,0.10)" },
-                      }}
+                      size="small"
+                      sx={{ p: 0.375, borderRadius: "10px", border: `1.5px solid ${C.border}`, "&:hover": { borderColor: C.borderHover } }}
                     >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="premium" size={36} />
+                      <UserAvatar initials={initials} photo={user?.photo} roleKey="premium" size={32} />
                     </IconButton>
                   </Tooltip>
                 </>
               )}
 
-              {/* ── Admin (role:"admin") ───────────────────────────────────── */}
               {roleKey === "admin" && (
                 <>
                   <RoleBadge roleKey="admin" />
                   <Button
-                    component={RouterLink} to="/admin" variant="outlined"
-                    startIcon={<AdminPanelSettingsRoundedIcon />}
+                    component={RouterLink}
+                    to="/admin"
+                    variant="outlined"
+                    startIcon={<AdminPanelSettingsRoundedIcon sx={{ fontSize: "16px !important" }} />}
                     sx={{
-                      minHeight: 44, px: 2, borderRadius: "999px",
-                      textTransform: "none", fontWeight: 800, fontSize: "0.88rem",
-                      borderColor: "rgba(185,28,28,0.28)", color: COLORS.admin,
-                      "&:hover": { borderColor: COLORS.admin, backgroundColor: COLORS.adminSoft },
+                      minHeight: 38,
+                      px: 1.75,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      borderColor: "rgba(185,28,28,0.25)",
+                      color: C.adminRed,
+                      "&:hover": { borderColor: C.adminRed, bgcolor: C.adminSoft },
                     }}
                   >
-                    Admin Panel
+                    Admin
                   </Button>
-                  <Tooltip title="Admin account" arrow>
+                  <Tooltip title="Admin account" arrow placement="bottom">
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
-                      sx={{
-                        p: 0.45, borderRadius: "999px",
-                        border: "2px solid rgba(185,28,28,0.16)", backgroundColor: "#ffffff",
-                        "&:hover": { borderColor: COLORS.admin, boxShadow: "0 0 0 4px rgba(239,68,68,0.10)" },
-                      }}
+                      size="small"
+                      sx={{ p: 0.375, borderRadius: "10px", border: "1.5px solid rgba(185,28,28,0.18)", "&:hover": { borderColor: C.adminRed } }}
                     >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="admin" size={36} />
+                      <UserAvatar initials={initials} photo={user?.photo} roleKey="admin" size={32} />
                     </IconButton>
                   </Tooltip>
                 </>
               )}
             </Stack>
 
-            {/* Hamburger */}
             <IconButton
               onClick={() => setMobileOpen(true)}
+              size="small"
               sx={{
                 display: { xs: "inline-flex", md: "none" },
-                width: 44, height: 44, borderRadius: "14px",
-                border: `1px solid ${COLORS.borderStrong}`, backgroundColor: "#ffffff",
-                color: COLORS.text,
-                "&:hover": { borderColor: COLORS.primary, backgroundColor: COLORS.primarySoft, color: COLORS.primary },
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                border: `1.5px solid ${C.border}`,
+                color: C.text,
+                "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
               }}
             >
               <MenuRoundedIcon sx={{ fontSize: 20 }} />
             </IconButton>
-          </Box>
+          </Stack>
         </Container>
       </Box>
 
-      {/* ── Desktop dropdown Menu ────────────────────────────────────────────── */}
       {loggedIn && (
         <Menu
           anchorEl={anchorEl}
@@ -667,32 +623,24 @@ export default function Navbar() {
           PaperProps={{
             elevation: 0,
             sx: {
-              mt: 1.4, minWidth: 260, borderRadius: "22px", overflow: "visible",
-              border: `1px solid ${COLORS.border}`, boxShadow: COLORS.shadowStrong,
-              "&::before": {
-                content: '""', position: "absolute", top: -7, right: 20,
-                width: 14, height: 14, backgroundColor: "#ffffff",
-                borderLeft: `1px solid ${COLORS.border}`, borderTop: `1px solid ${COLORS.border}`,
-                transform: "rotate(45deg)",
-              },
+              mt: 1,
+              minWidth: 240,
+              borderRadius: "14px",
+              border: `1px solid ${C.border}`,
+              boxShadow: C.shadowLifted,
+              overflow: "hidden",
             },
           }}
         >
-          <Box
-            sx={{
-              px: 2.4, py: 2,
-              backgroundColor: roleKey === "admin" ? "rgba(254,242,242,0.8)" : "rgba(248,250,252,0.95)",
-              borderRadius: "22px 22px 0 0",
-            }}
-          >
-            <Stack direction="row" spacing={1.4} alignItems="center">
-              <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={46} />
+          <Box sx={{ px: 2, pt: 2, pb: 1.5 }}>
+            <Stack direction="row" spacing={1.25} alignItems="center">
+              <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={40} />
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 900, fontSize: "0.97rem", lineHeight: 1.2, color: COLORS.text }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: C.text, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {user?.name || "User"}
                 </Typography>
-                {!!user?.email && (
-                  <Typography sx={{ fontSize: "0.74rem", color: COLORS.muted, fontWeight: 500, mb: 0.7 }}>
+                {user?.email && (
+                  <Typography sx={{ fontSize: "0.72rem", color: C.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", mt: 0.2, mb: 0.5 }}>
                     {user.email}
                   </Typography>
                 )}
@@ -701,7 +649,7 @@ export default function Navbar() {
             </Stack>
           </Box>
 
-          <Divider />
+          <Divider sx={{ borderColor: C.border }} />
 
           {dropdownItems.map((item) => (
             <MenuItem
@@ -709,104 +657,77 @@ export default function Navbar() {
               component={RouterLink}
               to={item.to}
               onClick={closeMenu}
-              sx={{
-                py: 1.4, px: 2.2, gap: 0.5, fontWeight: 700, fontSize: "0.88rem", color: "#334155",
-                "&:hover": { backgroundColor: COLORS.primarySoft, color: COLORS.primary },
-              }}
+              sx={{ py: 1.25, px: 2, fontSize: "0.875rem", fontWeight: 500, color: C.text, gap: 0.5, "&:hover": { bgcolor: "rgba(15,23,42,0.04)" } }}
             >
-              <ListItemIcon sx={{ minWidth: 36, color: COLORS.muted, "& svg": { fontSize: 18 } }}>
+              <ListItemIcon sx={{ minWidth: 32, color: C.muted, "& svg": { fontSize: 17 } }}>
                 {item.icon}
               </ListItemIcon>
               {item.label}
-              <ChevronRightRoundedIcon sx={{ ml: "auto", fontSize: 16, color: "#cbd5e1" }} />
             </MenuItem>
           ))}
 
-          <Divider />
+          <Divider sx={{ borderColor: C.border }} />
 
           <MenuItem
             onClick={handleLogout}
-            sx={{
-              py: 1.4, px: 2.2, gap: 0.5, fontWeight: 800, fontSize: "0.88rem",
-              color: "#ef4444", borderRadius: "0 0 22px 22px",
-              "&:hover": { backgroundColor: "rgba(239,68,68,0.05)" },
-            }}
+            sx={{ py: 1.25, px: 2, fontSize: "0.875rem", fontWeight: 600, color: "#ef4444", gap: 0.5, "&:hover": { bgcolor: "rgba(239,68,68,0.04)" } }}
           >
-            <ListItemIcon sx={{ minWidth: 36, color: "#ef4444", "& svg": { fontSize: 18 } }}>
+            <ListItemIcon sx={{ minWidth: 32, color: "#ef4444", "& svg": { fontSize: 17 } }}>
               <LogoutRoundedIcon />
             </ListItemIcon>
-            Logout
+            Log out
           </MenuItem>
         </Menu>
       )}
 
-      {/* ── Mobile Drawer ────────────────────────────────────────────────────── */}
       <Drawer
         anchor="right"
         open={mobileOpen}
         onClose={closeMobile}
         PaperProps={{
           sx: {
-            width: 334, maxWidth: "100%", borderRadius: "28px 0 0 28px",
-            backgroundColor: "#ffffff", boxShadow: "-20px 0 60px rgba(15,23,42,0.14)",
-            overflow: "hidden",
+            width: 300,
+            maxWidth: "85vw",
+            backgroundColor: "#ffffff",
+            boxShadow: "-8px 0 40px rgba(15,23,42,0.12)",
           },
         }}
       >
         <Stack sx={{ height: "100%" }}>
-          <Box sx={{ px: 2.5, pt: 2.5, pb: 2, borderBottom: `1px solid ${COLORS.border}` }}>
-            <Stack
-              direction="row" alignItems="center" justifyContent="space-between"
-              spacing={1.2} mb={loggedIn ? 2 : 0}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.75, borderBottom: `1px solid ${C.border}` }}>
+            <Logo />
+            <IconButton
+              onClick={closeMobile}
+              size="small"
+              sx={{ width: 36, height: 36, borderRadius: "9px", border: `1.5px solid ${C.border}`, color: C.muted, "&:hover": { borderColor: C.borderHover, color: C.text } }}
             >
-              <Logo />
-              <IconButton
-                onClick={closeMobile}
-                sx={{
-                  width: 42, height: 42, borderRadius: "14px",
-                  border: `1px solid ${COLORS.borderStrong}`, color: COLORS.text,
-                  "&:hover": { color: COLORS.admin, borderColor: COLORS.admin, backgroundColor: COLORS.adminSoft },
-                }}
-              >
-                <CloseRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Stack>
+              <CloseRoundedIcon sx={{ fontSize: 17 }} />
+            </IconButton>
+          </Stack>
 
-            {loggedIn && (
-              <Box
-                sx={{
-                  p: 1.8, borderRadius: "18px",
-                  backgroundColor: roleKey === "admin" ? "rgba(254,242,242,0.72)" : "rgba(248,250,252,0.9)",
-                  border: roleKey === "admin" ? "1px solid rgba(239,68,68,0.12)" : "1px solid rgba(148,163,184,0.18)",
-                }}
-              >
-                <Stack direction="row" spacing={1.3} alignItems="center">
-                  <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={44} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 900, fontSize: "0.95rem", lineHeight: 1.2, color: COLORS.text }}>
-                      {user?.name || "User"}
+          {loggedIn && (
+            <Box sx={{ px: 2, py: 2, borderBottom: `1px solid ${C.border}` }}>
+              <Stack direction="row" spacing={1.25} alignItems="center">
+                <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={42} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: C.text, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {user?.name || "User"}
+                  </Typography>
+                  {user?.email && (
+                    <Typography sx={{ fontSize: "0.72rem", color: C.muted, mt: 0.2, mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {user.email}
                     </Typography>
-                    {!!user?.email && (
-                      <Typography sx={{ fontSize: "0.72rem", color: COLORS.muted, mb: 0.55 }}>
-                        {user.email}
-                      </Typography>
-                    )}
-                    <RoleBadge roleKey={roleKey} />
-                  </Box>
-                </Stack>
-              </Box>
-            )}
-          </Box>
+                  )}
+                  <RoleBadge roleKey={roleKey} />
+                </Box>
+              </Stack>
+            </Box>
+          )}
 
-          <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 1.5 }}>
-            <Stack spacing={0.45}>
+          <Box sx={{ flex: 1, overflowY: "auto", px: 1.5, py: 1.5 }}>
+            <Stack spacing={0.25}>
               {navCfg.mobile.map((item) => (
-                <MobileNavLink
-                  key={item.label}
-                  item={item}
-                  active={isActive(item.to)}
-                  onClick={closeMobile}
-                />
+                <MobileNavItem key={item.label} item={item} active={isActive(item.to)} onClick={closeMobile} />
               ))}
             </Stack>
 
@@ -816,46 +737,69 @@ export default function Navbar() {
                 to="/subscription"
                 onClick={closeMobile}
                 sx={{
-                  mt: 2, p: 2, display: "flex", alignItems: "center", gap: 1.2,
-                  borderRadius: "18px", textDecoration: "none",
-                  backgroundColor: "#111827", color: "#ffffff",
-                  boxShadow: "0 14px 28px rgba(17,24,39,0.14)",
+                  mt: 2,
+                  p: 1.75,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                  borderRadius: "12px",
+                  textDecoration: "none",
+                  bgcolor: C.freePurple,
+                  color: "#ffffff",
+                  boxShadow: "0 4px 16px rgba(109,40,217,0.24)",
                 }}
               >
-                <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} />
+                <WorkspacePremiumRoundedIcon sx={{ fontSize: 20, flexShrink: 0 }} />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 900, fontSize: "0.88rem", lineHeight: 1.2, color: "#ffffff" }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", lineHeight: 1.3 }}>
                     Upgrade to Premium
                   </Typography>
-                  <Typography sx={{ fontSize: "0.73rem", color: "rgba(255,255,255,0.76)" }}>
-                    Unlock contacts, prices &amp; post listings — ₹299
+                  <Typography sx={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.72)", mt: 0.25 }}>
+                    Post listings &amp; unlock contacts — ₹299
                   </Typography>
                 </Box>
-                <ChevronRightRoundedIcon sx={{ ml: "auto", fontSize: 18, color: "#ffffff" }} />
+                <ChevronRightRoundedIcon sx={{ ml: "auto", fontSize: 18, flexShrink: 0, opacity: 0.7 }} />
               </Box>
             )}
 
             {!loggedIn && (
-              <Stack spacing={1.1} sx={{ mt: 2 }}>
+              <Stack spacing={1} sx={{ mt: 2 }}>
                 <Button
-                  component={RouterLink} to="/login" onClick={closeMobile}
-                  variant="outlined" startIcon={<LoginRoundedIcon />} fullWidth
+                  component={RouterLink}
+                  to="/login"
+                  onClick={closeMobile}
+                  variant="outlined"
+                  startIcon={<LoginRoundedIcon />}
+                  fullWidth
                   sx={{
-                    minHeight: 48, borderRadius: "16px",
-                    textTransform: "none", fontWeight: 800,
-                    borderColor: COLORS.borderStrong, color: COLORS.text,
+                    minHeight: 44,
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    borderColor: C.border,
+                    color: C.text,
+                    "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
                   }}
                 >
-                  Login
+                  Log in
                 </Button>
                 <Button
-                  component={RouterLink} to="/register" onClick={closeMobile}
-                  variant="contained" startIcon={<PersonAddAlt1RoundedIcon />} fullWidth
+                  component={RouterLink}
+                  to="/register"
+                  onClick={closeMobile}
+                  variant="contained"
+                  startIcon={<PersonAddAlt1RoundedIcon />}
+                  fullWidth
                   sx={{
-                    minHeight: 48, borderRadius: "16px",
-                    textTransform: "none", fontWeight: 900,
-                    backgroundColor: COLORS.text,
-                    "&:hover": { backgroundColor: "#1e293b" },
+                    minHeight: 44,
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    bgcolor: C.text,
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#1e293b", boxShadow: "none" },
                   }}
                 >
                   Create Account
@@ -865,18 +809,25 @@ export default function Navbar() {
           </Box>
 
           {loggedIn && (
-            <Box sx={{ px: 2.5, py: 2, borderTop: `1px solid ${COLORS.border}` }}>
+            <Box sx={{ px: 1.5, py: 2, borderTop: `1px solid ${C.border}` }}>
               <Button
-                onClick={handleLogout} fullWidth variant="outlined"
-                startIcon={<LogoutRoundedIcon />}
+                onClick={handleLogout}
+                fullWidth
+                variant="text"
+                startIcon={<LogoutRoundedIcon sx={{ fontSize: "17px !important" }} />}
                 sx={{
-                  minHeight: 48, borderRadius: "18px",
-                  textTransform: "none", fontWeight: 800, fontSize: "0.9rem",
-                  borderColor: "rgba(239,68,68,0.28)", color: "#ef4444",
-                  "&:hover": { borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.05)" },
+                  minHeight: 42,
+                  borderRadius: "10px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  color: "#ef4444",
+                  justifyContent: "flex-start",
+                  px: 1.5,
+                  "&:hover": { bgcolor: "rgba(239,68,68,0.05)" },
                 }}
               >
-                Logout
+                Log out
               </Button>
             </Box>
           )}
