@@ -30,6 +30,9 @@ import AboutPage from '../pages/AboutPage'
 import HowItWorksPage from '../pages/HowItWorksPage'
 import FAQPage from '../pages/FAQPage'
 import ContactPage from '../pages/ContactPage'
+import PrivacyPolicyPage from '../support/PrivacyPolicyPage'
+import TermsOfServicePage from '../support/TermsOfServicePage'
+import RefundPolicyPage from '../support/RefundPolicyPage'
 
 const routes = [
   // ── Public pages ─────────────────────────────────────────────────
@@ -41,6 +44,9 @@ const routes = [
       { path: "/how-it-works", element: <HowItWorksPage /> },
       { path: "/faq", element: <FAQPage /> },
       { path: "/contact", element: <ContactPage /> },
+      { path: "/privacy-policy", element: <PrivacyPolicyPage /> },
+      { path: "/terms", element: <TermsOfServicePage /> },
+      { path: "/refund-policy", element: <RefundPolicyPage /> },
       { path: '/subscription', element: <SubscriptionPage /> },
     ],
   },

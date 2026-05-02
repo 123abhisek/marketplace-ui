@@ -46,9 +46,9 @@ const LINKS = {
   Support: [
     { label: "Help Centre", href: "#" },
     { label: "Report a listing", href: "#" },
-    { label: "Refund policy", href: "#" },
-    { label: "Terms of service", href: "#" },
-    { label: "Privacy policy", href: "#" },
+    { label: "Refund policy", href: "/refund-policy" },
+    { label: "Terms of service", href: "/terms" },
+    { label: "Privacy policy", href: "/privacy-policy" },
   ],
 };
 
