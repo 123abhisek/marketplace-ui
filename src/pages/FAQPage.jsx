@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Box, Button, Chip, Container, Grid, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { useAppState } from "../hooks/useAppState";
 
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -345,6 +346,8 @@ function FAQItem({ item, index }) {
 export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAppState();
+  const isLoggedIn = Boolean(user?.loggedIn);
 
   const filtered = FAQS.filter((f) => {
     const matchesCat = activeCategory === "all" || f.cat === activeCategory;
@@ -926,33 +929,37 @@ export default function FAQPage() {
               lineHeight: 1.85,
             }}
           >
-            Create your free account today and start browsing or listing in minutes.
+            {isLoggedIn
+              ? "Explore listings, manage your account, and keep moving with confidence on EasyDeal."
+              : "Create your free account today and start browsing or listing in minutes."}
           </Typography>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
-            <Button
-              component={RouterLink}
-              to="/register"
-              variant="contained"
-              endIcon={<ArrowForwardRoundedIcon />}
-              sx={{
-                minHeight: 52,
-                px: 4,
-                borderRadius: "14px",
-                textTransform: "none",
-                fontWeight: 700,
-                fontSize: "1rem",
-                bgcolor: "#ffffff",
-                color: C.primary,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-                "&:hover": {
-                  bgcolor: "#f0fdf9",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
-                },
-              }}
-            >
-              Create Free Account
-            </Button>
+            {!isLoggedIn && (
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant="contained"
+                endIcon={<ArrowForwardRoundedIcon />}
+                sx={{
+                  minHeight: 52,
+                  px: 4,
+                  borderRadius: "14px",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  bgcolor: "#ffffff",
+                  color: C.primary,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+                  "&:hover": {
+                    bgcolor: "#f0fdf9",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+                  },
+                }}
+              >
+                Create Free Account
+              </Button>
+            )}
 
             <Button
               component={RouterLink}

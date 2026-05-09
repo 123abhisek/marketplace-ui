@@ -1,7 +1,9 @@
+
 // src/pages/HowItWorksPage.jsx
 import { useState } from "react";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { useAppState } from "../hooks/useAppState";
 
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
@@ -32,6 +34,22 @@ const C = {
   primaryHover: "#0d6b63",
   primarySoft: "rgba(15,118,110,0.08)",
   border: "rgba(15,23,42,0.08)",
+};
+
+// ── Shared card styles ────────────────────────────────────────────────────────
+const equalCenteredCard = {
+  height: "100%",
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "space-between",
+  textAlign: "center",
+  transition: "transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease",
+  "&:hover": {
+    transform: "translateY(-5px)",
+    boxShadow: "0 16px 40px rgba(15,23,42,0.10)",
+  },
 };
 
 // ── Seller steps ──────────────────────────────────────────────────────────────
@@ -334,6 +352,9 @@ export default function HowItWorksPage() {
   const [tab, setTab] = useState("seller");
   const steps = tab === "seller" ? SELLER_STEPS : BUYER_STEPS;
 
+  const { user } = useAppState();
+  const isLoggedIn = Boolean(user?.loggedIn);
+
   return (
     <Box sx={{ bgcolor: "#f8f9fb", overflowX: "hidden" }}>
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
@@ -370,7 +391,7 @@ export default function HowItWorksPage() {
               mx: "auto",
             }}
           >
-            Whether you're buying or selling a property or vehicle, EasyDeal makes the entire
+            Whether you&apos;re buying or selling a property or vehicle, EasyDeal makes the entire
             process smooth, transparent, and incredibly fast — from signup to deal done.
           </Typography>
 
@@ -429,33 +450,28 @@ export default function HowItWorksPage() {
 
             <Stack direction="row" spacing={1.5} justifyContent="center" flexWrap="wrap">
               <TabButton active={tab === "seller"} onClick={() => setTab("seller")}>
-                🏷️ &nbsp; I'm a Seller
+                🏷️ &nbsp; I&apos;m a Seller
               </TabButton>
               <TabButton active={tab === "buyer"} onClick={() => setTab("buyer")}>
-                🔍 &nbsp; I'm a Buyer
+                🔍 &nbsp; I&apos;m a Buyer
               </TabButton>
             </Stack>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center">
             {steps.map((s, i) => (
-              <Grid item xs={12} sm={6} md={3} key={`${tab}-${i}`}>
+              <Grid item xs={12} sm={6} md={3} key={`${tab}-${i}`} sx={{ display: "flex" }}>
                 <Box
                   sx={{
+                    ...equalCenteredCard,
+                    minHeight: { xs: 300, md: 330 },
                     p: { xs: 3, md: 3.5 },
                     borderRadius: "24px",
                     bgcolor: s.color,
                     border: `1px solid ${s.border}`,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
                     position: "relative",
                     overflow: "hidden",
-                    transition: "transform 0.22s ease, box-shadow 0.22s ease",
-                    "&:hover": {
-                      transform: "translateY(-6px)",
-                      boxShadow: "0 16px 40px rgba(15,23,42,0.10)",
-                    },
+                    justifyContent: "space-between",
                   }}
                 >
                   <Typography
@@ -475,55 +491,82 @@ export default function HowItWorksPage() {
                     {s.step}
                   </Typography>
 
-                  <Box
-                    sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: "14px",
-                      bgcolor: s.iconBg,
-                      display: "grid",
-                      placeItems: "center",
-                      mb: 2.5,
-                      color: s.iconColor,
-                      "& svg": { fontSize: 24 },
-                      boxShadow: "0 4px 12px rgba(15,23,42,0.07)",
-                      flexShrink: 0,
-                    }}
+                  <Stack
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ height: "100%", width: "100%" }}
                   >
-                    {s.icon}
-                  </Box>
-
-                  <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: C.text, mb: 1, lineHeight: 1.3 }}>
-                    {s.title}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.855rem", color: C.muted, lineHeight: 1.78, flex: 1 }}>
-                    {s.desc}
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      mt: 2.5,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      bgcolor: "rgba(255,255,255,0.7)",
-                      px: 1.25,
-                      py: 0.4,
-                      borderRadius: "8px",
-                      alignSelf: "flex-start",
-                    }}
-                  >
-                    <Typography
+                    <Box
                       sx={{
-                        fontSize: "0.72rem",
-                        fontWeight: 800,
-                        color: C.muted,
-                        letterSpacing: "0.06em",
+                        width: 56,
+                        height: 56,
+                        borderRadius: "16px",
+                        bgcolor: s.iconBg,
+                        display: "grid",
+                        placeItems: "center",
+                        color: s.iconColor,
+                        "& svg": { fontSize: 24 },
+                        boxShadow: "0 4px 12px rgba(15,23,42,0.07)",
+                        flexShrink: 0,
+                        mt: 0.5,
                       }}
                     >
-                      STEP {s.step}
+                      {s.icon}
+                    </Box>
+
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1rem",
+                        color: C.text,
+                        lineHeight: 1.3,
+                        maxWidth: "18ch",
+                      }}
+                    >
+                      {s.title}
                     </Typography>
-                  </Box>
+
+                    <Typography
+                      sx={{
+                        fontSize: "0.855rem",
+                        color: C.muted,
+                        lineHeight: 1.78,
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        maxWidth: "30ch",
+                      }}
+                    >
+                      {s.desc}
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 0.5,
+                        bgcolor: "rgba(255,255,255,0.72)",
+                        px: 1.35,
+                        py: 0.45,
+                        borderRadius: "999px",
+                        alignSelf: "center",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          color: C.muted,
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        STEP {s.step}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Box>
               </Grid>
             ))}
@@ -562,48 +605,60 @@ export default function HowItWorksPage() {
           <Box sx={{ textAlign: "center", mb: 7 }}>
             <SectionLabel>Categories</SectionLabel>
             <SectionHeading center sx={{ mb: 1.5 }}>
-              What Can You Buy & Sell?
+              What Can You Buy &amp; Sell?
             </SectionHeading>
             <Typography sx={{ fontSize: "1rem", color: C.muted, maxWidth: 460, mx: "auto", lineHeight: 1.8 }}>
               EasyDeal covers two major categories with thousands of verified listings updated daily.
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center">
             {[
               {
                 icon: <HomeWorkRoundedIcon sx={{ fontSize: 40 }} />,
                 label: "Properties",
                 iconColor: "#0369a1",
                 bg: "linear-gradient(135deg, rgba(186,230,253,0.55), rgba(196,181,253,0.35))",
-                items: ["Apartments & Flats", "Independent Houses & Villas", "Plots & Land", "Commercial Spaces", "PG & Rentals"],
+                items: [
+                  "Apartments & Flats",
+                  "Independent Houses & Villas",
+                  "Plots & Land",
+                  "Commercial Spaces",
+                  "PG & Rentals",
+                ],
               },
               {
                 icon: <DirectionsCarRoundedIcon sx={{ fontSize: 40 }} />,
                 label: "Vehicles",
                 iconColor: "#166534",
                 bg: "linear-gradient(135deg, rgba(187,247,208,0.55), rgba(254,240,138,0.35))",
-                items: ["Cars — New & Used", "Bikes & Scooters", "Trucks & Commercial", "Electric Vehicles", "Spare Parts & Accessories"],
+                items: [
+                  "Cars — New & Used",
+                  "Bikes & Scooters",
+                  "Trucks & Commercial",
+                  "Electric Vehicles",
+                  "Spare Parts & Accessories",
+                ],
               },
             ].map((cat, i) => (
-              <Grid item xs={12} md={6} key={i}>
+              <Grid item xs={12} md={6} key={i} sx={{ display: "flex" }}>
                 <Box
                   sx={{
+                    ...equalCenteredCard,
+                    minHeight: { xs: 360, md: 390 },
                     p: { xs: 3.5, md: 5 },
                     borderRadius: "28px",
                     background: cat.bg,
                     border: "1px solid rgba(255,255,255,0.9)",
-                    height: "100%",
-                    transition: "transform 0.22s ease, box-shadow 0.22s ease",
-                    "&:hover": { transform: "translateY(-5px)", boxShadow: "0 16px 44px rgba(15,23,42,0.09)" },
+                    justifyContent: "space-between",
                   }}
                 >
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                  <Stack spacing={2.2} alignItems="center" sx={{ width: "100%" }}>
                     <Box
                       sx={{
-                        width: 68,
-                        height: 68,
-                        borderRadius: "18px",
+                        width: 72,
+                        height: 72,
+                        borderRadius: "20px",
                         bgcolor: "rgba(255,255,255,0.85)",
                         display: "grid",
                         placeItems: "center",
@@ -614,20 +669,44 @@ export default function HowItWorksPage() {
                     >
                       {cat.icon}
                     </Box>
-                    <Typography sx={{ fontSize: "1.4rem", fontWeight: 900, color: C.text, letterSpacing: "-0.02em" }}>
+
+                    <Typography
+                      sx={{
+                        fontSize: "1.4rem",
+                        fontWeight: 900,
+                        color: C.text,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
                       {cat.label}
                     </Typography>
-                  </Stack>
 
-                  <Stack spacing={1.25}>
-                    {cat.items.map((item, j) => (
-                      <Stack key={j} direction="row" spacing={1.25} alignItems="center">
-                        <CheckCircleRoundedIcon sx={{ fontSize: 17, color: cat.iconColor, flexShrink: 0 }} />
-                        <Typography sx={{ fontSize: "0.9rem", color: C.text, fontWeight: 500 }}>
-                          {item}
-                        </Typography>
-                      </Stack>
-                    ))}
+                    <Stack spacing={1.25} alignItems="center" sx={{ width: "100%" }}>
+                      {cat.items.map((item, j) => (
+                        <Stack
+                          key={j}
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{ width: "100%" }}
+                        >
+                          <CheckCircleRoundedIcon
+                            sx={{ fontSize: 17, color: cat.iconColor, flexShrink: 0 }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "0.9rem",
+                              color: C.text,
+                              fontWeight: 500,
+                              textAlign: "center",
+                            }}
+                          >
+                            {item}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
                   </Stack>
                 </Box>
               </Grid>
@@ -642,39 +721,36 @@ export default function HowItWorksPage() {
           <Box sx={{ textAlign: "center", mb: 7 }}>
             <SectionLabel>Why EasyDeal</SectionLabel>
             <SectionHeading center sx={{ mb: 1.5 }}>
-              Built for Speed, Trust & Simplicity
+              Built for Speed, Trust &amp; Simplicity
             </SectionHeading>
             <Typography sx={{ fontSize: "1rem", color: C.muted, maxWidth: 480, mx: "auto", lineHeight: 1.8 }}>
               Every feature is designed to make your buying or selling experience as smooth as possible.
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center">
             {FEATURES.map((f, i) => (
-              <Grid item xs={12} sm={6} md={4} key={i}>
+              <Grid item xs={12} sm={6} md={4} key={i} sx={{ display: "flex" }}>
                 <Box
                   sx={{
+                    ...equalCenteredCard,
+                    minHeight: { xs: 220, md: 240 },
                     p: { xs: 3, md: 3.5 },
                     borderRadius: "22px",
                     background: f.bg,
                     border: "1px solid rgba(255,255,255,0.88)",
-                    display: "flex",
-                    gap: 2.25,
-                    alignItems: "flex-start",
-                    height: "100%",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    "&:hover": { transform: "translateY(-5px)", boxShadow: "0 14px 36px rgba(15,23,42,0.09)" },
+                    justifyContent: "center",
+                    gap: 1.4,
                   }}
                 >
                   <Box
                     sx={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: "13px",
+                      width: 54,
+                      height: 54,
+                      borderRadius: "15px",
                       bgcolor: "rgba(255,255,255,0.82)",
                       display: "grid",
                       placeItems: "center",
-                      flexShrink: 0,
                       color: f.iconColor,
                       "& svg": { fontSize: 22 },
                       boxShadow: "0 3px 10px rgba(15,23,42,0.07)",
@@ -682,14 +758,27 @@ export default function HowItWorksPage() {
                   >
                     {f.icon}
                   </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: C.text, mb: 0.6 }}>
-                      {f.title}
-                    </Typography>
-                    <Typography sx={{ fontSize: "0.86rem", color: C.muted, lineHeight: 1.75 }}>
-                      {f.desc}
-                    </Typography>
-                  </Box>
+
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: C.text,
+                    }}
+                  >
+                    {f.title}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: "0.86rem",
+                      color: C.muted,
+                      lineHeight: 1.75,
+                      maxWidth: "28ch",
+                    }}
+                  >
+                    {f.desc}
+                  </Typography>
                 </Box>
               </Grid>
             ))}
@@ -790,7 +879,7 @@ export default function HowItWorksPage() {
               mb: 2,
             }}
           >
-            Ready? Let's Go.
+            Ready? Let&apos;s Go.
           </Typography>
 
           <Typography
@@ -818,33 +907,37 @@ export default function HowItWorksPage() {
               lineHeight: 1.85,
             }}
           >
-            Join thousands of buyers and sellers on EasyDeal. Sign up free and start today.
+            {isLoggedIn
+              ? "Start exploring listings, connect with sellers, and make your next move with confidence."
+              : "Join thousands of buyers and sellers on EasyDeal. Sign up free and start today."}
           </Typography>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
-            <Button
-              component={RouterLink}
-              to="/register"
-              variant="contained"
-              endIcon={<ArrowForwardRoundedIcon />}
-              sx={{
-                minHeight: 52,
-                px: 4,
-                borderRadius: "14px",
-                textTransform: "none",
-                fontWeight: 700,
-                fontSize: "1rem",
-                bgcolor: "#ffffff",
-                color: C.primary,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-                "&:hover": {
-                  bgcolor: "#f0fdf9",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
-                },
-              }}
-            >
-              Create Free Account
-            </Button>
+            {!isLoggedIn && (
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant="contained"
+                endIcon={<ArrowForwardRoundedIcon />}
+                sx={{
+                  minHeight: 52,
+                  px: 4,
+                  borderRadius: "14px",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  bgcolor: "#ffffff",
+                  color: C.primary,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+                  "&:hover": {
+                    bgcolor: "#f0fdf9",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+                  },
+                }}
+              >
+                Create Free Account
+              </Button>
+            )}
 
             <Button
               component={RouterLink}

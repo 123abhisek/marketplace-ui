@@ -117,7 +117,7 @@ function getNavConfig() {
         { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
         { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
         { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
-        { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+        // { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
@@ -133,7 +133,7 @@ function getNavConfig() {
         { label: "About Us", to: "/about" },
         { label: "How It Works", to: "/how-it-works" },
         { label: "FAQ", to: "/faq" },
-        { label: "Blog", to: "/blog" },
+        // { label: "Blog", to: "/blog" },
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
@@ -144,7 +144,7 @@ function getNavConfig() {
         { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
         { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
         { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
-        { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+        // { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
