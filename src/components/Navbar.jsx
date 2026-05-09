@@ -152,6 +152,7 @@ function getNavConfig() {
         { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
         { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
         { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
+        {label: "My Bookings", to: "/dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
       ],
     },
 

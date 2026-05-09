@@ -1,73 +1,113 @@
 
-
 // src/services/paymentService.js
-import { tokenStore } from './api'   // ✅ use the same in-memory token source
+//
+// Generic / standalone payment flow — NOT for listing bookings.
+//
+// Use this ONLY for payments that are NOT tied to a property or vehicle booking,
+// e.g. subscription upgrades, platform fees, etc.
+//
+// For booking a listing, use bookingService.js → initiateBooking() instead.
+//
+//   /v1/api/payment/create-order   ← creates a standalone Razorpay order
+//   /v1/api/payment/verify-payment ← verifies the payment signature
+//
+// These endpoints do NOT create a Booking row in the database.
 
-const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
-const ROOT = `${BASE}/v1/api/payment`
+import api from './api'
 
-// ✅ Was: localStorage.getItem('accesstoken') — can be stale / null
-// ✅ Now: tokenStore.get() — always in sync with what apiFetch uses
-function authHeaders() {
-  const token = tokenStore.get()
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  }
-}
-
-async function handleResponse(res) {
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const msg = Array.isArray(data?.detail)
-      ? data.detail.map(e => e.msg).join(', ')
-      : (data?.detail ?? `Request failed (${res.status})`)
-    const err    = new Error(msg)
-    err.status   = res.status
-    err.response = data
-    throw err
-  }
-  return data
-}
-
-// POST /v1/api/payment/create-order
-export async function createOrder({ amountInr, currency = 'INR', notes = {} }) {
-  const res = await fetch(`${ROOT}/create-order`, {
-    method:  'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({
-      amount:   Math.round(amountInr * 100),  // INR → paise
-      currency,
-      notes,
-    }),
+// ─── Load Razorpay SDK once into <head> ───────────────────────────────────────
+function loadRazorpaySDK() {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) return resolve()
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload  = resolve
+    script.onerror = () => reject(new Error('Failed to load Razorpay SDK'))
+    document.head.appendChild(script)
   })
-  return handleResponse(res)
 }
 
-// POST /v1/api/payment/verify-payment
-export async function verifyPayment({ razorpay_payment_id, razorpay_order_id, razorpay_signature }) {
-  const res = await fetch(`${ROOT}/verify-payment`, {
-    method:  'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ razorpay_payment_id, razorpay_order_id, razorpay_signature }),
+// ─── initiatePayment ──────────────────────────────────────────────────────────
+// Usage:
+//   import { initiatePayment } from '../services/paymentService'
+//
+//   const result = await initiatePayment({
+//     amount: 49900,                    // in paise (49900 = ₹499)
+//     currency: 'INR',
+//     notes: { purpose: 'Premium subscription' },
+//   })
+//
+// Resolves: { success, message, payment_id }
+// Rejects:  Error('Payment cancelled by user')  — on modal dismiss
+//           Error(description)                  — on payment failure
+
+export async function initiatePayment({ amount, currency = 'INR', notes = {} }) {
+  // Step 1 — create a standalone Razorpay order (no Booking row created)
+  const order = await api.post('/v1/api/payment/create-order', {
+    amount,
+    currency,
+    notes,
   })
-  return handleResponse(res)
+  // order = { order_id, amount, currency, key_id }
+
+  // Step 2 — load Razorpay JS SDK if not already loaded
+  await loadRazorpaySDK()
+
+  // Step 3 — open popup, verify on backend inside handler
+  return new Promise((resolve, reject) => {
+    const options = {
+      key:         order.key_id,
+      amount:      order.amount,
+      currency:    order.currency,
+      order_id:    order.order_id,
+      name:        'EasyDeal',
+      description: 'Payment',
+
+      // ── Payment success — MUST verify on backend ───────────────────────
+      handler: async function (response) {
+        try {
+          const result = await api.post('/v1/api/payment/verify-payment', {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_signature:  response.razorpay_signature,
+          })
+          // result = { success, message, payment_id }
+          resolve(result)
+        } catch (err) {
+          reject(err)
+        }
+      },
+
+      // ── User closes modal without paying ──────────────────────────────
+      modal: {
+        ondismiss: () => reject(new Error('Payment cancelled by user')),
+      },
+
+      theme: { color: '#4361EE' },
+    }
+
+    const rzp = new window.Razorpay(options)
+
+    rzp.on('payment.failed', (response) => {
+      reject(new Error(response.error?.description || 'Payment failed'))
+    })
+
+    rzp.open()
+  })
 }
 
-// GET /v1/api/payment/my/payments
+// ─── Payment history helpers ──────────────────────────────────────────────────
+
+/** GET /v1/api/payment/my/payments
+ *  Full payment history for the current logged-in user.
+ */
 export async function getMyPayments() {
-  const res = await fetch(`${ROOT}/my/payments`, {
-    method:  'GET',
-    headers: authHeaders(),
-  })
-  return handleResponse(res)
+  return api.get('/v1/api/payment/my/payments')
 }
 
-// GET /v1/api/payment/{payment_id}
+/** GET /v1/api/payment/:payment_id
+ *  Single payment record by ID.
+ */
 export async function getPayment(paymentId) {
-  const res = await fetch(`${ROOT}/${paymentId}`, {
-    method:  'GET',
-    headers: authHeaders(),
-  })
-  return handleResponse(res)
+  return api.get(`/v1/api/payment/${paymentId}`)
 }

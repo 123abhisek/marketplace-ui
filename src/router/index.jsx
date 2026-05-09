@@ -6,7 +6,7 @@ import PublicLayout    from '../layouts/PublicLayout'
 import AuthLayout      from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import DashboardGate   from '../layouts/DashboardGate'
-import PremiumGate     from '../layouts/PremiumGate'      // ← new
+import PremiumGate     from '../layouts/PremiumGate'
 
 import LandingPage      from '../pages/LandingPage'
 import SubscriptionPage from '../pages/SubscriptionPage'
@@ -26,28 +26,30 @@ import LogoutPage             from '../dashboard/LogoutPage'
 
 import PropertyDetailPage from '../pages/PropertyDetailPage'
 import VehicleDetailPage  from '../pages/VehicleDetailPage'
-import AboutPage from '../pages/AboutPage'
-import HowItWorksPage from '../pages/HowItWorksPage'
-import FAQPage from '../pages/FAQPage'
-import ContactPage from '../pages/ContactPage'
-import PrivacyPolicyPage from '../support/PrivacyPolicyPage'
+import AboutPage          from '../pages/AboutPage'
+import HowItWorksPage     from '../pages/HowItWorksPage'
+import FAQPage            from '../pages/FAQPage'
+import ContactPage        from '../pages/ContactPage'
+import PrivacyPolicyPage  from '../support/PrivacyPolicyPage'
 import TermsOfServicePage from '../support/TermsOfServicePage'
-import RefundPolicyPage from '../support/RefundPolicyPage'
+import RefundPolicyPage   from '../support/RefundPolicyPage'
+
+import MyBookingsPage from '../dashboard/MyBookingsPage'
 
 const routes = [
   // ── Public pages ─────────────────────────────────────────────────
   {
     element: <PublicLayout />,
     children: [
-      { path: '/',             element: <LandingPage /> },
-      { path: "/about", element: <AboutPage /> },
-      { path: "/how-it-works", element: <HowItWorksPage /> },
-      { path: "/faq", element: <FAQPage /> },
-      { path: "/contact", element: <ContactPage /> },
-      { path: "/privacy-policy", element: <PrivacyPolicyPage /> },
-      { path: "/terms", element: <TermsOfServicePage /> },
-      { path: "/refund-policy", element: <RefundPolicyPage /> },
-      { path: '/subscription', element: <SubscriptionPage /> },
+      { path: '/',                element: <LandingPage /> },
+      { path: '/about',           element: <AboutPage /> },
+      { path: '/how-it-works',    element: <HowItWorksPage /> },
+      { path: '/faq',             element: <FAQPage /> },
+      { path: '/contact',         element: <ContactPage /> },
+      { path: '/privacy-policy',  element: <PrivacyPolicyPage /> },
+      { path: '/terms',           element: <TermsOfServicePage /> },
+      { path: '/refund-policy',   element: <RefundPolicyPage /> },
+      { path: '/subscription',    element: <SubscriptionPage /> },
     ],
   },
 
@@ -68,25 +70,27 @@ const routes = [
     ],
   },
 
-  // ── All /dashboard/* under ONE parent ────────────────────────────
-  // DashboardGate here only checks: is the user logged in?
+  // ── All /dashboard/* ─────────────────────────────────────────────
   {
     path: '/dashboard',
     element: <DashboardGate />,
     children: [
 
-      // ✅ Detail pages — any logged-in user (free OR premium)
+      // Detail pages — any logged-in user (free OR premium)
       { path: 'properties/:id', element: <PropertyDetailPage /> },
       { path: 'vehicles/:id',   element: <VehicleDetailPage /> },
 
-      // ✅ Premium-only pages — PremiumGate checks isPremium
+      // ✅ My Bookings — any logged-in user (free OR premium)
+      { path: 'my-bookings', element: <MyBookingsPage /> },
+      // Premium-only pages wrapped in PremiumGate + DashboardLayout
       {
         element: <PremiumGate />,
         children: [
           {
             element: <DashboardLayout />,
             children: [
-              { index: true,          element: <DashboardHome /> },
+              { index: true,          element: <DashboardHome /> },          // /dashboard
+              { path: 'home',         element: <DashboardHome /> },          // /dashboard/home  ← alias
               { path: 'properties',   element: <PropertiesPage /> },
               { path: 'vehicles',     element: <VehiclesPage /> },
               { path: 'add-property', element: <AddPropertyPage /> },
@@ -103,6 +107,7 @@ const routes = [
     ],
   },
 
+  // ── Catch-all ─────────────────────────────────────────────────────
   { path: '*', element: <Navigate to="/" replace /> },
 ]
 
