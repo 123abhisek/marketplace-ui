@@ -275,7 +275,7 @@ function Logo() {
         component="img"
         src="/logo.png"
         alt="EasyDeal"
-        sx={{ height: 36, width: "auto", objectFit: "contain" }}
+        sx={{ height: 50, width: "auto", objectFit: "contain" }}
       />
     </Stack>
   );
