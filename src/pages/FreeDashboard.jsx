@@ -1,4 +1,4 @@
-// src/pages/FreeDashboard.jsx
+
 import {
   Avatar,
   Box,
@@ -6,739 +6,801 @@ import {
   Card,
   CardContent,
   Chip,
+  Container,
   Divider,
   Grid,
   Stack,
   Typography,
-  LinearProgress,
 } from "@mui/material";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
+import DiamondRoundedIcon from "@mui/icons-material/DiamondRounded";
 import { useAppState } from "../hooks/useAppState";
-import { useNavigate } from "react-router-dom";
-import { Link as RouterLink }               from 'react-router-dom'
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const cardSx = {
-  borderRadius: "18px",
-  border: "1px solid rgba(226,232,240,0.9)",
-  boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-  background: "#fff",
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+
+const COLORS = {
+  pageBg: "#f5f7fb",
+  shell: "#eef2f7",
+  surface: "#ffffff",
+  surfaceSoft: "#f8fafc",
+  border: "rgba(15,23,42,0.08)",
+  borderStrong: "rgba(15,23,42,0.12)",
+  text: "#0f172a",
+  muted: "#64748b",
+  faint: "#94a3b8",
+  primary: "#0f766e",
+  primarySoft: "rgba(15,118,110,0.08)",
+  premium: "#5b4cf0",
+  premiumSoft: "rgba(91,76,240,0.08)",
+  premiumBorder: "rgba(91,76,240,0.18)",
+  shadow: "0 10px 30px rgba(15,23,42,0.06)",
+  shadowSoft: "0 2px 10px rgba(15,23,42,0.04)",
 };
 
-const upgradeBtnSx = {
-  borderRadius: "12px",
-  py: 1.4,
+const shellCardSx = {
+  borderRadius: "28px",
+  background: "rgba(255,255,255,0.72)",
+  border: `1px solid ${COLORS.border}`,
+  boxShadow: "0 20px 60px rgba(15,23,42,0.06)",
+  backdropFilter: "blur(8px)",
+};
+
+const cardSx = {
+  borderRadius: "22px",
+  background: COLORS.surface,
+  border: `1px solid ${COLORS.border}`,
+  boxShadow: COLORS.shadowSoft,
+};
+
+const sectionTitleSx = {
+  fontSize: "0.78rem",
   fontWeight: 800,
-  fontSize: "0.9rem",
-  background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: COLORS.faint,
+};
+
+const premiumBtnSx = {
+  minHeight: 50,
+  px: 2.2,
+  borderRadius: "16px",
+  textTransform: "none",
+  fontWeight: 800,
+  fontSize: "0.95rem",
   color: "#fff",
-  boxShadow: "0 8px 24px rgba(124,58,237,0.28)",
+  backgroundColor: COLORS.premium,
+  boxShadow: "0 12px 24px rgba(91,76,240,0.22)",
   "&:hover": {
-    background: "linear-gradient(135deg,#6d28d9,#9333ea)",
-    boxShadow: "0 12px 32px rgba(124,58,237,0.36)",
-    transform: "translateY(-1px)",
+    backgroundColor: "#4c3fe0",
+    boxShadow: "0 16px 28px rgba(91,76,240,0.28)",
   },
-  transition: "all .18s ease",
 };
 
 const PREMIUM_PERKS = [
-  "Post unlimited property listings",
-  "Post unlimited vehicle listings",
-  "Priority placement in search results",
-  "Direct contact with buyers & sellers",
-  "Verified seller badge on your profile",
+  "Unlimited property listings",
+  "Unlimited vehicle listings",
+  "Priority search placement",
+  "Direct buyer and seller contact",
+  "Verified premium seller badge",
 ];
 
-// ─── Locked feature card ──────────────────────────────────────────────────────
 function LockedCard({ icon, title, desc }) {
   return (
-    <Card sx={{ ...cardSx, position: "relative", overflow: "hidden" }}>
-      {/* Frosted lock overlay */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 2,
-          background: "rgba(255,255,255,0.70)",
-          backdropFilter: "blur(3px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 0.8,
-        }}
-      >
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            background: "rgba(124,58,237,0.10)",
-            border: "1.5px solid rgba(124,58,237,0.22)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <LockRoundedIcon sx={{ fontSize: 18, color: "#7c3aed" }} />
-        </Box>
-        <Typography
-          sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed" }}
-        >
-          Premium only
-        </Typography>
-      </Box>
-
-      {/* Blurred background content */}
-      <CardContent sx={{ p: 2.5, filter: "blur(1.5px)", userSelect: "none" }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+    <Card sx={{ ...cardSx, position: "relative", overflow: "hidden", height: "100%" }}>
+      <CardContent sx={{ p: 2.25 }}>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.1, opacity: 0.45 }}>
           <Box
             sx={{
-              width: 38,
-              height: 38,
-              borderRadius: "10px",
-              background: "rgba(226,232,240,0.6)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#94a3b8",
+              width: 42,
+              height: 42,
+              borderRadius: "14px",
+              background: COLORS.surfaceSoft,
+              border: `1px solid ${COLORS.border}`,
+              color: COLORS.faint,
+              display: "grid",
+              placeItems: "center",
+              flexShrink: 0,
             }}
           >
             {icon}
           </Box>
-          <Typography
-            sx={{ fontWeight: 700, fontSize: "0.9rem", color: "#0f172a" }}
-          >
+          <Typography sx={{ fontWeight: 800, fontSize: "0.96rem", color: COLORS.text }}>
             {title}
           </Typography>
         </Stack>
+
         <Typography
-          sx={{ fontSize: "0.82rem", color: "#64748b", lineHeight: 1.6 }}
+          sx={{
+            fontSize: "0.84rem",
+            lineHeight: 1.7,
+            color: COLORS.muted,
+            opacity: 0.58,
+            pr: 3,
+          }}
         >
           {desc}
         </Typography>
       </CardContent>
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backdropFilter: "blur(3px)",
+          background: "rgba(255,255,255,0.64)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <Chip
+          icon={<LockRoundedIcon sx={{ fontSize: "15px !important", color: COLORS.premium }} />}
+          label="Premium only"
+          sx={{
+            height: 34,
+            borderRadius: "999px",
+            fontWeight: 800,
+            fontSize: "0.75rem",
+            color: COLORS.premium,
+            background: "#fff",
+            border: `1px solid ${COLORS.premiumBorder}`,
+            boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
+            "& .MuiChip-label": { px: 1.1 },
+          }}
+        />
+      </Box>
     </Card>
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-export default function FreeDashboard() {
-  const { user, logout, upgradePremium, properties, vehicles } = useAppState();
-  const navigate = useNavigate();
-
+function DetailRow({ label, value, action, premium }) {
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {/* ── Top nav ── */}
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(226,232,240,0.8)",
-          px: { xs: 2, sm: 4 },
-          py: 1.5,
-        }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Stack direction="row" spacing={1.2} alignItems="center">
-            <Box
-              component={RouterLink}
-              to="/"
-              sx={{ textDecoration: "none", minWidth: 0, flexShrink: 0 }}
-            >
-          
-            <Box
-              component="img"
-              src="/logo.png"
-              alt="Easydeal Logo"
-              sx={{ height: 46, width: "auto", objectFit: "contain" }}
-            />
-            </Box>
-            <Chip
-              label="Free"
-              size="small"
-              sx={{
-                height: 22,
-                borderRadius: "999px",
-                fontWeight: 800,
-                fontSize: "0.65rem",
-                background: "rgba(100,116,139,0.10)",
-                color: "#64748b",
-                border: "1px solid rgba(100,116,139,0.20)",
-              }}
-            />
-          </Stack>
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="space-between"
+      spacing={2}
+      sx={{
+        py: 1.4,
+        borderBottom: `1px solid ${COLORS.border}`,
+      }}
+    >
+      <Typography sx={{ fontSize: "0.84rem", color: COLORS.muted, fontWeight: 600 }}>
+        {label}
+      </Typography>
 
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button
-              size="small"
-              onClick={upgradePremium}
-              startIcon={<StarRoundedIcon sx={{ fontSize: 15 }} />}
-              sx={{
-                borderRadius: "10px",
-                px: 1.8,
-                py: 0.7,
-                fontWeight: 800,
-                fontSize: "0.78rem",
-                background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-                color: "#fff",
-                display: { xs: "none", sm: "flex" },
-                "&:hover": {
-                  background: "linear-gradient(135deg,#6d28d9,#9333ea)",
-                },
-              }}
-            >
-              Upgrade
-            </Button>
-            <Avatar
-              src={user.photo || undefined}
-              sx={{
-                width: 34,
-                height: 34,
-                fontSize: "0.85rem",
-                background: "#0f766e",
-                cursor: "pointer",
-              }}
-            >
-              {user.name?.[0]?.toUpperCase()}
-            </Avatar>
-            <Button
-              size="small"
-              onClick={logout}
-              sx={{ color: "#94a3b8", minWidth: 0, p: 0.5 }}
-            >
-              <LogoutRoundedIcon sx={{ fontSize: 18 }} />
-            </Button>
-          </Stack>
-        </Stack>
-      </Box>
-
-      <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 4 }, py: 4 }}>
-        {/* ── Welcome banner ── */}
-        <Card
-          sx={{
-            ...cardSx,
-            mb: 3,
-            background:
-              "linear-gradient(135deg,#0f172a 0%,#0e4d6a 60%,#0f766e 100%)",
-            border: "none",
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {/* Decorative blobs */}
-          {[
-            { top: -40, right: -40, size: 180 },
-            { bottom: -30, left: 60, size: 120 },
-          ].map((b, i) => (
-            <Box
-              key={i}
-              aria-hidden
-              sx={{
-                position: "absolute",
-                width: b.size,
-                height: b.size,
-                top: b.top ?? "auto",
-                bottom: b.bottom ?? "auto",
-                left: b.left ?? "auto",
-                right: b.right ?? "auto",
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.06)",
-                pointerEvents: "none",
-              }}
-            />
-          ))}
-          <CardContent
-            sx={{ p: { xs: 2.5, sm: 3.5 }, position: "relative", zIndex: 1 }}
-          >
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={2.5}
-              alignItems={{ sm: "center" }}
-              justifyContent="space-between"
-            >
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,0.55)",
-                    mb: 0.5,
-                  }}
-                >
-                  Welcome back
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: 900,
-                    fontSize: { xs: "1.4rem", sm: "1.7rem" },
-                    color: "#fff",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.15,
-                    mb: 1,
-                  }}
-                >
-                  {user.name || "Explorer"} 👋
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.84rem",
-                    color: "rgba(255,255,255,0.60)",
-                    lineHeight: 1.65,
-                    maxWidth: 380,
-                  }}
-                >
-                  You're on the{" "}
-                  <strong style={{ color: "rgba(255,255,255,0.85)" }}>
-                    Free plan
-                  </strong>
-                  . Browse all listings — upgrade to post your own.
-                </Typography>
-              </Box>
-              <Button
-                onClick={upgradePremium}
-                startIcon={<WorkspacePremiumRoundedIcon />}
-                sx={{
-                  ...upgradeBtnSx,
-                  flexShrink: 0,
-                  px: 3,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Upgrade to Premium
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        {/* ── Stats row ── */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {[
-            {
-              label: "Properties available",
-              value: properties.length,
-              icon: <HomeWorkRoundedIcon sx={{ fontSize: 20 }} />,
-              color: "#0f766e",
-              bg: "rgba(15,118,110,0.09)",
-            },
-            {
-              label: "Vehicles available",
-              value: vehicles.length,
-              icon: <DirectionsCarRoundedIcon sx={{ fontSize: 20 }} />,
-              color: "#0e4d6a",
-              bg: "rgba(14,77,106,0.09)",
-            },
-            {
-              label: "Your listings",
-              value: "0 / 0",
-              icon: <LockRoundedIcon sx={{ fontSize: 20 }} />,
-              color: "#7c3aed",
-              bg: "rgba(124,58,237,0.09)",
-              locked: true,
-            },
-          ].map((s) => (
-            <Grid item xs={12} sm={4} key={s.label}>
-              <Card sx={cardSx}>
-                <CardContent sx={{ p: 2.5 }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: "12px",
-                        background: s.bg,
-                        color: s.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {s.icon}
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontWeight: 900,
-                          fontSize: "1.4rem",
-                          color: "#0f172a",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {s.value}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#64748b",
-                          fontWeight: 600,
-                          mt: 0.3,
-                        }}
-                      >
-                        {s.label}
-                      </Typography>
-                      {s.locked && (
-                        <Typography
-                          sx={{
-                            fontSize: "0.68rem",
-                            color: "#7c3aed",
-                            fontWeight: 700,
-                            mt: 0.2,
-                          }}
-                        >
-                          Premium required to post
-                        </Typography>
-                      )}
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* ── Browse listings ── */}
-        <Card sx={{ ...cardSx, mb: 3 }}>
-          <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 2.5 }}
-            >
-              <Typography
-                sx={{ fontWeight: 800, fontSize: "1rem", color: "#0f172a" }}
-              >
-                Browse Listings
-              </Typography>
-              <Chip
-                label="Free access"
-                size="small"
-                sx={{
-                  height: 24,
-                  borderRadius: "999px",
-                  fontWeight: 700,
-                  fontSize: "0.68rem",
-                  background: "rgba(15,118,110,0.09)",
-                  color: "#0f766e",
-                  border: "1px solid rgba(15,118,110,0.18)",
-                }}
-              />
-            </Stack>
-            <Grid container spacing={2}>
-              {[
-                {
-                  icon: <HomeWorkRoundedIcon sx={{ fontSize: 22 }} />,
-                  label: "Properties",
-                  count: properties.length,
-                  sub: "Flats, houses, plots & more",
-                  color: "#0f766e",
-                  bg: "rgba(15,118,110,0.08)",
-                  path: "/properties",
-                },
-                {
-                  icon: <DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />,
-                  label: "Vehicles",
-                  count: vehicles.length,
-                  sub: "Cars, bikes, trucks & more",
-                  color: "#0e4d6a",
-                  bg: "rgba(14,77,106,0.08)",
-                  path: "/vehicles",
-                },
-              ].map((item) => (
-                <Grid item xs={12} sm={6} key={item.label}>
-                  <Box
-                    onClick={() => navigate(item.path)}
-                    sx={{
-                      p: 2.5,
-                      borderRadius: "14px",
-                      border: "1.5px solid rgba(226,232,240,0.9)",
-                      cursor: "pointer",
-                      transition: "all .18s ease",
-                      "&:hover": {
-                        borderColor: item.color,
-                        background: item.bg,
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 8px 24px rgba(0,0,0,0.07)",
-                      },
-                    }}
-                  >
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "12px",
-                            background: item.bg,
-                            color: item.color,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {item.icon}
-                        </Box>
-                        <Box>
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              fontSize: "0.95rem",
-                              color: "#0f172a",
-                            }}
-                          >
-                            {item.label}
-                          </Typography>
-                          <Typography
-                            sx={{ fontSize: "0.76rem", color: "#64748b" }}
-                          >
-                            {item.count} listings · {item.sub}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <ArrowForwardRoundedIcon
-                        sx={{ fontSize: 18, color: "#94a3b8" }}
-                      />
-                    </Stack>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* ── Locked features row ── */}
+      <Stack direction="row" alignItems="center" spacing={1.1} sx={{ minWidth: 0 }}>
+        {premium && (
+          <Chip
+            size="small"
+            label="Premium"
+            sx={{
+              height: 22,
+              borderRadius: "999px",
+              fontWeight: 800,
+              fontSize: "0.66rem",
+              color: COLORS.premium,
+              background: COLORS.premiumSoft,
+              border: `1px solid ${COLORS.premiumBorder}`,
+            }}
+          />
+        )}
         <Typography
           sx={{
-            fontWeight: 800,
-            fontSize: "0.9rem",
-            color: "#64748b",
-            mb: 1.5,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
+            fontSize: "0.84rem",
+            color: COLORS.text,
+            fontWeight: 700,
+            textAlign: "right",
+            wordBreak: "break-word",
           }}
         >
-          Premium features — locked
+          {value}
         </Typography>
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
-            <LockedCard
-              icon={<HomeWorkRoundedIcon sx={{ fontSize: 18 }} />}
-              title="Post Property Listing"
-              desc="List your property for sale or rent and reach thousands of buyers."
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <LockedCard
-              icon={<DirectionsCarRoundedIcon sx={{ fontSize: 18 }} />}
-              title="Post Vehicle Listing"
-              desc="Sell your car, bike, or truck by posting directly to the marketplace."
-            />
-          </Grid>
-        </Grid>
+        {action ? (
+          <Typography
+            sx={{
+              fontSize: "0.75rem",
+              color: COLORS.primary,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {action}
+          </Typography>
+        ) : null}
+      </Stack>
+    </Stack>
+  );
+}
 
-        {/* ── Upgrade CTA card ── */}
-        <Card
-          sx={{
-            borderRadius: "20px",
-            background: "linear-gradient(135deg,#faf5ff 0%,#f3e8ff 100%)",
-            border: "1.5px solid rgba(124,58,237,0.20)",
-            boxShadow: "0 4px 24px rgba(124,58,237,0.10)",
-          }}
-        >
-          <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={3}
-              alignItems={{ md: "center" }}
-              justifyContent="space-between"
-            >
-              <Box sx={{ flex: 1 }}>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{ mb: 1 }}
-                >
-                  <WorkspacePremiumRoundedIcon
-                    sx={{ color: "#7c3aed", fontSize: 22 }}
-                  />
-                  <Typography
-                    sx={{
-                      fontWeight: 900,
-                      fontSize: "1.1rem",
-                      color: "#3b0764",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    Unlock Premium for ₹299
-                  </Typography>
-                </Stack>
-                <Typography
-                  sx={{
-                    fontSize: "0.84rem",
-                    color: "#6b21a8",
-                    lineHeight: 1.7,
-                    mb: 2,
-                  }}
-                >
-                  Everything you need to buy, sell, and connect on India's
-                  fastest-growing marketplace.
-                </Typography>
-                <Stack spacing={0.9}>
-                  {PREMIUM_PERKS.map((perk) => (
-                    <Stack
-                      key={perk}
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                    >
-                      <Box
-                        sx={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: "50%",
-                          background: "rgba(124,58,237,0.15)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <CheckRoundedIcon
-                          sx={{ fontSize: 11, color: "#7c3aed" }}
-                        />
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: "0.82rem",
-                          color: "#4c1d95",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {perk}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              </Box>
+export default function FreeDashboard() {
+  const { user, logout, upgradePremium, properties = [], vehicles = [] } = useAppState();
+  const navigate = useNavigate();
 
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{
-                  display: { xs: "none", md: "block" },
-                  borderColor: "rgba(124,58,237,0.15)",
-                }}
-              />
+  const initials =
+    user?.name
+      ?.trim()
+      ?.split(" ")
+      ?.filter(Boolean)
+      ?.slice(0, 2)
+      ?.map((part) => part[0]?.toUpperCase())
+      ?.join("") || "U";
 
-              <Box
-                sx={{ textAlign: { xs: "left", md: "center" }, flexShrink: 0 }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "#7c3aed",
-                    mb: 0.3,
-                  }}
+  return (
+    <Box sx={{ minHeight: "100vh", background: COLORS.pageBg, py: { xs: 2, md: 3 } }}>
+      <Container maxWidth="lg">
+        <Box sx={{ ...shellCardSx, p: { xs: 1.5, sm: 2, md: 2.5 } }}>
+          <Box
+            sx={{
+              ...cardSx,
+              borderRadius: "22px",
+              px: { xs: 1.5, sm: 2.2 },
+              py: 1.2,
+              mb: 2,
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+              <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
+                <Box
+                  component={RouterLink}
+                  to="/"
+                  sx={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
                 >
-                  ONE-TIME PAYMENT
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: 900,
-                    fontSize: "2.8rem",
-                    color: "#3b0764",
-                    lineHeight: 1,
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  ₹299
-                </Typography>
-                <Typography
-                  sx={{ fontSize: "0.75rem", color: "#6b21a8", mb: 2 }}
-                >
-                  Lifetime premium access
-                </Typography>
-
-                {/* Progress bar teaser */}
-                <Box sx={{ mb: 2 }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    sx={{ mb: 0.5 }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "0.68rem",
-                        fontWeight: 700,
-                        color: "#7c3aed",
-                      }}
-                    >
-                      Limited slots
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.68rem",
-                        fontWeight: 700,
-                        color: "#7c3aed",
-                      }}
-                    >
-                      73% filled
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={73}
-                    sx={{
-                      height: 6,
-                      borderRadius: 999,
-                      backgroundColor: "rgba(124,58,237,0.15)",
-                      "& .MuiLinearProgress-bar": {
-                        borderRadius: 999,
-                        background: "linear-gradient(90deg,#7c3aed,#a855f7)",
-                      },
-                    }}
+                  <Box
+                    component="img"
+                    src="/logo.png"
+                    alt="Easydeal Logo"
+                    sx={{ height: { xs: 34, sm: 38 }, width: "auto", objectFit: "contain" }}
                   />
                 </Box>
 
-                <Button fullWidth onClick={upgradePremium} sx={upgradeBtnSx}>
-                  Upgrade Now →
-                </Button>
-                <Typography
+                <Chip
+                  label="Free user"
+                  size="small"
                   sx={{
-                    fontSize: "0.68rem",
-                    color: "#9333ea",
-                    mt: 1,
-                    fontWeight: 600,
+                    height: 26,
+                    borderRadius: "999px",
+                    fontWeight: 800,
+                    fontSize: "0.7rem",
+                    color: COLORS.muted,
+                    background: COLORS.surfaceSoft,
+                    border: `1px solid ${COLORS.border}`,
+                  }}
+                />
+              </Stack>
+
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button
+                  onClick={upgradePremium}
+                  sx={{
+                    display: { xs: "none", sm: "inline-flex" },
+                    minHeight: 40,
+                    px: 1.8,
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 800,
+                    fontSize: "0.84rem",
+                    color: COLORS.text,
+                    background: COLORS.surfaceSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    "&:hover": { background: "#f1f5f9" },
+                  }}
+                  startIcon={<DiamondRoundedIcon sx={{ fontSize: 17 }} />}
+                >
+                  Upgrade
+                </Button>
+
+                <Avatar
+                  src={user?.photo || undefined}
+                  sx={{
+                    width: 38,
+                    height: 38,
+                    bgcolor: COLORS.premium,
+                    fontWeight: 800,
+                    fontSize: "0.9rem",
                   }}
                 >
-                  Instant activation · No hidden fees
-                </Typography>
-              </Box>
+                  {initials}
+                </Avatar>
+
+                <Button
+                  onClick={logout}
+                  sx={{
+                    minWidth: 40,
+                    width: 40,
+                    height: 40,
+                    p: 0,
+                    borderRadius: "12px",
+                    color: COLORS.muted,
+                    background: COLORS.surfaceSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    "&:hover": { background: "#f8fafc", color: COLORS.text },
+                  }}
+                >
+                  <LogoutRoundedIcon sx={{ fontSize: 18 }} />
+                </Button>
+              </Stack>
             </Stack>
-          </CardContent>
-        </Card>
-      </Box>
+          </Box>
+
+          <Grid container spacing={2.2}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ ...cardSx, overflow: "hidden", height: "100%" }}>
+                <Box
+                  sx={{
+                    height: { xs: 140, sm: 156 },
+                    background: "linear-gradient(135deg, #16c2a3 0%, #4f7cff 100%)",
+                  }}
+                />
+
+                <CardContent
+                  sx={{
+                    px: { xs: 2, sm: 2.5 },
+                    pb: 2.5,
+                    pt: 0,
+                  }}
+                >
+                  <Stack
+                    direction={{ xs: "column", sm: "row", md: "column" }}
+                    spacing={{ xs: 1.6, sm: 1.8, md: 1.6 }}
+                    alignItems={{ xs: "flex-start", sm: "flex-end", md: "flex-start" }}
+                    sx={{
+                      mt: { xs: -4.5, sm: -5.5 },
+                    }}
+                  >
+                    <Avatar
+                      src={user?.photo || undefined}
+                      sx={{
+                        width: { xs: 88, sm: 94 },
+                        height: { xs: 88, sm: 94 },
+                        border: "4px solid #fff",
+                        boxShadow: "0 10px 24px rgba(15,23,42,0.12)",
+                        bgcolor: COLORS.surfaceSoft,
+                        color: COLORS.text,
+                        fontWeight: 900,
+                        fontSize: "1.5rem",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {initials}
+                    </Avatar>
+
+                    <Box
+                      sx={{
+                        minWidth: 0,
+                        flex: 1,
+                        pt: { xs: 0, sm: 4.5, md: 0 },
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: { xs: "1.75rem", sm: "1.6rem" },
+                          lineHeight: 1.05,
+                          letterSpacing: "-0.03em",
+                          color: COLORS.text,
+                          fontWeight: 900,
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {user?.name || "Explorer User"}
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          mt: 1,
+                          fontSize: "0.98rem",
+                          lineHeight: 1.65,
+                          color: COLORS.muted,
+                          maxWidth: 26,
+                        }}
+                      >
+                        Browse listings, track your account, and unlock premium posting.
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    flexWrap="wrap"
+                    sx={{ mt: 2.2, rowGap: 1 }}
+                  >
+                    <Chip
+                      label="Free User"
+                      size="small"
+                      sx={{
+                        height: 28,
+                        borderRadius: "999px",
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        color: COLORS.muted,
+                        background: COLORS.surfaceSoft,
+                        border: `1px solid ${COLORS.border}`,
+                      }}
+                    />
+                    <Stack direction="row" spacing={0.6} alignItems="center">
+                      <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
+                      <Typography sx={{ fontSize: "0.84rem", color: COLORS.muted, fontWeight: 600 }}>
+                        Bengaluru, India
+                      </Typography>
+                    </Stack>
+                  </Stack>
+
+                  <Button
+                    fullWidth
+                    onClick={upgradePremium}
+                    startIcon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />}
+                    sx={{ ...premiumBtnSx, mt: 2.5 }}
+                  >
+                    Upgrade Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={8}>
+              <Stack spacing={2.2}>
+                <Card sx={cardSx}>
+                  <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                    <Typography sx={sectionTitleSx}>Account overview</Typography>
+
+                    <Box sx={{ mt: 1.2 }}>
+                      <DetailRow label="Member name" value={user?.name || "Easydeal user"} action="Edit" />
+                      <DetailRow label="Email" value={user?.email || "Not added yet"} action="Edit" />
+                      <DetailRow label="Plan type" value="Free access" action="Upgrade" />
+                      <DetailRow label="Post property listings" value="Locked" premium />
+                      <DetailRow label="Post vehicle listings" value="Locked" premium />
+                      <Box sx={{ pt: 1.4 }}>
+                        <Typography sx={{ fontSize: "0.78rem", color: COLORS.faint, fontWeight: 700 }}>
+                          Free users can browse all listings. Upgrade to publish and get priority visibility.
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                <Grid container spacing={2.2}>
+                  {[
+                    {
+                      label: "Properties available",
+                      value: properties.length,
+                      icon: <HomeWorkRoundedIcon sx={{ fontSize: 20 }} />,
+                      tone: COLORS.primary,
+                      soft: COLORS.primarySoft,
+                    },
+                    {
+                      label: "Vehicles available",
+                      value: vehicles.length,
+                      icon: <DirectionsCarRoundedIcon sx={{ fontSize: 20 }} />,
+                      tone: "#2563eb",
+                      soft: "rgba(37,99,235,0.08)",
+                    },
+                    {
+                      label: "Listings you can post",
+                      value: "0",
+                      sub: "Upgrade required",
+                      icon: <LockRoundedIcon sx={{ fontSize: 20 }} />,
+                      tone: COLORS.premium,
+                      soft: COLORS.premiumSoft,
+                    },
+                  ].map((item) => (
+                    <Grid item xs={12} sm={4} key={item.label}>
+                      <Card sx={{ ...cardSx, height: "100%" }}>
+                        <CardContent sx={{ p: 2.2 }}>
+                          <Stack spacing={1.4}>
+                            <Box
+                              sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: "14px",
+                                background: item.soft,
+                                color: item.tone,
+                                display: "grid",
+                                placeItems: "center",
+                              }}
+                            >
+                              {item.icon}
+                            </Box>
+
+                            <Typography
+                              sx={{
+                                fontSize: "1.7rem",
+                                lineHeight: 1,
+                                fontWeight: 900,
+                                color: COLORS.text,
+                              }}
+                            >
+                              {item.value}
+                            </Typography>
+
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontSize: "0.82rem",
+                                  color: COLORS.muted,
+                                  fontWeight: 700,
+                                  lineHeight: 1.45,
+                                }}
+                              >
+                                {item.label}
+                              </Typography>
+                              {item.sub ? (
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.72rem",
+                                    color: item.tone,
+                                    fontWeight: 800,
+                                    mt: 0.55,
+                                  }}
+                                >
+                                  {item.sub}
+                                </Typography>
+                              ) : null}
+                            </Box>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Card sx={cardSx}>
+                  <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      justifyContent="space-between"
+                      spacing={1}
+                      sx={{ mb: 2 }}
+                    >
+                      <Typography sx={sectionTitleSx}>Browse marketplace</Typography>
+
+                      <Chip
+                        label="Open for free users"
+                        size="small"
+                        sx={{
+                          height: 26,
+                          borderRadius: "999px",
+                          fontWeight: 800,
+                          fontSize: "0.7rem",
+                          color: COLORS.primary,
+                          background: COLORS.primarySoft,
+                          border: `1px solid rgba(15,118,110,0.16)`,
+                        }}
+                      />
+                    </Stack>
+
+                    <Grid container spacing={2}>
+                      {[
+                        {
+                          label: "Property listings",
+                          count: properties.length,
+                          sub: "Flats, houses, plots and rentals",
+                          path: "/properties",
+                          tone: COLORS.primary,
+                          soft: COLORS.primarySoft,
+                          icon: <HomeWorkRoundedIcon sx={{ fontSize: 22 }} />,
+                        },
+                        {
+                          label: "Vehicle listings",
+                          count: vehicles.length,
+                          sub: "Cars, bikes, trucks and more",
+                          path: "/vehicles",
+                          tone: "#2563eb",
+                          soft: "rgba(37,99,235,0.08)",
+                          icon: <DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />,
+                        },
+                      ].map((item) => (
+                        <Grid item xs={12} sm={6} key={item.label}>
+                          <Box
+                            onClick={() => navigate(item.path)}
+                            sx={{
+                              p: 2.1,
+                              borderRadius: "18px",
+                              border: `1px solid ${COLORS.border}`,
+                              background: COLORS.surface,
+                              cursor: "pointer",
+                              transition: "all .18s ease",
+                              "&:hover": {
+                                borderColor: item.tone,
+                                transform: "translateY(-2px)",
+                                boxShadow: COLORS.shadow,
+                              },
+                            }}
+                          >
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                              <Stack direction="row" spacing={1.4} alignItems="center" sx={{ minWidth: 0 }}>
+                                <Box
+                                  sx={{
+                                    width: 46,
+                                    height: 46,
+                                    borderRadius: "14px",
+                                    background: item.soft,
+                                    color: item.tone,
+                                    display: "grid",
+                                    placeItems: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {item.icon}
+                                </Box>
+
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "0.95rem",
+                                      fontWeight: 800,
+                                      color: COLORS.text,
+                                    }}
+                                  >
+                                    {item.label}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "0.78rem",
+                                      color: COLORS.muted,
+                                      lineHeight: 1.55,
+                                    }}
+                                  >
+                                    {item.count} available · {item.sub}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+
+                              <ArrowForwardRoundedIcon sx={{ fontSize: 18, color: COLORS.faint, flexShrink: 0 }} />
+                            </Stack>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </CardContent>
+                </Card>
+
+                <Grid container spacing={2.2}>
+                  <Grid item xs={12} sm={6}>
+                    <LockedCard
+                      icon={<HomeWorkRoundedIcon sx={{ fontSize: 18 }} />}
+                      title="Post property listing"
+                      desc="Publish your property directly to the marketplace and reach serious buyers faster."
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <LockedCard
+                      icon={<DirectionsCarRoundedIcon sx={{ fontSize: 18 }} />}
+                      title="Post vehicle listing"
+                      desc="Sell your car, bike, or commercial vehicle with premium seller visibility."
+                    />
+                  </Grid>
+                </Grid>
+
+                <Card
+                  sx={{
+                    ...cardSx,
+                    background: "#fbfbff",
+                    border: `1px solid ${COLORS.premiumBorder}`,
+                    boxShadow: "0 12px 28px rgba(91,76,240,0.08)",
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 2.1, sm: 2.6 } }}>
+                    <Grid container spacing={2.5} alignItems="center">
+                      <Grid item xs={12} md={7}>
+                        <Typography sx={sectionTitleSx}>Premium upgrade</Typography>
+
+                        <Typography
+                          sx={{
+                            mt: 1,
+                            fontSize: { xs: "1.3rem", sm: "1.5rem" },
+                            lineHeight: 1.1,
+                            letterSpacing: "-0.03em",
+                            fontWeight: 900,
+                            color: COLORS.text,
+                          }}
+                        >
+                          Unlock premium access for ₹299
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            mt: 1,
+                            fontSize: "0.88rem",
+                            lineHeight: 1.7,
+                            color: COLORS.muted,
+                            maxWidth: 58,
+                          }}
+                        >
+                          A one-time upgrade that lets you post listings, get visibility, and connect directly with buyers and sellers.
+                        </Typography>
+
+                        <Stack spacing={1.1} sx={{ mt: 2 }}>
+                          {PREMIUM_PERKS.map((perk) => (
+                            <Stack key={perk} direction="row" spacing={1.2} alignItems="center">
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: "999px",
+                                  background: COLORS.premiumSoft,
+                                  display: "grid",
+                                  placeItems: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <CheckRoundedIcon sx={{ fontSize: 13, color: COLORS.premium }} />
+                              </Box>
+                              <Typography sx={{ fontSize: "0.83rem", color: COLORS.text, fontWeight: 700 }}>
+                                {perk}
+                              </Typography>
+                            </Stack>
+                          ))}
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} md={5}>
+                        <Box
+                          sx={{
+                            p: 2.2,
+                            borderRadius: "20px",
+                            background: "#fff",
+                            border: `1px solid ${COLORS.premiumBorder}`,
+                            boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: "0.74rem",
+                              fontWeight: 800,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              color: COLORS.premium,
+                            }}
+                          >
+                            One-time unlock
+                          </Typography>
+
+                          <Typography
+                            sx={{
+                              mt: 0.8,
+                              fontSize: "2.7rem",
+                              lineHeight: 1,
+                              letterSpacing: "-0.05em",
+                              fontWeight: 900,
+                              color: COLORS.text,
+                            }}
+                          >
+                            ₹299
+                          </Typography>
+
+                          <Typography sx={{ mt: 0.8, fontSize: "0.82rem", color: COLORS.muted, lineHeight: 1.6 }}>
+                            Premium posting and account upgrades activated instantly after payment.
+                          </Typography>
+
+                          <Button
+                            fullWidth
+                            onClick={upgradePremium}
+                            startIcon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />}
+                            sx={{ ...premiumBtnSx, mt: 2.2 }}
+                          >
+                            Upgrade Premium
+                          </Button>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
     </Box>
   );
 }

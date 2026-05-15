@@ -239,7 +239,7 @@ function getRedirectPath(normalizedUser) {
   if (!normalizedUser?.loggedIn) return "/";
   if (normalizedUser.role === "admin") return "/admin";
   if (normalizedUser.isPremium) return "/dashboard";
-  return "/free-dashboard";
+  return "/";
 }
 
 // ── Main component ────────────────────────────────────────────────────────────

@@ -103,26 +103,27 @@ function getNavConfig() {
 
     free: {
       desktop: [
-        { label: "Dashboard", to: "/free-dashboard" },
+        { label: "Explore", to: "/free-dashboard" },
         { label: "Pricing", to: "/subscription" },
         { label: "About Us", to: "/about" },
         { label: "How It Works", to: "/how-it-works" },
         { label: "FAQ", to: "/faq" },
-        // { label: "Blog", to: "/blog" },
+         { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Dashboard", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Explore", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Upgrade", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
         { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
         { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
         { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
-        // { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
+         { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "My Dashboard", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Upgrade Premium", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
+        {label: "My Bookings", to: "/dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
       ],
     },
 
