@@ -1,28 +1,81 @@
-import { Box, Stack, Typography } from "@mui/material";
-import { Outlet } from "react-router-dom";
+
+// src/layouts/AdminLayout.jsx
+import { Outlet, Link as RouterLink, useLocation } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Divider,
+} from "@mui/material";
+import Navbar from "../components/Navbar";
+
+const navItems = [
+  { label: "Overview", path: "/admin" },
+  { label: "Users", path: "/admin/users" },
+  { label: "Listings", path: "/admin/listings" },
+  { label: "Reports", path: "/admin/reports" },
+  { label: "Settings", path: "/admin/settings" },
+];
 
 export default function AdminLayout() {
+  const location = useLocation();
+
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
+    
+    <Box sx={{ minHeight: "100vh", display: "flex", background: "#f8fafc" }}>
+   
       <Box
         sx={{
-          px: { xs: 2, md: 3 },
-          py: 2,
-          borderBottom: "1px solid rgba(15,23,42,0.08)",
+          width: 260,
+          borderRight: "1px solid rgba(15,23,42,0.08)",
           background: "#fff",
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
+          p: 2,
         }}
       >
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#0f172a" }}>
-            EasyDeal Admin
-          </Typography>
+        <Typography
+          sx={{
+            fontWeight: 900,
+            fontSize: "1.2rem",
+            color: "#0f172a",
+            mb: 2,
+          }}
+        >
+          Admin Panel
+        </Typography>
+
+        <Divider sx={{ mb: 2 }} />
+
+        <Stack spacing={1}>
+          {navItems.map((item) => {
+            const active = location.pathname === item.path;
+            return (
+              <Button
+                key={item.path}
+                component={RouterLink}
+                to={item.path}
+                fullWidth
+                sx={{
+                  justifyContent: "flex-start",
+                  textTransform: "none",
+                  borderRadius: "12px",
+                  px: 1.5,
+                  py: 1.1,
+                  fontWeight: active ? 800 : 700,
+                  color: active ? "#0f172a" : "#64748b",
+                  background: active ? "rgba(15,118,110,0.08)" : "transparent",
+                }}
+              >
+                {item.label}
+              </Button>
+            );
+          })}
         </Stack>
       </Box>
 
-      <Outlet />
+      <Box sx={{ flex: 1, p: 3 }}>
+        <Outlet />
+      </Box>
     </Box>
   );
 }

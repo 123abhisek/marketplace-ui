@@ -1,11 +1,18 @@
+
 // src/layouts/PremiumGate.jsx
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAppState } from '../hooks/useAppState'
+import { Navigate, Outlet } from "react-router-dom";
+import { useAppState } from "../hooks/useAppState";
 
 export default function PremiumGate() {
-  const { user } = useAppState()
+  const { user, isPremium } = useAppState();
 
-  if (!user.isPremium) return <Navigate to="/free-dashboard" replace />
+  if (user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
-  return <Outlet />
+  if (!isPremium) {
+    return <Navigate to="/free-dashboard" replace />;
+  }
+
+  return <Outlet />;
 }

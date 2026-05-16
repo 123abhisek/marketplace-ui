@@ -1,70 +1,35 @@
-// // // src/layouts/DashboardGate.jsx
-// // import { Navigate, Outlet } from 'react-router-dom'
-// // import { useAppState } from '../hooks/useAppState'
-
-// // /**
-// //  * DashboardGate
-// //  *
-// //  * Props:
-// //  *   requirePremium — if true, free users are redirected to /free-dashboard
-// //  *                    if false (default), just checks loggedIn
-// //  */
-// // export default function DashboardGate({ requirePremium = false }) {
-// //   const { user } = useAppState()
-
-// //   // Not logged in → go to login
-// //   if (!user.loggedIn) {
-// //     return <Navigate to="/login" replace />
-// //   }
-
-// //   // Premium route but user is free → redirect to free dashboard
-// //   if (requirePremium && !user.isPremium) {
-// //     return <Navigate to="/free-dashboard" replace />
-// //   }
-
-// //   // Free dashboard route but user upgraded → send to premium dashboard
-// //   if (!requirePremium && user.isPremium) {
-// //     return <Navigate to="/dashboard" replace />
-// //   }
-
-// //   return <Outlet />
-// // }
-
-
-
-// // src/layouts/DashboardGate.jsx
-// import { Navigate, Outlet } from 'react-router-dom'
-// import { useAppState } from '../hooks/useAppState'
-
-// export default function DashboardGate() {
-//   const { user } = useAppState()
-
-//   if (!user.loggedIn) return <Navigate to="/login" replace />
-
-//   return <Outlet />
-// }   
-
-
-
 
 // src/layouts/DashboardGate.jsx
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAppState } from '../hooks/useAppState'
-import { tokenStore } from '../services/api'
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
+import { useAppState } from "../hooks/useAppState";
 
 export default function DashboardGate() {
-  const { user, logout } = useAppState()
+  const { hydrated, isLoggedIn, user } = useAppState();
+  const location = useLocation();
 
-  // No login flag in state
-  if (!user.loggedIn) {
-    return <Navigate to="/login" replace />
+  if (!hydrated) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f8fafc",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  // loggedIn flag exists in localStorage but JWT is gone/expired
-  if (!tokenStore.get()) {
-    logout()   // clears stale user from localStorage + state
-    return <Navigate to="/login" replace />
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  return <Outlet />
+  if (user?.role === "admin" && !location.pathname.startsWith("/admin")) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <Outlet />;
 }

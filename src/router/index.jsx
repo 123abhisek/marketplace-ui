@@ -1,4 +1,5 @@
 
+
 // src/router/index.jsx
 import { Navigate } from "react-router-dom";
 
@@ -44,9 +45,9 @@ import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminListingsPage from "../pages/admin/AdminListingsPage";
 import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+import Navbar from "../components/Navbar";
 
 const routes = [
-  // ── Public pages ─────────────────────────────────────────────
   {
     element: <PublicLayout />,
     children: [
@@ -65,7 +66,6 @@ const routes = [
     ],
   },
 
-  // ── Auth pages ───────────────────────────────────────────────
   {
     element: <AuthLayout />,
     children: [
@@ -74,17 +74,23 @@ const routes = [
     ],
   },
 
-  // ── Logged-in but free user area ─────────────────────────────
   {
     element: <DashboardGate />,
     children: [{ path: "/free-dashboard", element: <FreeDashboard /> }],
   },
 
-  // ── Shared logged-in dashboard routes ────────────────────────
   {
     path: "/dashboard",
     element: <DashboardGate />,
     children: [
+      {
+        index: true,
+        element: (
+          <PremiumGate>
+            <DashboardLayout />
+          </PremiumGate>
+        ),
+      },
       { path: "properties/:id", element: <PropertyDetailPage /> },
       { path: "vehicles/:id", element: <VehicleDetailPage /> },
       { path: "my-bookings", element: <MyBookingsPage /> },
@@ -112,13 +118,17 @@ const routes = [
     ],
   },
 
-  // ── Admin routes ─────────────────────────────────────────────
   {
-    path: "/Welcome back, Admin!",
+    path: "/admin",
     element: <AdminGate />,
     children: [
       {
-        element: <AdminLayout />,
+        element: (
+          <>
+            <Navbar />
+            <AdminLayout />
+          </>
+        ),
         children: [
           { index: true, element: <AdminOverviewPage /> },
           { path: "users", element: <AdminUsersPage /> },
@@ -130,7 +140,6 @@ const routes = [
     ],
   },
 
-  // ── Catch-all ────────────────────────────────────────────────
   { path: "*", element: <Navigate to="/" replace /> },
 ];
 

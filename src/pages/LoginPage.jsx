@@ -1,6 +1,7 @@
+
 // src/pages/LoginPage.jsx
 import { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import {
   Box,
@@ -25,7 +26,6 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { useAppState } from "../hooks/useAppState";
 import { extractError } from "../utils/mappers";
 
-// ── Left brand panel ──────────────────────────────────────────────────────────
 function BrandPanel() {
   const feats = [
     {
@@ -45,6 +45,7 @@ function BrandPanel() {
       text: "Price & contact for premium users",
     },
   ];
+
   const stats = [
     { value: "2,400+", label: "Properties listed" },
     { value: "1,800+", label: "Vehicles listed" },
@@ -65,7 +66,6 @@ function BrandPanel() {
         overflow: "hidden",
       }}
     >
-      {/* Background blobs */}
       {[
         { top: -80, right: -80, size: 260, opacity: 0.12 },
         { bottom: -60, left: -60, size: 220, opacity: 0.1 },
@@ -90,13 +90,7 @@ function BrandPanel() {
         />
       ))}
 
-      {/* Logo */}
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-        sx={{ position: "relative", zIndex: 1 }}
-      >
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ position: "relative", zIndex: 1 }}>
         <Box
           component="img"
           src="/logo.png"
@@ -105,7 +99,6 @@ function BrandPanel() {
         />
       </Stack>
 
-      {/* Headline */}
       <Box sx={{ position: "relative", zIndex: 1 }}>
         <Typography
           sx={{
@@ -123,6 +116,7 @@ function BrandPanel() {
           <br />
           marketplace
         </Typography>
+
         <Typography
           sx={{
             color: "rgba(255,255,255,0.65)",
@@ -136,7 +130,6 @@ function BrandPanel() {
         </Typography>
       </Box>
 
-      {/* Feature bullets */}
       <Stack spacing={1.3} sx={{ position: "relative", zIndex: 1 }}>
         {feats.map((f, i) => (
           <Stack key={i} direction="row" spacing={1.3} alignItems="center">
@@ -169,7 +162,6 @@ function BrandPanel() {
         ))}
       </Stack>
 
-      {/* Stats */}
       <Box
         sx={{
           position: "relative",
@@ -183,9 +175,7 @@ function BrandPanel() {
       >
         {stats.map((s) => (
           <Box key={s.label}>
-            <Typography
-              sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#fff" }}
-            >
+            <Typography sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#fff" }}>
               {s.value}
             </Typography>
             <Typography
@@ -204,7 +194,6 @@ function BrandPanel() {
   );
 }
 
-// ── Shared styles ─────────────────────────────────────────────────────────────
 const inputSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: "14px",
@@ -234,36 +223,53 @@ const btnSx = {
   "&.Mui-disabled": { background: "rgba(15,118,110,0.40)", color: "#fff" },
 };
 
-// ── Role-based redirect helper ────────────────────────────────────────────────
 function getRedirectPath(normalizedUser) {
-  if (!normalizedUser?.loggedIn) return "/";
-  if (normalizedUser.role === "admin") return "/admin";
-  if (normalizedUser.isPremium) return "/dashboard";
+  if (!normalizedUser?.loggedIn) return "/login";
+  if (normalizedUser?.role === "admin") return "/admin";
+  if (normalizedUser?.isPremium) return "/dashboard";
   return "/";
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiErr, setApiErr] = useState("");
-  const { login } = useAppState();
+
+  const { login, user, isLoggedIn, isPremium } = useAppState();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { control, handleSubmit } = useForm({
     defaultValues: { email: "", password: "" },
   });
 
+  const sessionUser = user
+    ? {
+        ...user,
+        loggedIn: isLoggedIn,
+        isPremium: user?.isPremium ?? isPremium,
+      }
+    : null;
+
+  if (isLoggedIn && sessionUser) {
+    const redirectTo = location.state?.from?.pathname || getRedirectPath(sessionUser);
+    return <Navigate to={redirectTo} replace />;
+  }
+
   const onSubmit = async (data) => {
     setApiErr("");
     setLoading(true);
+
     try {
-      // login() now returns the normalized user so we can route by role
       const normalizedUser = await login({
         email: data.email,
         password: data.password,
       });
-      navigate(getRedirectPath(normalizedUser), { replace: true });
+
+      const redirectTo =
+        location.state?.from?.pathname || getRedirectPath(normalizedUser);
+
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setApiErr(extractError(err));
     } finally {
@@ -286,13 +292,7 @@ export default function LoginPage() {
           overflowY: "auto",
         }}
       >
-        {/* Mobile logo */}
-        <Stack
-          direction="row"
-          spacing={1.2}
-          alignItems="center"
-          sx={{ mb: 4, display: { md: "none" } }}
-        >
+        <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 4, display: { md: "none" } }}>
           <Box
             component="img"
             src="/logo.png"
@@ -302,7 +302,6 @@ export default function LoginPage() {
         </Stack>
 
         <Box sx={{ width: "100%", maxWidth: 440 }}>
-          {/* Header */}
           <Box sx={{ mb: 4 }}>
             <Chip
               label="Welcome back"
@@ -332,9 +331,7 @@ export default function LoginPage() {
               <br />
               Easydeal
             </Typography>
-            <Typography
-              sx={{ color: "#64748b", fontSize: "0.89rem", lineHeight: 1.65 }}
-            >
+            <Typography sx={{ color: "#64748b", fontSize: "0.89rem", lineHeight: 1.65 }}>
               New here?{" "}
               <Box
                 component={RouterLink}
@@ -357,7 +354,6 @@ export default function LoginPage() {
             </Typography>
           </Divider>
 
-          {/* API error banner */}
           {apiErr && (
             <Box
               sx={{
@@ -369,15 +365,12 @@ export default function LoginPage() {
                 border: "1px solid rgba(239,68,68,0.20)",
               }}
             >
-              <Typography
-                sx={{ fontSize: "0.83rem", color: "#dc2626", fontWeight: 700 }}
-              >
+              <Typography sx={{ fontSize: "0.83rem", color: "#dc2626", fontWeight: 700 }}>
                 {apiErr}
               </Typography>
             </Box>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <Stack spacing={2}>
               <Controller
@@ -403,9 +396,7 @@ export default function LoginPage() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonRoundedIcon
-                            sx={{ fontSize: 18, color: "#94a3b8" }}
-                          />
+                          <PersonRoundedIcon sx={{ fontSize: 18, color: "#94a3b8" }} />
                         </InputAdornment>
                       ),
                     }}
@@ -431,9 +422,7 @@ export default function LoginPage() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockRoundedIcon
-                            sx={{ fontSize: 18, color: "#94a3b8" }}
-                          />
+                          <LockRoundedIcon sx={{ fontSize: 18, color: "#94a3b8" }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -476,12 +465,7 @@ export default function LoginPage() {
             </Stack>
           </form>
 
-          <Stack
-            direction="row"
-            justifyContent="center"
-            spacing={0.5}
-            sx={{ mt: 3 }}
-          >
+          <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 3 }}>
             <Typography sx={{ fontSize: "0.82rem", color: "#94a3b8" }}>
               Don&apos;t have an account?
             </Typography>

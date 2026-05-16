@@ -20,162 +20,186 @@ import { useNavigate } from 'react-router-dom'
 const AppContext = createContext(null)
 
 const DEFAULT_USER = {
-  id:           null,
-  name:         '',
-  email:        '',
-  mobile:       '',
-  gender:       '',
-  dob:          '',
-  location:     '',
-  state:        '',
-  city:         '',
-  pincode:      '',
-  occupation:   '',
-  photo:        null,
-  role:         'free',
-  isPremium:    false,
+  id: null,
+  name: '',
+  email: '',
+  mobile: '',
+  gender: '',
+  dob: '',
+  location: '',
+  state: '',
+  city: '',
+  pincode: '',
+  occupation: '',
+  photo: null,
+  role: 'free',
+  isPremium: false,
   subscription: 'inactive',
-  loggedIn:     false,
+  loggedIn: false,
 }
 
-// ── Normalize API response → unified app user shape ───────────────────────────
-const normalizeUser = (u) => {
-  const isPremium =
-    u.is_premium === true ||
-    u.ispremium === true ||
-    u.isPremium === true
+const LS_USER_KEY = 'userData'
+const LS_TOKEN_KEY = 'access_token'
 
-  return {
-    id: u.id || null,
-    name: u.name || '',
-    email: u.email || '',
-    mobile: u.phone || u.mobile || '',
-    gender: u.gender || '',
-    dob: u.dob || '',
-    location: u.location || '',
-    state: u.state || '',
-    city: u.city || '',
-    pincode: u.pincode || '',
-    occupation: u.occupation || '',
-
-    photo:
-      u.avatar_b64 ||
-      u.avatarb64 ||
-      u.photo ||
-      null,
-
-    loggedIn:
-      u.loggedIn ??
-      u.is_logged_in ??
-      true,
-
-    isPremium,
-
-    // FIXED ROLE
-    role: (u.role || (isPremium ? 'premium' : 'free')).toLowerCase(),
-
-    subscription:
-      u.subscription ||
-      (isPremium ? 'active' : 'inactive'),
+const getStoredToken = () => {
+  try {
+    return tokenStore?.get?.() || localStorage.getItem(LS_TOKEN_KEY) || ''
+  } catch {
+    return ''
   }
 }
 
-
-// ── localStorage helpers ──────────────────────────────────────────────────────
-const LS_USER_KEY = 'userData'
-
-function saveUserToStorage(user) {
-  try { localStorage.setItem(LS_USER_KEY, JSON.stringify(user)) } catch {}
+const saveUserToStorage = (user) => {
+  try {
+    localStorage.setItem(LS_USER_KEY, JSON.stringify(user))
+  } catch {}
 }
 
-function clearUserFromStorage() {
-  try { localStorage.removeItem(LS_USER_KEY) } catch {}
+const clearUserFromStorage = () => {
+  try {
+    localStorage.removeItem(LS_USER_KEY)
+  } catch {}
 }
 
-function loadUserFromStorage() {
+const loadUserFromStorage = () => {
   try {
     const raw = localStorage.getItem(LS_USER_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    return parsed?.loggedIn ? parsed : null
-  } catch { return null }
+    return parsed || null
+  } catch {
+    return null
+  }
 }
 
-// ── blob URL → base64 data URI (for avatar upload) ────────────────────────────
+const normalizeUser = (u = {}, hasToken = true) => {
+  const isPremium =
+    u?.is_premium === true ||
+    u?.ispremium === true ||
+    u?.isPremium === true
+
+  const role = String(u?.role || '').toLowerCase()
+
+  return {
+    id: u?.id || null,
+    name: u?.name || '',
+    email: u?.email || '',
+    mobile: u?.phone || u?.mobile || '',
+    gender: u?.gender || '',
+    dob: u?.dob || '',
+    location: u?.location || '',
+    state: u?.state || '',
+    city: u?.city || '',
+    pincode: u?.pincode || '',
+    occupation: u?.occupation || '',
+    photo: u?.avatar_b64 || u?.avatarb64 || u?.photo || null,
+    loggedIn: hasToken,
+    isPremium,
+    role: role || (isPremium ? 'premium' : 'free'),
+    subscription: u?.subscription || (isPremium ? 'active' : 'inactive'),
+  }
+}
+
 async function blobUrlToBase64(blobUrl) {
   if (!blobUrl) return undefined
   if (blobUrl.startsWith('data:')) return blobUrl
+
   try {
     const response = await fetch(blobUrl)
     const blob = await response.blob()
-    return new Promise((resolve) => {
+
+    return await new Promise((resolve) => {
       const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result)
       reader.readAsDataURL(blob)
     })
-  } catch { return undefined }
+  } catch {
+    return undefined
+  }
 }
 
 export function AppProvider({ children }) {
-  // ── Hydrate user from localStorage on first render ────────────────────────
-  const [user, setUser] = useState(() => loadUserFromStorage() ?? DEFAULT_USER)
+  const navigate = useNavigate()
 
-  const [properties,      setProperties]      = useState([])
-  const [vehicles,        setVehicles]        = useState([])
-  const [loading,         setLoading]         = useState(false)
+  const [user, setUser] = useState(DEFAULT_USER)
+  const [hydrated, setHydrated] = useState(false)
+
+  const [properties, setProperties] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [loading, setLoading] = useState(false)
   const [listingsLoading, setListingsLoading] = useState(true)
-  const [toast, setToast] = useState({ open: false, message: '', severity: 'success' })
+  const [toast, setToast] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  })
 
- const navigate = useNavigate()
-
-  // ── Re-hydrate tokenStore from localStorage on mount ─────────────────────
-  // tokenStore already reads localStorage on module load, but this effect
-  // acts as a safety net for cases where the module loaded before the token
-  // was written (e.g. SSR hydration edge cases).
-  useEffect(() => {
-    const storedToken = localStorage.getItem('access_token')
-    if (storedToken && !tokenStore.get()) {
-      tokenStore.set(storedToken)
-    }
-    // If user is marked loggedIn but no token exists, clear the stale session
-    const storedUser = loadUserFromStorage()
-    if (storedUser?.loggedIn && !tokenStore.get()) {
-      clearUserFromStorage()
-      setUser(DEFAULT_USER)
-    }
+  const notify = useCallback((message, severity = 'success') => {
+    setToast({ open: true, message, severity })
   }, [])
 
-  const notify = useCallback(
-    (message, severity = 'success') => setToast({ open: true, message, severity }),
-    [],
-  )
-  const closeToast = useCallback(
-    () => setToast((p) => ({ ...p, open: false })),
-    [],
-  )
+  const closeToast = useCallback(() => {
+    setToast((prev) => ({ ...prev, open: false }))
+  }, [])
 
-  // ── Fetch public listings on mount ────────────────────────────────────────
+  useEffect(() => {
+    const storedToken = getStoredToken()
+    const storedUser = loadUserFromStorage()
+
+    if (storedToken && tokenStore?.get?.() !== storedToken) {
+      tokenStore?.set?.(storedToken)
+    }
+
+    if (storedToken && storedUser?.loggedIn) {
+      setUser(normalizeUser(storedUser, true))
+    } else {
+      setUser(DEFAULT_USER)
+      clearUserFromStorage()
+      if (!storedToken) {
+        tokenStore?.clear?.()
+      }
+    }
+
+    setHydrated(true)
+  }, [])
+
   useEffect(() => {
     setListingsLoading(true)
+
     Promise.allSettled([
       vehicleService.getAll(),
       propertyService.getAll(),
-    ]).then(([vRes, pRes]) => {
-      if (vRes.status === 'fulfilled') setVehicles(vRes.value)
-      if (pRes.status === 'fulfilled') setProperties(pRes.value)
-    }).finally(() => setListingsLoading(false))
+    ])
+      .then(([vRes, pRes]) => {
+        if (vRes.status === 'fulfilled') setVehicles(vRes.value)
+        if (pRes.status === 'fulfilled') setProperties(pRes.value)
+      })
+      .finally(() => setListingsLoading(false))
   }, [])
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
   const login = useCallback(
     async ({ email, password }) => {
       setLoading(true)
-      try {
-        // authService.login already calls tokenStore.set(access_token) internally
-        const responseData = await authService.login({ email, password })
-        console.log('Login response:', responseData)
 
-        const normalizedUser = normalizeUser(responseData.user ?? {})
+      try {
+        const response = await authService.login({ email, password })
+        const payload = response?.data ?? response
+
+        const accessToken =
+          payload?.access_token ||
+          payload?.token ||
+          getStoredToken()
+
+        if (payload?.access_token && tokenStore?.get?.() !== payload.access_token) {
+          tokenStore?.set?.(payload.access_token)
+        }
+
+        if (!accessToken) {
+          throw new Error('No access token returned from login API')
+        }
+
+        const normalizedUser = normalizeUser(payload?.user ?? {}, true)
+
         setUser(normalizedUser)
         saveUserToStorage(normalizedUser)
 
@@ -190,11 +214,21 @@ export function AppProvider({ children }) {
 
   const register = useCallback(
     async ({
-      name, email, password, mobile,
-      gender, dob, occupation,
-      location, state, city, pincode, photo,
+      name,
+      email,
+      password,
+      mobile,
+      gender,
+      dob,
+      occupation,
+      location,
+      state,
+      city,
+      pincode,
+      photo,
     }) => {
       setLoading(true)
+
       try {
         const avatar_b64 = await blobUrlToBase64(photo)
 
@@ -202,24 +236,30 @@ export function AppProvider({ children }) {
           name,
           email,
           password,
-          phone:      mobile     || undefined,
-          gender:     gender     || undefined,
-          dob:        dob        || undefined,
+          phone: mobile || undefined,
+          gender: gender || undefined,
+          dob: dob || undefined,
           occupation: occupation || undefined,
           avatar_b64: avatar_b64 || undefined,
-          location:   location   || undefined,
-          state:      state      || undefined,
-          city:       city       || undefined,
-          pincode:    pincode    || undefined,
+          location: location || undefined,
+          state: state || undefined,
+          city: city || undefined,
+          pincode: pincode || undefined,
         })
 
-        // Login immediately after register to get the token
-        const responseData = await authService.login({ email, password })
-        const normalizedUser = normalizeUser(responseData.user ?? {})
+        const response = await authService.login({ email, password })
+        const payload = response?.data ?? response
+
+        if (payload?.access_token && tokenStore?.get?.() !== payload.access_token) {
+          tokenStore?.set?.(payload.access_token)
+        }
+
+        const normalizedUser = normalizeUser(payload?.user ?? {}, true)
+
         setUser(normalizedUser)
         saveUserToStorage(normalizedUser)
-        notify('Account created successfully!')
 
+        notify('Account created successfully!')
         return normalizedUser
       } finally {
         setLoading(false)
@@ -229,20 +269,24 @@ export function AppProvider({ children }) {
   )
 
   const logout = useCallback(async () => {
-    try { await authService.logout() } catch {}
-    // authService.logout already calls tokenStore.clear()
-    setUser(DEFAULT_USER)
+    try {
+      await authService.logout()
+    } catch {}
+
+    tokenStore?.clear?.()
     clearUserFromStorage()
+    setUser(DEFAULT_USER)
+
     notify('Logged out', 'info')
   }, [notify])
 
-  // ── Listings ──────────────────────────────────────────────────────────────
   const addVehicle = useCallback(
     async (payload) => {
       if (!user.isPremium) {
         notify('Upgrade to Premium to post vehicle listings', 'warning')
         return false
       }
+
       const newVehicle = await vehicleService.add(payload)
       setVehicles((prev) => [newVehicle, ...prev])
       notify('Vehicle listing posted!')
@@ -257,6 +301,7 @@ export function AppProvider({ children }) {
         notify('Upgrade to Premium to post property listings', 'warning')
         return false
       }
+
       const newProperty = await propertyService.add(payload)
       setProperties((prev) => [newProperty, ...prev])
       notify('Property listing posted!')
@@ -285,37 +330,26 @@ export function AppProvider({ children }) {
 
   const refreshListings = useCallback(async () => {
     setListingsLoading(true)
+
     Promise.allSettled([
       vehicleService.getAll(),
       propertyService.getAll(),
-    ]).then(([vRes, pRes]) => {
-      if (vRes.status === 'fulfilled') setVehicles(vRes.value)
-      if (pRes.status === 'fulfilled') setProperties(pRes.value)
-    }).finally(() => setListingsLoading(false))
+    ])
+      .then(([vRes, pRes]) => {
+        if (vRes.status === 'fulfilled') setVehicles(vRes.value)
+        if (pRes.status === 'fulfilled') setProperties(pRes.value)
+      })
+      .finally(() => setListingsLoading(false))
   }, [])
 
   const upgradePremium = useCallback(() => {
-
-navigate('/dashboard/subscription')
-
-    // setUser((prev) => {
-    //   const updated = {
-    //     ...prev,
-    //     isPremium:    true,
-    //     role:         'premium',
-    //     subscription: 'active',
-    //   }
-    //   // saveUserToStorage(updated)
-
-    //   return updated
-    // })
-    // notify('Premium subscription activated!')
-  }, [notify])
+    navigate('/dashboard/subscription')
+  }, [navigate])
 
   const updateProfile = useCallback(
     (data) => {
       setUser((prev) => {
-        const updated = { ...prev, ...data }
+        const updated = normalizeUser({ ...prev, ...data }, true)
         saveUserToStorage(updated)
         return updated
       })
@@ -324,6 +358,9 @@ navigate('/dashboard/subscription')
     [notify],
   )
 
+  const isLoggedIn = hydrated && !!getStoredToken() && !!user?.loggedIn
+  const isPremium = !!user?.isPremium
+
   const value = useMemo(
     () => ({
       user,
@@ -331,6 +368,9 @@ navigate('/dashboard/subscription')
       vehicles,
       loading,
       listingsLoading,
+      hydrated,
+      isLoggedIn,
+      isPremium,
       login,
       logout,
       register,
@@ -344,16 +384,32 @@ navigate('/dashboard/subscription')
       notify,
     }),
     [
-      user, properties, vehicles, loading, listingsLoading,
-      login, logout, register, upgradePremium, updateProfile,
-      addVehicle, addProperty, deleteVehicle, deleteProperty,
-      refreshListings, notify,
+      user,
+      properties,
+      vehicles,
+      loading,
+      listingsLoading,
+      hydrated,
+      isLoggedIn,
+      isPremium,
+      login,
+      logout,
+      register,
+      upgradePremium,
+      updateProfile,
+      addVehicle,
+      addProperty,
+      deleteVehicle,
+      deleteProperty,
+      refreshListings,
+      notify,
     ],
   )
 
   return (
     <AppContext.Provider value={value}>
       {children}
+
       <Snackbar
         open={toast.open}
         autoHideDuration={3500}
@@ -374,6 +430,9 @@ navigate('/dashboard/subscription')
 
 export const useAppState = () => {
   const ctx = useContext(AppContext)
-  if (!ctx) throw new Error('useAppState must be used inside <AppProvider>')
+  if (!ctx) {
+    throw new Error('useAppState must be used inside <AppProvider>')
+  }
   return ctx
 }
+
