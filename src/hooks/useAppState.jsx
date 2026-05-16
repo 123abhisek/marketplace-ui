@@ -40,26 +40,46 @@ const DEFAULT_USER = {
 
 // ── Normalize API response → unified app user shape ───────────────────────────
 const normalizeUser = (u) => {
-  const isPremium = u.is_premium === true || u.ispremium === true || false
+  const isPremium =
+    u.is_premium === true ||
+    u.ispremium === true ||
+    u.isPremium === true
+
   return {
-    id:           u.id           || null,
-    name:         u.name         || '',
-    email:        u.email        || '',
-    mobile:       u.phone        || u.mobile || '',
-    gender:       u.gender       || '',
-    dob:          u.dob          || '',
-    location:     u.location     || '',
-    state:        u.state        || '',
-    city:         u.city         || '',
-    pincode:      u.pincode      || '',
-    occupation:   u.occupation   || '',
-    photo:        u.avatar_b64   || u.avatarb64 || null,
+    id: u.id || null,
+    name: u.name || '',
+    email: u.email || '',
+    mobile: u.phone || u.mobile || '',
+    gender: u.gender || '',
+    dob: u.dob || '',
+    location: u.location || '',
+    state: u.state || '',
+    city: u.city || '',
+    pincode: u.pincode || '',
+    occupation: u.occupation || '',
+
+    photo:
+      u.avatar_b64 ||
+      u.avatarb64 ||
+      u.photo ||
+      null,
+
+    loggedIn:
+      u.loggedIn ??
+      u.is_logged_in ??
+      true,
+
     isPremium,
-    role:         isPremium ? 'premium' : 'free',
-    subscription: isPremium ? 'active'  : 'inactive',
-    loggedIn:     true,
+
+    // FIXED ROLE
+    role: (u.role || (isPremium ? 'premium' : 'free')).toLowerCase(),
+
+    subscription:
+      u.subscription ||
+      (isPremium ? 'active' : 'inactive'),
   }
 }
+
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
 const LS_USER_KEY = 'userData'

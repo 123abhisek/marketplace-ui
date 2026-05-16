@@ -9,7 +9,7 @@ export default function AdminGate() {
   }
 
   if (user?.role !== "admin") {
-    return <Navigate to="/free-dashboard" replace />;
+    return <Navigate to="/admin" replace />;
   }
 
   return <Outlet />;

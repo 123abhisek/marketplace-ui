@@ -114,7 +114,7 @@ const routes = [
 
   // ── Admin routes ─────────────────────────────────────────────
   {
-    path: "/admin",
+    path: "/Welcome back, Admin!",
     element: <AdminGate />,
     children: [
       {

@@ -66,17 +66,42 @@ const C = {
 };
 
 function resolveRole(user) {
-  if (!user?.loggedIn) return "guest";
-  if (user?.role === "admin") return "admin";
+
+  const isLoggedIn =
+    user?.loggedIn ||
+    user?.is_logged_in;
+
+  const isPremium =
+    user?.isPremium ||
+    user?.is_premium;
+
+  const role = user?.role?.toLowerCase?.();
+
+  // admin FIRST
+  if (isLoggedIn && role === "admin") {
+    return "admin";
+  }
+
+  // premium
   if (
-    user?.isPremium === true ||
-    user?.role === "premium" ||
-    user?.subscription === "active"
+    isLoggedIn &&
+    (
+      isPremium ||
+      role === "premium" ||
+      user?.subscription === "active"
+    )
   ) {
     return "premium";
   }
-  return "free";
+
+  // normal logged in user
+  if (isLoggedIn) {
+    return "free";
+  }
+
+  return "guest";
 }
+
 
 function getNavConfig() {
   return {
