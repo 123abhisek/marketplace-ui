@@ -103,7 +103,7 @@ function getNavConfig() {
 
     free: {
       desktop: [
-        { label: "Explore", to: "/free-dashboard" },
+        { label: "Explore", to: "/explore" },
         { label: "Pricing", to: "/subscription" },
         { label: "About Us", to: "/about" },
         { label: "How It Works", to: "/how-it-works" },
@@ -112,7 +112,7 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Explore", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Explore", to: "/explore", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Upgrade", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
         { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
         { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
@@ -129,7 +129,7 @@ function getNavConfig() {
 
     premium: {
       desktop: [
-        { label: "Dashboard", to: "/dashboard" },
+        { label: "Explore", to: "/explore" },
         { label: "My Listings", to: "/dashboard/my-listings" },
         { label: "About Us", to: "/about" },
         { label: "How It Works", to: "/how-it-works" },
@@ -138,7 +138,7 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Explore", to: "/explore", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Post Listing", to: "/dashboard/add-property", icon: <AddCircleOutlineRoundedIcon fontSize="small" /> },
         { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
         { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },

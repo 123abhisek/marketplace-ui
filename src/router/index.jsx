@@ -34,6 +34,7 @@ import TermsOfServicePage from "../support/TermsOfServicePage";
 import RefundPolicyPage from "../support/RefundPolicyPage";
 
 import MyBookingsPage from "../dashboard/MyBookingsPage";
+import ExplorePage from "../pages/ExplorePage";
 
 const routes = [
   // ── Public pages ─────────────────────────────────────────────────
@@ -49,6 +50,7 @@ const routes = [
       { path: "/terms", element: <TermsOfServicePage /> },
       { path: "/refund-policy", element: <RefundPolicyPage /> },
       { path: "/subscription", element: <SubscriptionPage /> },
+      { path: "/explore", element: <ExplorePage /> },
     ],
   },
 
