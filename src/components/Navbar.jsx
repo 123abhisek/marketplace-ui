@@ -108,7 +108,7 @@ function getNavConfig() {
         { label: "About Us", to: "/about" },
         { label: "How It Works", to: "/how-it-works" },
         { label: "FAQ", to: "/faq" },
-         { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        //  { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [

@@ -15,6 +15,7 @@ import {
   vehicleService,
   tokenStore,
 } from '../services/api'
+import { useNavigate } from 'react-router-dom'
 
 const AppContext = createContext(null)
 
@@ -104,6 +105,8 @@ export function AppProvider({ children }) {
   const [loading,         setLoading]         = useState(false)
   const [listingsLoading, setListingsLoading] = useState(true)
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' })
+
+ const navigate = useNavigate()
 
   // ── Re-hydrate tokenStore from localStorage on mount ─────────────────────
   // tokenStore already reads localStorage on module load, but this effect
@@ -272,17 +275,21 @@ export function AppProvider({ children }) {
   }, [])
 
   const upgradePremium = useCallback(() => {
-    setUser((prev) => {
-      const updated = {
-        ...prev,
-        isPremium:    true,
-        role:         'premium',
-        subscription: 'active',
-      }
-      saveUserToStorage(updated)
-      return updated
-    })
-    notify('Premium subscription activated!')
+
+navigate('/dashboard/subscription')
+
+    // setUser((prev) => {
+    //   const updated = {
+    //     ...prev,
+    //     isPremium:    true,
+    //     role:         'premium',
+    //     subscription: 'active',
+    //   }
+    //   // saveUserToStorage(updated)
+
+    //   return updated
+    // })
+    // notify('Premium subscription activated!')
   }, [notify])
 
   const updateProfile = useCallback(

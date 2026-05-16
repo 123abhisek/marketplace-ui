@@ -45,8 +45,8 @@ const PAGE_TITLES = {
     sub: "Manage your posted listings",
   },
   "/dashboard/profile": {
-    title: "Profile",
-    sub: "Manage your account details",
+    // title: "Profile",
+    // sub: "Manage your account details",
   },
   "/dashboard/subscription": {
     title: "Subscription",
