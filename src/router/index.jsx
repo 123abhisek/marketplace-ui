@@ -75,13 +75,23 @@ const routes = [
   },
 
   {
-    element: <DashboardGate />,
+    element: (
+          <>
+            <Navbar />
+             <DashboardGate />
+          </>
+        ),
     children: [{ path: "/free-dashboard", element: <FreeDashboard /> }],
   },
 
   {
     path: "/dashboard",
-    element: <DashboardGate />,
+    element: (
+          <>
+            <Navbar />
+             <DashboardGate />
+          </>
+        ),
     children: [
       {
         index: true,
