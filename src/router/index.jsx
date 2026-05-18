@@ -1,5 +1,3 @@
-
-
 // src/router/index.jsx
 import { Navigate } from "react-router-dom";
 
@@ -78,22 +76,22 @@ const routes = [
 
   {
     element: (
-          <>
-            <Navbar />
-             <DashboardGate />
-          </>
-        ),
+      <>
+        <Navbar />
+        <DashboardGate />
+      </>
+    ),
     children: [{ path: "/free-dashboard", element: <FreeDashboard /> }],
   },
 
   {
     path: "/dashboard",
     element: (
-          <>
-            <Navbar />
-             <DashboardGate />
-          </>
-        ),
+      <>
+        <Navbar />
+        <DashboardGate />
+      </>
+    ),
     children: [
       {
         index: true,
@@ -148,6 +146,8 @@ const routes = [
           { path: "reports", element: <AdminReportsPage /> },
           { path: "settings", element: <AdminSettingsPage /> },
           { path: "orders", element: <AdminOrdersPage /> },
+          { path: "add-property", element: <AddPropertyPage /> },
+          { path: "add-vehicle", element: <AddVehiclePage /> },
         ],
       },
     ],

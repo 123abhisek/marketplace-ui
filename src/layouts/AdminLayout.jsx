@@ -6,6 +6,8 @@ import Navbar from "../components/Navbar";
 const navItems = [
   { label: "Overview", path: "/admin" },
   { label: "Users", path: "/admin/users" },
+  { label: "Property", path: "/admin/add-property" },
+  { label: "Vehicles", path: "/admin/add-vehicle" },
   { label: "Listings", path: "/admin/listings" },
   { label: "Orders", path: "/admin/orders" },
   { label: "Reports", path: "/admin/reports" },

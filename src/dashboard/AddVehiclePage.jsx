@@ -144,17 +144,6 @@ export default function AddVehiclePage() {
 
       {/* ── Page header ── */}
       <Stack direction="row" alignItems="center" spacing={2}>
-        <Button
-          startIcon={<ArrowBackRoundedIcon />}
-          onClick={handleCancel}
-          sx={{
-            borderRadius: '12px', color: '#64748B', fontWeight: 700, fontSize: '0.82rem',
-            '&:hover': { background: '#F1F5F9' },
-          }}
-        >
-          Back
-        </Button>
-
         <Box>
           <Typography variant="h5" fontWeight={900} sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}>
             Add Vehicle
@@ -176,7 +165,7 @@ export default function AddVehiclePage() {
       </Stack>
 
       {/* Premium gate card */}
-      {!user.isPremium && <PremiumLockCard />}
+      {/* {!user.isPremium && <PremiumLockCard />} */}
 
       {/* API error */}
       {apiError && (
