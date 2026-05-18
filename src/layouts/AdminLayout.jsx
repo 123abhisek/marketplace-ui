@@ -1,19 +1,13 @@
-
 // src/layouts/AdminLayout.jsx
 import { Outlet, Link as RouterLink, useLocation } from "react-router-dom";
-import {
-  Box,
-  Button,
-  Stack,
-  Typography,
-  Divider,
-} from "@mui/material";
+import { Box, Button, Stack, Typography, Divider } from "@mui/material";
 import Navbar from "../components/Navbar";
 
 const navItems = [
   { label: "Overview", path: "/admin" },
   { label: "Users", path: "/admin/users" },
   { label: "Listings", path: "/admin/listings" },
+  { label: "Orders", path: "/admin/orders" },
   { label: "Reports", path: "/admin/reports" },
   { label: "Settings", path: "/admin/settings" },
 ];
@@ -22,9 +16,7 @@ export default function AdminLayout() {
   const location = useLocation();
 
   return (
-    
     <Box sx={{ minHeight: "100vh", display: "flex", background: "#f8fafc" }}>
-   
       <Box
         sx={{
           width: 260,
