@@ -45,6 +45,8 @@ import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminListingsPage from "../pages/admin/AdminListingsPage";
 import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
+
 import Navbar from "../components/Navbar";
 
 const routes = [
@@ -145,6 +147,7 @@ const routes = [
           { path: "listings", element: <AdminListingsPage /> },
           { path: "reports", element: <AdminReportsPage /> },
           { path: "settings", element: <AdminSettingsPage /> },
+          { path: "orders", element: <AdminOrdersPage /> },
         ],
       },
     ],
