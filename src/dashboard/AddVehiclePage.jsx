@@ -100,7 +100,10 @@ export default function AddVehiclePage() {
   // ── Submit handler ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
     // Bug Fix 6 — block non-premium submit even via keyboard (Enter key)
-    if (!user.isPremium) return
+    if (user.role != "admin") {
+      notify("Only admins are allowed to post listings", "warning");
+      return;
+    }
 
     // Bug Fix 3 — require at least one image
     if (files.length === 0) {
@@ -391,7 +394,7 @@ export default function AddVehiclePage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={!user.isPremium || submitting}
+              disabled={!user.role || submitting}
               startIcon={
                 submitting
                   ? <CircularProgress size={16} color="inherit" />

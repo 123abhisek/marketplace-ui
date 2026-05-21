@@ -282,8 +282,8 @@ export function AppProvider({ children }) {
 
   const addVehicle = useCallback(
     async (payload) => {
-      if (!user.isPremium) {
-        notify('Upgrade to Premium to post vehicle listings', 'warning')
+      if (!user.role || user.role !== 'admin') {
+        notify('Only admins are allowed to post vehicle listings', 'warning')
         return false
       }
 
@@ -292,13 +292,13 @@ export function AppProvider({ children }) {
       notify('Vehicle listing posted!')
       return true
     },
-    [user.isPremium, notify],
+    [user.role, notify],
   )
 
   const addProperty = useCallback(
     async (payload) => {
-      if (!user.isPremium) {
-        notify('Upgrade to Premium to post property listings', 'warning')
+      if (!user.role || user.role !== 'admin') {
+        notify('Only admins are allowed to post property listings', 'warning')
         return false
       }
 
@@ -307,7 +307,7 @@ export function AppProvider({ children }) {
       notify('Property listing posted!')
       return true
     },
-    [user.isPremium, notify],
+    [user.role, notify],
   )
 
   const deleteVehicle = useCallback(
