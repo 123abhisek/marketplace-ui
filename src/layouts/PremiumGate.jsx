@@ -12,6 +12,8 @@ export default function PremiumGate() {
 
   if (!isPremium) {
     return <Navigate to="/free-dashboard" replace />;
+  }else {
+    return <Navigate to="/premium-dashboard" replace />;
   }
 
   return <Outlet />;

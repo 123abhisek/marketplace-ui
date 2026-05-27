@@ -92,7 +92,7 @@ export default function AddPropertyPage() {
     mode: "onTouched",
     defaultValues: {
       title: "",
-      propertyType: "",
+      propertyType: PROPERTY_TYPES[0].value,
       location: "",
       apartmentName: "",
       floor: "",
@@ -184,7 +184,7 @@ export default function AddPropertyPage() {
             Fill in the details to create a new listing
           </Typography>
         </Box>
-        <Chip
+        {/* <Chip
           label={user.isPremium ? "Posting Enabled" : "Premium Required"}
           size="small"
           sx={{
@@ -194,7 +194,7 @@ export default function AddPropertyPage() {
             background: user.isPremium ? "#ECFDF5" : "#FEF3C7",
             color: user.isPremium ? "#059669" : "#D97706",
           }}
-        />
+        /> */}
       </Stack>
 
       {/* {!user.isPremium && <PremiumLockCard />} */}
@@ -240,6 +240,7 @@ export default function AddPropertyPage() {
                     label="Property Type *"
                     control={control}
                     rules={{ required: "Property type is required" }}
+                    defaultValue={PROPERTY_TYPES[0].value}
                     options={PROPERTY_TYPES}
                   />
                 </Grid>

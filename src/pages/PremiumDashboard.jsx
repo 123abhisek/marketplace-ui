@@ -58,7 +58,7 @@ import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useAppState } from "../hooks/useAppState";
-import { getMyBookings } from "../services/bookingService";
+import {getMyBookings} from "../services/bookingService";
 
 const UI = {
   bg: "#F5F7FB",
@@ -271,12 +271,7 @@ function StatusChip({ status }) {
 //             justifyContent="space-between"
 //             alignItems={{ xs: "flex-start", sm: "center" }}
 //           >
-//             <Stack
-//               direction="row"
-//               spacing={1.4}
-//               alignItems="center"
-//               sx={{ minWidth: 0 }}
-//             >
+//             <Stack direction="row" spacing={1.4} alignItems="center" sx={{ minWidth: 0 }}>
 //               <Box
 //                 sx={{
 //                   width: 64,
@@ -308,27 +303,18 @@ function StatusChip({ status }) {
 //                 >
 //                   {order.name}
 //                 </Typography>
-//                 <Typography
-//                   sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}
-//                 >
+//                 <Typography sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}>
 //                   Order ID: {order.id} · {order.category}
 //                 </Typography>
-//                 <Typography
-//                   sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}
-//                 >
+//                 <Typography sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}>
 //                   Delivery: {order.deliveryDate}
 //                 </Typography>
 //               </Box>
 //             </Stack>
 
-//             <Stack
-//               alignItems={{ xs: "flex-start", sm: "flex-end" }}
-//               spacing={0.8}
-//             >
+//             <Stack alignItems={{ xs: "flex-start", sm: "flex-end" }} spacing={0.8}>
 //               <StatusChip status={order.status} />
-//               <Typography
-//                 sx={{ fontSize: "0.95rem", fontWeight: 900, color: UI.text }}
-//               >
+//               <Typography sx={{ fontSize: "0.95rem", fontWeight: 900, color: UI.text }}>
 //                 ₹{order.price}
 //               </Typography>
 //             </Stack>
@@ -354,10 +340,10 @@ function StatusChip({ status }) {
 //                     order.status === "Delivered"
 //                       ? UI.success
 //                       : order.status === "Shipped"
-//                         ? UI.blue
-//                         : order.status === "Pending"
-//                           ? UI.warning
-//                           : UI.purple,
+//                       ? UI.blue
+//                       : order.status === "Pending"
+//                       ? UI.warning
+//                       : UI.purple,
 //                 },
 //               }}
 //             />
@@ -996,7 +982,7 @@ function BottomNavButton({ icon, label, active = false }) {
   );
 }
 
-export default function FreeDashboard() {
+export default function PremiumDashboard() {
   const {
     user,
     logout,
@@ -1017,6 +1003,36 @@ export default function FreeDashboard() {
     return parts[0]?.[0]?.toUpperCase() || "U";
   }, [user?.name]);
 
+  // const orders = [
+  //   {
+  //     id: "ED-20481",
+  //     name: "2BHK Apartment Booking Lead",
+  //     category: "Property",
+  //     price: "12,500",
+  //     deliveryDate: "18 May 2026",
+  //     status: "Shipped",
+  //     progress: 72,
+  //   },
+  //   {
+  //     id: "ED-20479",
+  //     name: "Used Hyundai i20 Seller Package",
+  //     category: "Vehicle",
+  //     price: "8,999",
+  //     deliveryDate: "Delivered on 13 May 2026",
+  //     status: "Delivered",
+  //     progress: 100,
+  //   },
+  //   {
+  //     id: "ED-20465",
+  //     name: "Premium Seller Visibility Upgrade",
+  //     category: "Property",
+  //     price: "299",
+  //     deliveryDate: "Awaiting activation",
+  //     status: "Pending",
+  //     progress: 36,
+  //   },
+  // ];
+
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
@@ -1030,69 +1046,46 @@ export default function FreeDashboard() {
 
       const response = await getMyBookings();
 
-      // FastAPI response is direct array
-      // but support both formats safely
+      // If API returns directly array:
+      // const bookings = response;
 
-      const bookings = Array.isArray(response)
-        ? response
-        : response?.bookings || [];
+      // If API returns { bookings: [...] }
+      const bookings = response?.bookings || [];
 
-      const formattedOrders = bookings.map((booking) => {
-        const rawStatus = booking.status || "PENDING";
+      const formattedOrders = bookings.map((booking) => ({
+        id: booking.booking_number || `ED-${booking.id}`,
 
-        const normalizedStatus =
-          rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+        name: booking.property?.title || booking.vehicle?.title || "Booking",
 
-        return {
-          id: booking.id || `ED-${Math.random()}`,
+        category: booking.property_id ? "Property" : "Vehicle",
 
-          name: booking.listing?.title || booking.listing_title || "Booking",
+        price: Number(booking.amount || 0).toLocaleString("en-IN"),
 
-          category:
-            booking.listing?.type === "property" ? "Property" : "Vehicle",
+        deliveryDate:
+          booking.status === "completed"
+            ? `Delivered on ${new Date(booking.updated_at).toLocaleDateString(
+                "en-IN",
+              )}`
+            : booking.status === "pending"
+              ? "Awaiting activation"
+              : new Date(booking.created_at).toLocaleDateString("en-IN"),
 
-          price: Number(booking.payment?.amount || 0).toLocaleString("en-IN"),
+        status:
+          booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1),
 
-          deliveryDate:
-            rawStatus === "COMPLETED"
-              ? `Delivered on ${new Date(booking.updated_at).toLocaleDateString(
-                  "en-IN",
-                )}`
-              : rawStatus === "CONFIRMED"
-                ? `Confirmed on ${new Date(
-                    booking.updated_at,
-                  ).toLocaleDateString("en-IN")}`
-                : rawStatus === "PENDING"
-                  ? "Awaiting confirmation"
-                  : new Date(booking.created_at).toLocaleDateString("en-IN"),
-
-          status: normalizedStatus,
-
-          progress:
-            rawStatus === "COMPLETED"
-              ? 100
-              : rawStatus === "CONFIRMED"
-                ? 72
-                : rawStatus === "PENDING"
-                  ? 36
-                  : 10,
-
-          image: booking.listing?.thumbnail || null,
-
-          location: booking.listing?.location || "",
-
-          ownerName: booking.owner?.name || "",
-
-          paymentStatus: booking.payment?.payment_status || "PENDING",
-
-          createdAt: booking.created_at,
-        };
-      });
+        progress:
+          booking.status === "completed"
+            ? 100
+            : booking.status === "processing"
+              ? 72
+              : booking.status === "pending"
+                ? 36
+                : 0,
+      }));
 
       setOrders(formattedOrders);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
-      setOrders([]);
     } finally {
       setOrdersLoading(false);
     }

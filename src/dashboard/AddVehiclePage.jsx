@@ -156,7 +156,7 @@ export default function AddVehiclePage() {
           </Typography>
         </Box>
 
-        <Chip
+        {/* <Chip
           label={user.isPremium ? 'Posting Enabled' : 'Premium Required'}
           size="small"
           sx={{
@@ -164,7 +164,7 @@ export default function AddVehiclePage() {
             background: user.isPremium ? '#ECFDF5' : '#FEF3C7',
             color:      user.isPremium ? '#059669' : '#D97706',
           }}
-        />
+        /> */}
       </Stack>
 
       {/* Premium gate card */}

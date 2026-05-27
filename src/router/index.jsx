@@ -1,3 +1,4 @@
+
 // src/router/index.jsx
 import { Navigate } from "react-router-dom";
 
@@ -14,6 +15,7 @@ import SubscriptionPage from "../pages/SubscriptionPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import FreeDashboard from "../pages/FreeDashboard";
+import PremiumDashboard from "../pages/PremiumDashboard";
 
 import DashboardHome from "../dashboard/DashboardHome";
 import PropertiesPage from "../dashboard/PropertiesPage";
@@ -75,13 +77,36 @@ const routes = [
   },
 
   {
+    path: "/free-dashboard",
     element: (
       <>
         <Navbar />
         <DashboardGate />
       </>
     ),
-    children: [{ path: "/free-dashboard", element: <FreeDashboard /> }],
+    children: [
+      { index: true, element: <FreeDashboard /> },
+      {
+        path: "my-bookings",
+        element: (
+          <DashboardGate>
+            <MyBookingsPage />
+          </DashboardGate>
+        ),
+      },
+    ],
+  },
+
+  {
+    path: "/premium-dashboard",
+    element: (
+      <>
+        <Navbar />
+        <DashboardGate />
+        <PremiumGate />
+      </>
+    ),
+    children: [{ index: true, element: <PremiumDashboard /> }],
   },
 
   {
@@ -94,36 +119,42 @@ const routes = [
     ),
     children: [
       {
-        index: true,
         element: (
           <PremiumGate>
             <DashboardLayout />
           </PremiumGate>
         ),
-      },
-      { path: "properties/:id", element: <PropertyDetailPage /> },
-      { path: "vehicles/:id", element: <VehicleDetailPage /> },
-      { path: "my-bookings", element: <MyBookingsPage /> },
-
-      {
-        element: <PremiumGate />,
         children: [
-          {
-            element: <DashboardLayout />,
-            children: [
-              { index: true, element: <DashboardHome /> },
-              { path: "home", element: <DashboardHome /> },
-              { path: "properties", element: <PropertiesPage /> },
-              { path: "vehicles", element: <VehiclesPage /> },
-              { path: "add-property", element: <AddPropertyPage /> },
-              { path: "add-vehicle", element: <AddVehiclePage /> },
-              { path: "my-listings", element: <MyListingsPage /> },
-              { path: "profile", element: <ProfilePage /> },
-              { path: "subscription", element: <SubscriptionStatusPage /> },
-              { path: "logout", element: <LogoutPage /> },
-            ],
-          },
+          { index: true, element: <Navigate to="home" replace /> },
+          { path: "home", element: <DashboardHome /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "subscription", element: <SubscriptionStatusPage /> },
+          { path: "logout", element: <LogoutPage /> },
         ],
+      },
+      {
+        path: "properties/:id",
+        element: (
+          <PremiumGate>
+            <PropertyDetailPage />
+          </PremiumGate>
+        ),
+      },
+      {
+        path: "vehicles/:id",
+        element: (
+          <PremiumGate>
+            <VehicleDetailPage />
+          </PremiumGate>
+        ),
+      },
+      {
+        path: "my-bookings",
+        element: (
+          <PremiumGate>
+            <MyBookingsPage />
+          </PremiumGate>
+        ),
       },
     ],
   },
