@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +8,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -16,17 +16,13 @@ import {
 } from "@mui/material";
 import AddHomeRoundedIcon from "@mui/icons-material/AddHomeRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import FormInput from "../components/FormInput";
 import SelectInput from "../components/SelectInput";
 import ImageUploader from "../components/ImageUploader";
-import PremiumLockCard from "../components/PremiumLockCard";
 import { useAppState } from "../hooks/useAppState";
 import { propertyService } from "../services/api";
 import { extractError } from "../utils/mappers";
 import { filesToBase64, revokePreviewUrls } from "../utils/imageUtils";
-
-// ── blobUrlToBase64 removed — replaced by filesToBase64 from imageUtils ───────
 
 const PROPERTY_TYPES = [
   { label: "Residential", value: "Residential" },
@@ -38,6 +34,31 @@ const PROPERTY_TYPES = [
   { label: "Villa", value: "Villa" },
   { label: "Land", value: "Land" },
 ];
+
+// ── Converts to float for fields the backend expects as number ────────────────
+function toFloatOrNull(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const n = parseFloat(raw);
+  return isNaN(n) ? null : n;
+}
+
+// ── Trims string fields, returns "" for empty ─────────────────────────────────
+function toStr(value) {
+  return String(value ?? "").trim();
+}
+
+// ── Shared validator for number-only fields ───────────────────────────────────
+function validateNumericField(label, required = false) {
+  return (v) => {
+    const raw = String(v ?? "").trim();
+    if (!raw) return required ? `${label} is required` : true;
+    const n = parseFloat(raw);
+    if (isNaN(n)) return `${label} must be a valid number (e.g. 1800)`;
+    if (n <= 0) return `${label} must be greater than 0`;
+    return true;
+  };
+}
 
 function SectionHeader({ icon, title, description }) {
   return (
@@ -58,10 +79,7 @@ function SectionHeader({ icon, title, description }) {
         >
           {icon}
         </Box>
-        <Typography
-          fontWeight={800}
-          sx={{ color: "#1E293B", fontSize: "0.95rem" }}
-        >
+        <Typography fontWeight={800} sx={{ color: "#1E293B", fontSize: "0.95rem" }}>
           {title}
         </Typography>
       </Stack>
@@ -78,12 +96,10 @@ export default function AddPropertyPage() {
   const { user, notify } = useAppState();
   const navigate = useNavigate();
 
-  // files = array of { file: File, preview: string } from ImageUploader
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
 
-  // ── Revoke blob preview URLs on unmount ──────────────────────────────────────
   useEffect(() => {
     return () => revokePreviewUrls(files.map((f) => f.preview));
   }, [files]);
@@ -108,13 +124,11 @@ export default function AddPropertyPage() {
   });
 
   const propType = watch("propertyType");
-  const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(
-    propType,
-  );
+  const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(propType);
   const isAgri = propType === "Agricultural";
 
   const onSubmit = async (data) => {
-    if (user.role != "admin") {
+    if (user.role !== "admin") {
       notify("Only admins are allowed to post listings", "warning");
       return;
     }
@@ -123,44 +137,33 @@ export default function AddPropertyPage() {
     setApiError("");
 
     try {
-      // ✅ Extract raw File objects → convert to base64 data URIs
-      // Replaces the old: files.map(f => blobUrlToBase64(f.preview))
-      // which re-fetched blob: URLs (fragile, can fail on tab restore)
       const base64Images = await filesToBase64(files.map((f) => f.file ?? f));
 
       const payload = {
-        title: data.title,
+        // ── strings ───────────────────────────────────────────────────────────
+        title:          toStr(data.title),
+        property_type:  toStr(data.propertyType),
+        location:       toStr(data.location),
+        apartment_name: toStr(data.apartmentName),
+        contact:        toStr(data.contactNumber),
+        floor:          toStr(data.floor),       // backend expects string
+        rooms:          toStr(data.rooms),       // backend expects string
+        bedrooms:       toStr(data.bedrooms),    // backend expects string
+        crops_grown:    toStr(data.cropsGrown),
+        rent_lease:     toStr(data.rentLease),
 
-        property_type: data.propertyType,
+        // ── numbers ───────────────────────────────────────────────────────────
+        area:           toFloatOrNull(data.area),
+        land_area:      toFloatOrNull(data.landArea),
+        price:          toFloatOrNull(data.expectedPrice),
 
-        location: data.location || "",
-
-        apartment_name: data.apartmentName || "",
-
-        contact: data.contactNumber,
-
-        floor: data.floor || "",
-
-        rooms: data.rooms || "",
-
-        bedrooms: data.bedrooms || "",
-
-        area: data.area || "",
-
-        land_area: data.landArea || "",
-
-        crops_grown: data.cropsGrown || "",
-
-        price: Number(data.expectedPrice),
-
-        rent_lease: data.rentLease || "",
-
+        // ── images ───────────────────────────────────────────────────────────
         images: base64Images,
       };
 
       await propertyService.add(payload);
       notify("Property listing posted!");
-      navigate("/dashboard/my-listings");
+      navigate("/admin/listings");
     } catch (err) {
       setApiError(extractError(err));
     } finally {
@@ -184,40 +187,19 @@ export default function AddPropertyPage() {
             Fill in the details to create a new listing
           </Typography>
         </Box>
-        {/* <Chip
-          label={user.isPremium ? "Posting Enabled" : "Premium Required"}
-          size="small"
-          sx={{
-            ml: "auto",
-            fontWeight: 700,
-            border: "none",
-            background: user.isPremium ? "#ECFDF5" : "#FEF3C7",
-            color: user.isPremium ? "#059669" : "#D97706",
-          }}
-        /> */}
       </Stack>
 
-      {/* {!user.isPremium && <PremiumLockCard />} */}
-
       {apiError && (
-        <Alert
-          severity="error"
-          sx={{ borderRadius: "14px" }}
-          onClose={() => setApiError("")}
-        >
+        <Alert severity="error" sx={{ borderRadius: "14px" }} onClose={() => setApiError("")}>
           {apiError}
         </Alert>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={2.5}>
+
           {/* ── Section 1: Basic Information ── */}
-          <Card
-            sx={{
-              borderRadius: "20px",
-              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
-            }}
-          >
+          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<AddHomeRoundedIcon sx={{ fontSize: 18 }} />}
@@ -277,12 +259,7 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 2: Property Details ── */}
-          <Card
-            sx={{
-              borderRadius: "20px",
-              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
-            }}
-          >
+          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>📐</span>}
@@ -294,12 +271,23 @@ export default function AddPropertyPage() {
                 {isResidential && (
                   <>
                     <Grid item xs={6} sm={4}>
-                      <FormInput name="floor" label="Floor" control={control} />
+                      {/* floor → string on backend, free text like "G", "1st", "2" */}
+                      <FormInput
+                        name="floor"
+                        label="Floor (e.g. G, 1, 2nd)"
+                        control={control}
+                      />
                     </Grid>
                     <Grid item xs={6} sm={4}>
-                      <FormInput name="rooms" label="Rooms" control={control} />
+                      {/* rooms → string on backend */}
+                      <FormInput
+                        name="rooms"
+                        label="Rooms"
+                        control={control}
+                      />
                     </Grid>
                     <Grid item xs={6} sm={4}>
+                      {/* bedrooms → string on backend */}
                       <FormInput
                         name="bedrooms"
                         label="Bedrooms"
@@ -311,15 +299,23 @@ export default function AddPropertyPage() {
                 <Grid item xs={12} sm={6} md={4}>
                   <FormInput
                     name="area"
-                    label="Built-up Area (e.g. 1800 sqft)"
+                    label="Built-up Area (sqft) *"
                     control={control}
+                    rules={{
+                      required: "Built-up area is required",
+                      validate: validateNumericField("Built-up area", true),
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <FormInput
                     name="landArea"
-                    label="Land Area (e.g. 2 Acres)"
+                    label="Land Area (acres) *"
                     control={control}
+                    rules={{
+                      required: "Land area is required",
+                      validate: validateNumericField("Land area", true),
+                    }}
                   />
                 </Grid>
                 {isAgri && (
@@ -336,12 +332,7 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 3: Pricing & Terms ── */}
-          <Card
-            sx={{
-              borderRadius: "20px",
-              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
-            }}
-          >
+          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>💰</span>}
@@ -357,15 +348,7 @@ export default function AddPropertyPage() {
                     control={control}
                     rules={{
                       required: "Expected price is required",
-                      validate: (v) => {
-                        const n = parseFloat(String(v ?? "").trim());
-                        if (!String(v ?? "").trim())
-                          return "Expected price is required";
-                        if (isNaN(n))
-                          return "Price must be a valid number (e.g. 5000000)";
-                        if (n <= 0) return "Price must be greater than ₹0";
-                        return true;
-                      },
+                      validate: validateNumericField("Expected price", true),
                     }}
                   />
                 </Grid>
@@ -381,12 +364,7 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 4: Images ── */}
-          <Card
-            sx={{
-              borderRadius: "20px",
-              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
-            }}
-          >
+          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>🖼️</span>}
