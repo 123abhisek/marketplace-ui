@@ -51,6 +51,7 @@ const getStoredToken = () => {
 
 const saveUserToStorage = (user) => {
   try {
+    console.log("user :",user);
     localStorage.setItem(LS_USER_KEY, JSON.stringify(user));
   } catch {}
 };

@@ -126,7 +126,7 @@ export default function AddVehiclePage() {
       const base64Images = await filesToBase64(rawFiles)
 
       const ok = await addVehicle({ ...data, images: base64Images })
-      if (ok) navigate('/dashboard/my-listings')
+      if (ok) navigate('/admin/listings')
     } catch (err) {
       setApiError(extractError(err))
     } finally {

@@ -313,7 +313,7 @@ function ListingCard({ item, navigate, index }) {
 
             <Button
               onClick={() =>
-                navigate(item.itemType === "property" ? "/properties" : "/vehicles")
+                navigate(item.itemType === "property" ? "/properties/" + item.id : "/vehicles/" + item.id, { replace: true }) || (item.itemType === "property" ? "/properties" : "/vehicles")
               }
               endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
               sx={{
