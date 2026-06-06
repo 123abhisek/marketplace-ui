@@ -48,11 +48,11 @@ const MAIN_NAV = [
     label: "Add Vehicle",
     icon: <NoteAddRoundedIcon sx={{ fontSize: 20 }} />,
   },
-  {
-    to: "/dashboard/my-listings",
-    label: "My Listings",
-    icon: <ListAltRoundedIcon sx={{ fontSize: 20 }} />,
-  },
+  // {
+  //   to: "/dashboard/my-listings",
+  //   label: "My Listings",
+  //   icon: <ListAltRoundedIcon sx={{ fontSize: 20 }} />,
+  // },
 ];
 
 const BOTTOM_NAV = [

@@ -148,7 +148,7 @@ function getNavConfig() {
       dropdown: [
         { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Upgrade Premium", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
-        {label: "My Bookings", to: "/dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
+        {label: "My Bookings", to: "/free-dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
       ],
     },
 
@@ -174,9 +174,9 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
-        { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
+        { label: "Dashboard", to: "/premium-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        // { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
+        // { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
         { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
         {label: "My Bookings", to: "/dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
       ],

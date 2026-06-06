@@ -40,10 +40,10 @@ const PAGE_TITLES = {
     title: "Add Vehicle",
     sub: "Create a new vehicle listing",
   },
-  "/dashboard/my-listings": {
-    title: "My Listings",
-    sub: "Manage your posted listings",
-  },
+  // "/dashboard/my-listings": {
+  //   title: "My Listings",
+  //   sub: "Manage your posted listings",
+  // },
   "/dashboard/profile": {
     // title: "Profile",
     // sub: "Manage your account details",
@@ -204,7 +204,7 @@ export default function DashboardLayout() {
 
           <Stack direction="row" spacing={1} alignItems="center">
             {/* Live Button */}
-            <Button
+            {/* <Button
               onClick={() => navigate("/")}
               sx={{
                 textTransform: "none",
@@ -221,7 +221,7 @@ export default function DashboardLayout() {
               }}
             >
               Live
-            </Button>
+            </Button> */}
             <IconButton
               sx={{
                 background: "#fff",
@@ -254,7 +254,7 @@ export default function DashboardLayout() {
             </IconButton>
 
             {/* User Avatar */}
-            <Avatar
+            {/* <Avatar
               src={user.photo || user.avatar_url}
               sx={{
                 width: 38,
@@ -270,7 +270,7 @@ export default function DashboardLayout() {
               }}
             >
               {user.name?.charAt(0)?.toUpperCase() || "U"}
-            </Avatar>
+            </Avatar> */}
           </Stack>
         </Box>
 
