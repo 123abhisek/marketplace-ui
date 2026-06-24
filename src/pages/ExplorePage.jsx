@@ -172,7 +172,13 @@ function ListingCard({ item, navigate, index }) {
     <Card
       sx={{
         ...cardSx,
+        // ── uniform height ──────────────────────────────────────────────────
+        maxWidth: 360,
+        flexShrink: 0,
         height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        // ────────────────────────────────────────────────────────────────────
         overflow: "hidden",
         transition: "transform .35s ease, box-shadow .35s ease, border-color .35s ease, opacity .45s ease",
         animation: `fadeUp .45s ease ${index * 0.05}s both`,
@@ -183,12 +189,20 @@ function ListingCard({ item, navigate, index }) {
         },
       }}
     >
+      {/* Image – fixed height, never grows */}
       <Box
         sx={{
           position: "relative",
           height: 220,
+          flex: "0 0 220px",
           overflow: "hidden",
           background: COLORS.surfaceSoft,
+          width: "100%",
+          flexShrink: 0,          // ← prevents image from shrinking
+          overflow: "hidden",
+          background: COLORS.surfaceSoft,
+          ".MuiCard-root:hover &": { transform: "scale(1.04)" },
+          ".MuiCard-root:hover & img": { transform: "scale(1.04)" },
         }}
       >
         <Box
@@ -200,9 +214,7 @@ function ListingCard({ item, navigate, index }) {
             height: "100%",
             objectFit: "cover",
             transition: "transform .6s ease",
-            ".MuiCard-root:hover &": {
-              transform: "scale(1.04)",
-            },
+            ".MuiCard-root:hover &": { transform: "scale(1.04)" },
           }}
         />
         <Box
@@ -238,8 +250,20 @@ function ListingCard({ item, navigate, index }) {
         />
       </Box>
 
-      <CardContent sx={{ p: 2.2 }}>
-        <Stack spacing={1.15}>
+      {/* Content – grows to fill remaining height */}
+      <CardContent
+        sx={{
+          p: 2.2,
+          // ── make content area flex so footer sticks to bottom ────────────
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          // ────────────────────────────────────────────────────────────────
+        }}
+      >
+        {/* Body content – grows to push footer down */}
+        <Stack spacing={1.15} sx={{ flexGrow: 1 }}>
+          {/* Title row */}
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
             <Typography
               sx={{
@@ -253,7 +277,6 @@ function ListingCard({ item, navigate, index }) {
             >
               {getTitle(item.raw)}
             </Typography>
-
             <Chip
               label={getCategory(item.raw, item.itemType)}
               size="small"
@@ -270,6 +293,7 @@ function ListingCard({ item, navigate, index }) {
             />
           </Stack>
 
+          {/* Location */}
           <Stack direction="row" spacing={0.8} alignItems="center">
             <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
             <Typography sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}>
@@ -277,15 +301,18 @@ function ListingCard({ item, navigate, index }) {
             </Typography>
           </Stack>
 
+          {/* Company */}
           <Stack direction="row" spacing={0.8} alignItems="center">
             <BusinessRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
             <Typography sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}>
               {getCompany(item.raw, item.itemType)}
             </Typography>
           </Stack>
+        </Stack>
 
-          <Divider sx={{ borderColor: COLORS.border, my: 0.6 }} />
-
+        {/* Footer – always at the bottom */}
+        <Box sx={{ mt: "auto" }}>
+          <Divider sx={{ borderColor: COLORS.border, my: 1.2 }} />
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.2}>
             <Box>
               <Typography
@@ -313,7 +340,12 @@ function ListingCard({ item, navigate, index }) {
 
             <Button
               onClick={() =>
-                navigate(item.itemType === "property" ? "/properties/" + item.id : "/vehicles/" + item.id, { replace: true }) || (item.itemType === "property" ? "/properties" : "/vehicles")
+                navigate(
+                  item.itemType === "property"
+                    ? "/properties/" + item.id
+                    : "/vehicles/" + item.id,
+                  { replace: true }
+                )
               }
               endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
               sx={{
@@ -334,7 +366,7 @@ function ListingCard({ item, navigate, index }) {
               View
             </Button>
           </Stack>
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1002,9 +1034,16 @@ export default function ExplorePage() {
 
           {/* Grid */}
           {filteredItems.length > 0 ? (
-            <Grid container spacing={2}>
+           <Grid container spacing={2} alignItems="stretch">
               {filteredItems.map((item, index) => (
-                <Grid item xs={12} sm={6} lg={4} key={item.id}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  lg={4}
+                  key={item.id}
+                  sx={{ display: 'flex' }}
+                >
                   <ListingCard item={item} navigate={navigate} index={index} />
                 </Grid>
               ))}
