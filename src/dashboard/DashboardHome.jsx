@@ -319,11 +319,14 @@ export default function DashboardHome() {
             sx={{ color: "#1E293B", letterSpacing: "-0.03em", lineHeight: 1.1 }}
           >
             Good{" "}
-            {new Date().getHours() < 12
-              ? "morning"
-              : new Date().getHours() < 17
-                ? "afternoon"
-                : "evening"}
+            {(() => {
+              const hour = new Date().getHours();
+
+              if (hour >= 5 && hour < 12) return "morning";
+              if (hour >= 12 && hour < 17) return "afternoon";
+              if (hour >= 17 && hour < 21) return "evening";
+              return "night";
+            })()}
             , {user.name?.split(" ")[0]} 👋
           </Typography>
           <Typography sx={{ color: "#94A3B8", fontSize: "0.875rem", mt: 0.5 }}>
@@ -751,7 +754,7 @@ export default function DashboardHome() {
       </Card>
 
       {/* ── Quick Actions (Ref 4 — Knowledge quick add cards) ── */}
-      <Grid container spacing={2.5}>
+      {/* <Grid container spacing={2.5}>
         <Grid item xs={12} md={6}>
           <Card
             component={RouterLink}
@@ -899,7 +902,7 @@ export default function DashboardHome() {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
+      </Grid> */}
     </Stack>
   );
 }

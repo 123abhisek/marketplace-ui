@@ -18,6 +18,8 @@ export default function AdminLayout() {
   const location = useLocation();
 
   return (
+    <>
+    <Navbar />
     <Box sx={{ minHeight: "100vh", display: "flex", background: "#f8fafc" }}>
       <Box
         sx={{
@@ -71,5 +73,6 @@ export default function AdminLayout() {
         <Outlet />
       </Box>
     </Box>
+    </>
   );
 }

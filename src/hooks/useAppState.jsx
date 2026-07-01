@@ -397,7 +397,7 @@ export function AppProvider({ children }) {
   );
 
   const upgradePremium = useCallback(() => {
-    navigate("/dashboard/subscription");
+    navigate("/subscription");
   }, [navigate]);
 
   const updateProfile = useCallback(

@@ -1,5 +1,4 @@
-// src/router/index.jsx
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
 import AuthLayout from "../layouts/AuthLayout";
@@ -9,46 +8,51 @@ import PremiumGate from "../layouts/PremiumGate";
 import AdminLayout from "../layouts/AdminLayout";
 import AdminGate from "../layouts/AdminGate";
 
+/* Public Pages */
 import LandingPage from "../pages/LandingPage";
-import SubscriptionPage from "../pages/SubscriptionPage";
-import LoginPage from "../pages/LoginPage";
-import RegisterPage from "../pages/RegisterPage";
-import FreeDashboard from "../pages/FreeDashboard";
-import PremiumDashboard from "../pages/PremiumDashboard";
-
-import DashboardHome from "../dashboard/DashboardHome";
-import PropertiesPage from "../dashboard/PropertiesPage";
-import VehiclesPage from "../dashboard/VehiclesPage";
-import AddPropertyPage from "../dashboard/AddPropertyPage";
-import AddVehiclePage from "../dashboard/AddVehiclePage";
-import MyListingsPage from "../dashboard/MyListingsPage";
-import ProfilePage from "../dashboard/ProfilePage";
-import SubscriptionStatusPage from "../dashboard/SubscriptionStatusPage";
-import LogoutPage from "../dashboard/LogoutPage";
-import MyBookingsPage from "../dashboard/MyBookingsPage";
-
-import PropertyDetailPage from "../pages/PropertyDetailPage";
-import VehicleDetailPage from "../pages/VehicleDetailPage";
 import AboutPage from "../pages/AboutPage";
 import HowItWorksPage from "../pages/HowItWorksPage";
 import FAQPage from "../pages/FAQPage";
 import ContactPage from "../pages/ContactPage";
 import ExplorePage from "../pages/ExplorePage";
+import SubscriptionPage from "../pages/SubscriptionPage";
 
+import PropertyDetailPage from "../pages/PropertyDetailPage";
+import VehicleDetailPage from "../pages/VehicleDetailPage";
+
+/* Auth */
+import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
+
+/* Dashboard */
+import FreeDashboard from "../pages/FreeDashboard";
+import PremiumDashboard from "../pages/PremiumDashboard";
+
+import DashboardHome from "../dashboard/DashboardHome";
+import ProfilePage from "../dashboard/ProfilePage";
+import SubscriptionStatusPage from "../dashboard/SubscriptionStatusPage";
+import LogoutPage from "../dashboard/LogoutPage";
+import MyBookingsPage from "../dashboard/MyBookingsPage";
+import MyListingsPage from "../dashboard/MyListingsPage";
+import PropertiesPage from "../dashboard/PropertiesPage";
+import VehiclesPage from "../dashboard/VehiclesPage";
+import AddPropertyPage from "../dashboard/AddPropertyPage";
+import AddVehiclePage from "../dashboard/AddVehiclePage";
+
+/* Support */
 import PrivacyPolicyPage from "../support/PrivacyPolicyPage";
-import TermsOfServicePage from "../support/TermsOfServicePage";
 import RefundPolicyPage from "../support/RefundPolicyPage";
+import TermsOfServicePage from "../support/TermsOfServicePage";
 
+/* Admin */
 import AdminOverviewPage from "../pages/admin/AdminOverviewPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminListingsPage from "../pages/admin/AdminListingsPage";
+import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
 import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
-import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
 
-import Navbar from "../components/Navbar";
-
-const routes = [
+export const routes = [
   {
     element: <PublicLayout />,
     children: [
@@ -57,13 +61,13 @@ const routes = [
       { path: "/how-it-works", element: <HowItWorksPage /> },
       { path: "/faq", element: <FAQPage /> },
       { path: "/contact", element: <ContactPage /> },
+      { path: "/explore", element: <ExplorePage /> },
+      { path: "/subscription", element: <SubscriptionPage /> },
+      { path: "/properties/:id", element: <PropertyDetailPage /> },
+      { path: "/vehicles/:id", element: <VehicleDetailPage /> },
       { path: "/privacy-policy", element: <PrivacyPolicyPage /> },
       { path: "/terms", element: <TermsOfServicePage /> },
       { path: "/refund-policy", element: <RefundPolicyPage /> },
-      { path: "/subscription", element: <SubscriptionPage /> },
-      { path: "/explore", element: <ExplorePage /> },
-      { path: "/properties/:id", element: <PropertyDetailPage /> },
-      { path: "/vehicles/:id", element: <VehicleDetailPage /> },
     ],
   },
 
@@ -79,54 +83,189 @@ const routes = [
     path: "/free-dashboard",
     element: (
       <DashboardGate>
-        <Navbar />
-        <Outlet />
+        <DashboardLayout />
       </DashboardGate>
     ),
+    handle: {
+      title: "Dashboard",
+      sub: "Welcome back to your EasyDeal Hub",
+    },
     children: [
-      { index: true, element: <FreeDashboard /> },
-      { path: "my-bookings", element: <MyBookingsPage /> },
+      {
+        index: true,
+        element: <FreeDashboard />,
+        handle: {
+          title: "Dashboard",
+          sub: "Welcome back to your EasyDeal Hub",
+        },
+      },
+      {
+        path: "my-bookings",
+        element: <MyBookingsPage />,
+        handle: {
+          title: "My Bookings",
+          sub: "View all your bookings",
+        },
+      },
     ],
   },
 
   {
-    path: "/premium-dashboard",
+    path: "/dashboard",
     element: (
       <DashboardGate>
         <PremiumGate>
-          <Navbar />
-          <Outlet />
+          <DashboardLayout />
         </PremiumGate>
       </DashboardGate>
     ),
-    children: [{ index: true, element: <PremiumDashboard /> }],
+    handle: {
+      title: "Dashboard",
+      sub: "Welcome back",
+    },
+    children: [
+      {
+        index: true,
+        element: <Navigate to="home" replace />,
+      },
+      {
+        path: "home",
+        element: <DashboardHome />,
+        handle: {
+          title: "Dashboard",
+          sub: "Welcome back",
+        },
+      },
+      {
+        path: "premium",
+        element: <PremiumDashboard />,
+        handle: {
+          title: "Premium Dashboard",
+          sub: "Access premium features and insights",
+        },
+      },
+      {
+        path: "properties",
+        element: <PropertiesPage />,
+        handle: {
+          title: "Properties",
+          sub: "Browse all property listings",
+        },
+      },
+      {
+        path: "properties/add",
+        element: (
+          <AdminGate>
+            <AddPropertyPage />
+          </AdminGate>
+        ),
+        handle: {
+          title: "Add Property",
+          sub: "Create a new property listing",
+        },
+      },
+      {
+        path: "properties/:id",
+        element: <PropertyDetailPage />,
+        handle: {
+          title: "Property Details",
+          sub: "View property information",
+        },
+      },
+      {
+        path: "vehicles",
+        element: <VehiclesPage />,
+        handle: {
+          title: "Vehicles",
+          sub: "Browse all vehicle listings",
+        },
+      },
+      {
+        path: "vehicles/add",
+        element: (
+          <AdminGate>
+            <AddVehiclePage />
+          </AdminGate>
+        ),
+        handle: {
+          title: "Add Vehicle",
+          sub: "Create a new vehicle listing",
+        },
+      },
+      {
+        path: "vehicles/:id",
+        element: <VehicleDetailPage />,
+        handle: {
+          title: "Vehicle Details",
+          sub: "View vehicle information",
+        },
+      },
+      {
+        path: "my-listings",
+        element: <MyListingsPage />,
+        handle: {
+          title: "My Listings",
+          sub: "Manage your listings",
+        },
+      },
+      {
+        path: "my-bookings",
+        element: <MyBookingsPage />,
+        handle: {
+          title: "My Bookings",
+          sub: "Track all your bookings",
+        },
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
+        handle: {
+          title: "Profile",
+          sub: "Manage your account",
+        },
+      },
+      {
+        path: "subscription",
+        element: <SubscriptionStatusPage />,
+        handle: {
+          title: "Subscription",
+          sub: "Manage your subscription",
+        },
+      },
+      {
+        path: "logout",
+        element: <LogoutPage />,
+        handle: {
+          title: "Logout",
+          sub: "Sign out from your account",
+        },
+      },
+    ],
   },
 
   {
-  path: "/dashboard",
-  element: (
-    <DashboardGate>
-      <PremiumGate>
-        <Navbar />
-        <PremiumDashboard />
-      </PremiumGate>
-    </DashboardGate>
-  ),
-  children: [
-    { index: true, element: <Navigate to="home" replace /> },
+    path: "/admin",
+    element: <AdminGate />,
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Navigate to="overview" replace /> },
+          { path: "overview", element: <AdminOverviewPage /> },
+          { path: "users", element: <AdminUsersPage /> },
+          { path: "listings", element: <AdminListingsPage /> },
+          { path: "orders", element: <AdminOrdersPage /> },
+          { path: "reports", element: <AdminReportsPage /> },
+          { path: "settings", element: <AdminSettingsPage /> },
+        ],
+      },
+    ],
+  },
 
-    { path: "home", element: <DashboardHome /> },
-    { path: "profile", element: <ProfilePage /> },
-    { path: "subscription", element: <SubscriptionStatusPage /> },
-    { path: "logout", element: <LogoutPage /> },
-
-    { path: "properties/:id", element: <PropertyDetailPage /> },
-    { path: "vehicles/:id", element: <VehicleDetailPage /> },
-    { path: "my-bookings", element: <MyBookingsPage /> },
-  ],
-},
-
-  { path: "*", element: <Navigate to="/" replace /> },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
 ];
 
 export default routes;

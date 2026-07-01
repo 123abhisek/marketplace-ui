@@ -100,19 +100,6 @@ export default function PropertiesPage() {
           >
             Refresh
           </Button>
-          <Button
-            component={RouterLink}
-            to="/dashboard/add-property"
-            variant="contained"
-            startIcon={<AddHomeRoundedIcon />}
-            sx={{
-              borderRadius: '12px', fontWeight: 800,
-              background: 'linear-gradient(135deg, #4361EE 0%, #7C3AED 100%)',
-              boxShadow: '0 4px 16px rgba(67,97,238,0.30)',
-            }}
-          >
-            Add Property
-          </Button>
         </Stack>
       </Stack>
 

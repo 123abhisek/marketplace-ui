@@ -278,29 +278,6 @@ export default function ProfilePage() {
   return (
     <Box sx={{ background: UI.bg, p: { xs: 1, sm: 1.5, md: 2 } }}>
       <Stack spacing={2.5}>
-        <Box>
-          <Typography
-            sx={{
-              fontSize: { xs: '1.45rem', md: '1.6rem' },
-              fontWeight: 900,
-              color: UI.text,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.1,
-            }}
-          >
-            Profile Settings
-          </Typography>
-          <Typography
-            sx={{
-              mt: 0.5,
-              fontSize: '0.86rem',
-              color: UI.muted,
-              lineHeight: 1.6,
-            }}
-          >
-            Manage your profile, contact details, and account information.
-          </Typography>
-        </Box>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2.5}>

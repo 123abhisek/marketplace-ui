@@ -78,21 +78,6 @@ export default function VehiclesPage() {
           >
             Refresh
           </Button>
-          <Button
-            component={RouterLink}
-            to="/dashboard/add-vehicle"
-            variant="contained"
-            startIcon={<NoteAddRoundedIcon />}
-            sx={{
-              borderRadius: '12px',
-              fontWeight: 800,
-              background: 'linear-gradient(135deg, #7C3AED 0%, #4361EE 100%)',
-              boxShadow: '0 4px 16px rgba(124,58,237,0.30)',
-              alignSelf: { xs: 'flex-start', sm: 'auto' },
-            }}
-          >
-            Add Vehicle
-          </Button>
         </Stack>
       </Stack>
 

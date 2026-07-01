@@ -174,7 +174,7 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
       ],
       dropdown: [
-        { label: "Dashboard", to: "/premium-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         // { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
         // { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
         { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
