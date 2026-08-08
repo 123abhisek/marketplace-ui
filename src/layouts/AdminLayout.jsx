@@ -1,17 +1,56 @@
+
+
 // src/layouts/AdminLayout.jsx
-import { Outlet, Link as RouterLink, useLocation } from "react-router-dom";
-import { Box, Button, Stack, Typography, Divider } from "@mui/material";
+
+import {
+  Outlet,
+  Link as RouterLink,
+  useLocation,
+} from "react-router-dom";
+
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Divider,
+} from "@mui/material";
+
 import Navbar from "../components/Navbar";
 
 const navItems = [
-  { label: "Overview", path: "/admin" },
-  { label: "Users", path: "/admin/users" },
-  { label: "Property", path: "/admin/add-property" },
-  { label: "Vehicles", path: "/admin/add-vehicle" },
-  { label: "Listings", path: "/admin/listings" },
-  { label: "Orders", path: "/admin/orders" },
-  { label: "Reports", path: "/admin/reports" },
-  { label: "Settings", path: "/admin/settings" },
+  {
+    label: "Overview",
+    path: "/admin/overview",
+  },
+  {
+    label: "Users",
+    path: "/admin/users",
+  },
+  {
+    label: "Add Property",
+    path: "/admin/properties/add",
+  },
+  {
+    label: "Add Vehicle",
+    path: "/admin/vehicles/add",
+  },
+  {
+    label: "Listings",
+    path: "/admin/listings",
+  },
+  {
+    label: "Orders",
+    path: "/admin/orders",
+  },
+  {
+    label: "Reports",
+    path: "/admin/reports",
+  },
+  {
+    label: "Settings",
+    path: "/admin/settings",
+  },
 ];
 
 export default function AdminLayout() {
@@ -19,60 +58,84 @@ export default function AdminLayout() {
 
   return (
     <>
-    <Navbar />
-    <Box sx={{ minHeight: "100vh", display: "flex", background: "#f8fafc" }}>
+      <Navbar />
+
       <Box
         sx={{
-          width: 260,
-          borderRight: "1px solid rgba(15,23,42,0.08)",
-          background: "#fff",
-          p: 2,
+          minHeight: "100vh",
+          display: "flex",
+          background: "#f8fafc",
         }}
       >
-        <Typography
+        <Box
+          component="aside"
           sx={{
-            fontWeight: 900,
-            fontSize: "1.2rem",
-            color: "#0f172a",
-            mb: 2,
+            width: 260,
+            flexShrink: 0,
+            borderRight: "1px solid rgba(15,23,42,0.08)",
+            background: "#fff",
+            p: 2,
           }}
         >
-          Admin Panel
-        </Typography>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: "1.2rem",
+              color: "#0f172a",
+              mb: 2,
+            }}
+          >
+            Admin Panel
+          </Typography>
 
-        <Divider sx={{ mb: 2 }} />
+          <Divider sx={{ mb: 2 }} />
 
-        <Stack spacing={1}>
-          {navItems.map((item) => {
-            const active = location.pathname === item.path;
-            return (
-              <Button
-                key={item.path}
-                component={RouterLink}
-                to={item.path}
-                fullWidth
-                sx={{
-                  justifyContent: "flex-start",
-                  textTransform: "none",
-                  borderRadius: "12px",
-                  px: 1.5,
-                  py: 1.1,
-                  fontWeight: active ? 800 : 700,
-                  color: active ? "#0f172a" : "#64748b",
-                  background: active ? "rgba(15,118,110,0.08)" : "transparent",
-                }}
-              >
-                {item.label}
-              </Button>
-            );
-          })}
-        </Stack>
+          <Stack spacing={1}>
+            {navItems.map((item) => {
+              const active =
+                location.pathname === item.path ||
+                location.pathname.startsWith(`${item.path}/`);
+
+              return (
+                <Button
+                  key={item.path}
+                  component={RouterLink}
+                  to={item.path}
+                  fullWidth
+                  sx={{
+                    justifyContent: "flex-start",
+                    textTransform: "none",
+                    borderRadius: "12px",
+                    px: 1.5,
+                    py: 1.1,
+                    fontWeight: active ? 800 : 700,
+                    color: active ? "#0f172a" : "#64748b",
+                    background: active
+                      ? "rgba(15,118,110,0.08)"
+                      : "transparent",
+                    "&:hover": {
+                      background: "rgba(15,118,110,0.08)",
+                    },
+                  }}
+                >
+                  {item.label}
+                </Button>
+              );
+            })}
+          </Stack>
+        </Box>
+
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            p: 3,
+          }}
+        >
+          <Outlet />
+        </Box>
       </Box>
-
-      <Box sx={{ flex: 1, p: 3 }}>
-        <Outlet />
-      </Box>
-    </Box>
     </>
   );
 }

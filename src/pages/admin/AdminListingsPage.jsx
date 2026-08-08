@@ -1,10 +1,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
+  Avatar,
   Box,
   Button,
   Card,
+  CardActions,
   CardContent,
+  CardMedia,
   Chip,
   Dialog,
   DialogActions,
@@ -12,11 +16,11 @@ import {
   DialogTitle,
   Divider,
   Grid,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
   Typography,
-  Alert,
 } from "@mui/material";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
@@ -26,10 +30,10 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import CurrencyRupeeRoundedIcon from "@mui/icons-material/CurrencyRupeeRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import AddHomeRoundedIcon from "@mui/icons-material/AddHomeRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { useLocation } from "react-router-dom";
 import { useAppState } from "../../hooks/useAppState";
 
@@ -45,14 +49,14 @@ const PROPERTY_TYPES = [
 ];
 
 const UI = {
-  bg: "#F5F7FB",
+  bg: "#F6F7FB",
   surface: "#FFFFFF",
-  surfaceSoft: "#F8FAFC",
+  surfaceSoft: "#F9FAFC",
   border: "rgba(15,23,42,0.08)",
-  borderStrong: "rgba(15,23,42,0.12)",
-  text: "#111827",
-  muted: "#667085",
-  faint: "#98A2B3",
+  borderStrong: "rgba(15,23,42,0.14)",
+  text: "#0F172A",
+  muted: "#64748B",
+  faint: "#94A3B8",
   primary: "#0F766E",
   primarySoft: "rgba(15,118,110,0.10)",
   blue: "#2563EB",
@@ -61,31 +65,38 @@ const UI = {
   successSoft: "rgba(22,163,74,0.10)",
   danger: "#DC2626",
   dangerSoft: "rgba(220,38,38,0.10)",
-  shadowSm: "0 2px 10px rgba(15,23,42,0.04)",
-  shadowMd: "0 10px 32px rgba(15,23,42,0.06)",
+  warning: "#F59E0B",
+  warningSoft: "rgba(245,158,11,0.12)",
+  shadowSm: "0 4px 18px rgba(15,23,42,0.05)",
+  shadowMd: "0 12px 34px rgba(15,23,42,0.08)",
 };
 
 const cardSx = {
-  borderRadius: "22px",
+  width: "30rem",
+  borderRadius: "24px",
   border: `1px solid ${UI.border}`,
   background: UI.surface,
   boxShadow: UI.shadowSm,
-  transition: "box-shadow 0.2s ease, transform 0.2s ease",
-  "&:hover": { boxShadow: UI.shadowMd, transform: "translateY(-2px)" },
+  overflow: "hidden",
+  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  "&:hover": {
+    transform: "translateY(-3px)",
+    boxShadow: UI.shadowMd,
+  },
 };
 
 const inputSx = {
   "& .MuiOutlinedInput-root": {
-    borderRadius: "14px",
-    background: UI.surfaceSoft,
-    fontSize: "0.88rem",
+    borderRadius: "16px",
+    background: UI.surface,
+    fontSize: "0.92rem",
     fontWeight: 600,
     "& fieldset": { borderColor: UI.border },
     "&:hover fieldset": { borderColor: UI.borderStrong },
     "&.Mui-focused fieldset": { borderColor: UI.primary },
   },
   "& .MuiInputLabel-root": {
-    fontSize: "0.85rem",
+    fontSize: "0.88rem",
     fontWeight: 600,
     color: UI.muted,
     "&.Mui-focused": { color: UI.primary },
@@ -94,20 +105,20 @@ const inputSx = {
 
 const btnPrimary = {
   minHeight: 44,
-  px: 2.5,
+  px: 2.25,
   borderRadius: "14px",
   textTransform: "none",
   fontWeight: 800,
   fontSize: "0.88rem",
   color: "#fff",
-  background: UI.primary,
+  background: "linear-gradient(135deg, #0F766E 0%, #2563EB 100%)",
   boxShadow: "none",
-  "&:hover": { background: "#0c615b", boxShadow: "none" },
+  "&:hover": { boxShadow: "none", opacity: 0.95 },
 };
 
 const btnOutlined = {
   minHeight: 44,
-  px: 2.5,
+  px: 2.25,
   borderRadius: "14px",
   textTransform: "none",
   fontWeight: 800,
@@ -121,7 +132,7 @@ const btnOutlined = {
 
 const btnDanger = {
   minHeight: 44,
-  px: 2.5,
+  px: 2.25,
   borderRadius: "14px",
   textTransform: "none",
   fontWeight: 800,
@@ -132,34 +143,63 @@ const btnDanger = {
   "&:hover": { background: "#b91c1c", boxShadow: "none" },
 };
 
-function SectionHeader({ icon, title, description }) {
+const getImage = (item) => {
+  const img = item?.images?.[0];
+  if (!img) return "";
+  if (typeof img === "string") return img;
+  return img?.url || img?.src || img?.preview || "";
+};
+
+const money = (value) => {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value);
+  return new Intl.NumberFormat("en-IN").format(n);
+};
+
+function SectionHeader({ icon, title, description, action }) {
   return (
-    <Box sx={{ mb: 2 }}>
-      <Stack direction="row" spacing={1.5} alignItems="center" mb={0.5}>
-        <Box
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: "10px",
-            background: "#EEF2FF",
-            display: "grid",
-            placeItems: "center",
-            color: "#4361EE",
-            flexShrink: 0,
-          }}
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      justifyContent="space-between"
+      alignItems={{ xs: "flex-start", sm: "center" }}
+      spacing={1.5}
+      sx={{ mb: 2 }}
+    >
+      <Box>
+        <Stack
+          direction="row"
+          spacing={1.2}
+          alignItems="center"
+          sx={{ mb: 0.4 }}
         >
-          {icon}
-        </Box>
-        <Typography fontWeight={800} sx={{ color: "#1E293B", fontSize: "0.95rem" }}>
-          {title}
-        </Typography>
-      </Stack>
-      {description ? (
-        <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8", ml: "46px" }}>
-          {description}
-        </Typography>
-      ) : null}
-    </Box>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: "12px",
+              background: UI.primarySoft,
+              display: "grid",
+              placeItems: "center",
+              color: UI.primary,
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography
+            sx={{ color: UI.text, fontSize: "1rem", fontWeight: 900 }}
+          >
+            {title}
+          </Typography>
+        </Stack>
+        {description ? (
+          <Typography sx={{ color: UI.muted, fontSize: "0.82rem", ml: "48px" }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Box>
+      {action}
+    </Stack>
   );
 }
 
@@ -192,169 +232,293 @@ function ListingCard({ item, onEdit, onDelete }) {
   const isProperty = item.type === "Property";
   const tone = isProperty ? UI.primary : UI.blue;
   const soft = isProperty ? UI.primarySoft : UI.blueSoft;
-  const borderAccent = isProperty ? "rgba(15,118,110,0.18)" : "rgba(37,99,235,0.18)";
   const Icon = isProperty ? HomeWorkRoundedIcon : DirectionsCarRoundedIcon;
+  const image = getImage(item);
 
   return (
     <Card sx={cardSx}>
-      <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
-        <Box
-          sx={{
-            height: 80,
-            background: isProperty
-              ? "linear-gradient(135deg, rgba(15,118,110,0.08) 0%, rgba(37,99,235,0.06) 100%)"
-              : "linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.06) 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            px: 2.2,
-            borderBottom: `1px solid ${UI.border}`,
-          }}
-        >
+      <Box
+        sx={{
+          position: "relative",
+          height: 200,
+          background: "linear-gradient(135deg, #E2E8F0 0%, #F8FAFC 100%)",
+        }}
+      >
+        {image ? (
+          <CardMedia
+            component="img"
+            src={image}
+            alt={item.title}
+            sx={{ height: "100%", objectFit: "cover" }}
+          />
+        ) : (
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "16px",
-              background: soft,
-              border: `1px solid ${borderAccent}`,
+              height: "100%",
               display: "grid",
               placeItems: "center",
-              color: tone,
+              color: UI.faint,
             }}
           >
-            <Icon sx={{ fontSize: 26 }} />
+            <Icon sx={{ fontSize: 54 }} />
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            position: "absolute",
+            top: 12,
+            left: 12,
+            display: "flex",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Chip
+            label={item.type}
+            size="small"
+            sx={{
+              height: 28,
+              borderRadius: "999px",
+              fontWeight: 800,
+              color: tone,
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(10px)",
+            }}
+          />
+          <Chip
+            icon={<CheckCircleRoundedIcon sx={{ fontSize: 14 }} />}
+            label="Active"
+            size="small"
+            sx={{
+              height: 28,
+              borderRadius: "999px",
+              fontWeight: 800,
+              color: UI.success,
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(10px)",
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.9)",
+            display: "grid",
+            placeItems: "center",
+            boxShadow: "0 6px 18px rgba(15,23,42,0.12)",
+          }}
+        >
+          <Icon sx={{ fontSize: 22, color: tone }} />
+        </Box>
+      </Box>
+
+      <CardContent sx={{ p: 2.25 }}>
+        <Stack spacing={1.25}>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: "1rem",
+                fontWeight: 900,
+                color: UI.text,
+                lineHeight: 1.35,
+                mb: 0.4,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {item.title}
+            </Typography>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <LocationOnRoundedIcon sx={{ fontSize: 15, color: UI.faint }} />
+              <Typography
+                sx={{
+                  fontSize: "0.8rem",
+                  color: UI.muted,
+                  fontWeight: 600,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.location}
+              </Typography>
+            </Stack>
           </Box>
 
-          <Stack direction="row" spacing={1}>
-            <Chip
-              label={item.type}
-              size="small"
-              sx={{
-                height: 26,
-                borderRadius: "999px",
-                fontWeight: 800,
-                fontSize: "0.7rem",
-                color: tone,
-                background: soft,
-              }}
-            />
-            <Chip
-              label="Active"
-              size="small"
-              sx={{
-                height: 26,
-                borderRadius: "999px",
-                fontWeight: 800,
-                fontSize: "0.7rem",
-                color: UI.success,
-                background: UI.successSoft,
-              }}
-            />
-          </Stack>
-        </Box>
-
-        <Box sx={{ p: 2.2 }}>
-          <Typography
-            sx={{
-              fontSize: "0.97rem",
-              fontWeight: 900,
-              color: UI.text,
-              lineHeight: 1.35,
-              mb: 0.6,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
           >
-            {item.title}
-          </Typography>
-
-          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mb: 0.5 }}>
-            <LocationOnRoundedIcon sx={{ fontSize: 14, color: UI.faint }} />
-            <Typography sx={{ fontSize: "0.78rem", color: UI.muted, fontWeight: 600 }}>
-              {item.location}
+            <Stack direction="row" spacing={0.6} alignItems="center">
+              <Box
+                sx={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: "8px",
+                  background: soft,
+                  display: "grid",
+                  placeItems: "center",
+                  color: tone,
+                }}
+              >
+                <CurrencyRupeeRoundedIcon sx={{ fontSize: 15 }} />
+              </Box>
+              <Typography
+                sx={{ fontSize: "1.02rem", fontWeight: 900, color: UI.text }}
+              >
+                {money(item.price)}
+              </Typography>
+            </Stack>
+            <Typography
+              sx={{ fontSize: "0.75rem", fontWeight: 700, color: UI.muted }}
+            >
+              ID: {item.id}
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 2 }}>
-            <CurrencyRupeeRoundedIcon sx={{ fontSize: 14, color: tone }} />
-            <Typography sx={{ fontSize: "0.97rem", fontWeight: 900, color: UI.text }}>
-              {item.price}
-            </Typography>
-          </Stack>
+          <Divider sx={{ borderColor: UI.border }} />
 
-          <Divider sx={{ mb: 1.8, borderColor: UI.border }} />
-
-          <Stack direction="row" spacing={1}>
-            <Button
-              fullWidth
-              startIcon={<EditRoundedIcon sx={{ fontSize: 17 }} />}
-              onClick={() => onEdit(item)}
-              sx={{
-                minHeight: 40,
-                borderRadius: "12px",
-                textTransform: "none",
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                color: tone,
-                background: soft,
-                border: `1px solid ${borderAccent}`,
-                boxShadow: "none",
-                "&:hover": { opacity: 0.85, boxShadow: "none" },
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              fullWidth
-              startIcon={<DeleteRoundedIcon sx={{ fontSize: 17 }} />}
-              onClick={() => onDelete(item)}
-              sx={{
-                minHeight: 40,
-                borderRadius: "12px",
-                textTransform: "none",
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                color: UI.danger,
-                background: UI.dangerSoft,
-                border: "1px solid rgba(220,38,38,0.18)",
-                boxShadow: "none",
-                "&:hover": { opacity: 0.85, boxShadow: "none" },
-              }}
-            >
-              Delete
-            </Button>
-          </Stack>
-        </Box>
+          <Grid container spacing={1}>
+            {isProperty ? (
+              <>
+                <Grid item xs={6}>
+                  <Meta label="Type" value={item.propertyType || "—"} />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta
+                    label="Area"
+                    value={item.area ? `${item.area} sqft` : "—"}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta
+                    label="Land"
+                    value={item.landArea ? `${item.landArea} acre` : "—"}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta label="Contact" value={item.contact || "—"} />
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={6}>
+                  <Meta label="Brand" value={item.brand || "—"} />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta label="Model" value={item.model || "—"} />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta label="Year" value={item.year || "—"} />
+                </Grid>
+                <Grid item xs={6}>
+                  <Meta
+                    label="KM"
+                    value={item.kmDriven ? `${item.kmDriven} km` : "—"}
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        </Stack>
       </CardContent>
+
+      <CardActions sx={{ px: 2.25, pb: 2.25, pt: 0, gap: 1 }}>
+        <Button
+          fullWidth
+          startIcon={<EditRoundedIcon sx={{ fontSize: 17 }} />}
+          onClick={() => onEdit(item)}
+          sx={{ ...btnOutlined, minHeight: 42, flex: 1 }}
+        >
+          Edit
+        </Button>
+        <Button
+          fullWidth
+          startIcon={<DeleteRoundedIcon sx={{ fontSize: 17 }} />}
+          onClick={() => onDelete(item)}
+          sx={{ ...btnDanger, minHeight: 42, flex: 1 }}
+        >
+          Delete
+        </Button>
+      </CardActions>
     </Card>
   );
 }
 
-function EditDialogContent({ editItem, editForm, setEditForm, editErrors, setEditErrors }) {
+function Meta({ label, value }) {
+  return (
+    <Box
+      sx={{
+        p: 1.1,
+        borderRadius: "14px",
+        background: UI.surfaceSoft,
+        border: `1px solid ${UI.border}`,
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: "0.7rem",
+          color: UI.faint,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: 0.4,
+          mb: 0.2,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.82rem",
+          color: UI.text,
+          fontWeight: 800,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+function EditDialogContent({
+  editItem,
+  editForm,
+  setEditForm,
+  editErrors,
+  setEditErrors,
+}) {
   if (!editItem) return null;
   const isProperty = editItem.type === "Property";
-
   const setField = (field, value) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
     if (editErrors[field]) setEditErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2.2}>
       {isProperty ? (
         <>
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
-                icon={<AddHomeRoundedIcon sx={{ fontSize: 18 }} />}
-                title="Basic Information"
-                description="Property title, type, and location details"
+                icon={<HomeWorkRoundedIcon sx={{ fontSize: 18 }} />}
+                title="Property Basics"
+                description="Update title, type, and location"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -415,46 +579,80 @@ function EditDialogContent({ editItem, editForm, setEditForm, editErrors, setEdi
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>📐</span>}
                 title="Property Details"
-                description="Dimensions, rooms, and structural information"
+                description="Rooms, dimensions, and other info"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={6} sm={4}>
-                  <TextField fullWidth label="Floor" value={editForm.floor} onChange={(e) => setField("floor", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Floor"
+                    value={editForm.floor}
+                    onChange={(e) => setField("floor", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                  <TextField fullWidth label="Rooms" value={editForm.rooms} onChange={(e) => setField("rooms", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Rooms"
+                    value={editForm.rooms}
+                    onChange={(e) => setField("rooms", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                  <TextField fullWidth label="Bedrooms" value={editForm.bedrooms} onChange={(e) => setField("bedrooms", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Bedrooms"
+                    value={editForm.bedrooms}
+                    onChange={(e) => setField("bedrooms", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <TextField fullWidth label="Built-up Area" value={editForm.area} onChange={(e) => setField("area", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Built-up Area"
+                    value={editForm.area}
+                    onChange={(e) => setField("area", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <TextField fullWidth label="Land Area" value={editForm.landArea} onChange={(e) => setField("landArea", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Land Area"
+                    value={editForm.landArea}
+                    onChange={(e) => setField("landArea", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField fullWidth label="Crops Grown" value={editForm.cropsGrown} onChange={(e) => setField("cropsGrown", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Crops Grown"
+                    value={editForm.cropsGrown}
+                    onChange={(e) => setField("cropsGrown", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
-                icon={<span style={{ fontSize: 15 }}>💰</span>}
-                title="Pricing & Terms"
-                description="Expected price and rental / lease information"
+                icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 18 }} />}
+                title="Pricing"
+                description="Update expected price and terms"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={4}>
                   <TextField
                     fullWidth
@@ -464,13 +662,6 @@ function EditDialogContent({ editItem, editForm, setEditForm, editErrors, setEdi
                     error={!!editErrors.price}
                     helperText={editErrors.price}
                     sx={inputSx}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CurrencyRupeeRoundedIcon sx={{ fontSize: 18, color: UI.faint }} />
-                        </InputAdornment>
-                      ),
-                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -488,73 +679,138 @@ function EditDialogContent({ editItem, editForm, setEditForm, editErrors, setEdi
         </>
       ) : (
         <>
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
                 icon={<DirectionsCarRoundedIcon sx={{ fontSize: 18 }} />}
                 title="Vehicle Identity"
-                description="Registration number, brand, model, and year"
+                description="Update vehicle title and registration details"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <TextField fullWidth label="Listing Title" value={editForm.title} onChange={(e) => setField("title", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Listing Title"
+                    value={editForm.title}
+                    onChange={(e) => setField("title", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Vehicle Registration Number" value={editForm.vehicleNumber} onChange={(e) => setField("vehicleNumber", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Vehicle Registration Number"
+                    value={editForm.vehicleNumber}
+                    onChange={(e) => setField("vehicleNumber", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Brand" value={editForm.brand} onChange={(e) => setField("brand", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Brand"
+                    value={editForm.brand}
+                    onChange={(e) => setField("brand", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="Model" value={editForm.model} onChange={(e) => setField("model", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Model"
+                    value={editForm.model}
+                    onChange={(e) => setField("model", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="Year" value={editForm.year} onChange={(e) => setField("year", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Year"
+                    value={editForm.year}
+                    onChange={(e) => setField("year", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="RTO Code" value={editForm.rtoCode} onChange={(e) => setField("rtoCode", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="RTO Code"
+                    value={editForm.rtoCode}
+                    onChange={(e) => setField("rtoCode", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>🚦</span>}
                 title="Usage & Location"
-                description="Odometer reading, registered state, and current location"
+                description="Update odometer, state, and city"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="KM Driven" value={editForm.kmDriven} onChange={(e) => setField("kmDriven", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="KM Driven"
+                    value={editForm.kmDriven}
+                    onChange={(e) => setField("kmDriven", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="State" value={editForm.state} onChange={(e) => setField("state", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="State"
+                    value={editForm.state}
+                    onChange={(e) => setField("state", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField fullWidth label="City / Area" value={editForm.location} onChange={(e) => setField("location", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="City / Area"
+                    value={editForm.location}
+                    onChange={(e) => setField("location", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: 2.5 }}>
               <SectionHeader
-                icon={<span style={{ fontSize: 15 }}>💰</span>}
+                icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 18 }} />}
                 title="Price & Contact"
-                description="Asking price and seller contact number"
+                description="Update asking price and contact number"
               />
-              <Divider sx={{ mb: 3, opacity: 0.6 }} />
-              <Grid container spacing={2.5}>
+              <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Asking Price" value={editForm.price} onChange={(e) => setField("price", e.target.value)} error={!!editErrors.price} helperText={editErrors.price} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Asking Price"
+                    value={editForm.price}
+                    onChange={(e) => setField("price", e.target.value)}
+                    error={!!editErrors.price}
+                    helperText={editErrors.price}
+                    sx={inputSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Contact Number" value={editForm.contactNumber} onChange={(e) => setField("contactNumber", e.target.value)} sx={inputSx} />
+                  <TextField
+                    fullWidth
+                    label="Contact Number"
+                    value={editForm.contactNumber}
+                    onChange={(e) => setField("contactNumber", e.target.value)}
+                    sx={inputSx}
+                  />
                 </Grid>
               </Grid>
             </CardContent>
@@ -650,7 +906,7 @@ export default function AdminListingsPage() {
       Property: localItems.filter((i) => i.type === "Property").length,
       Vehicle: localItems.filter((i) => i.type === "Vehicle").length,
     }),
-    [localItems]
+    [localItems],
   );
 
   function openEdit(item) {
@@ -671,7 +927,8 @@ export default function AdminListingsPage() {
     const errors = {};
     if (!editForm.title?.trim()) errors.title = "Title is required";
     if (!editForm.location?.trim()) errors.location = "Location is required";
-    if (!editForm.price?.trim()) errors.price = "Price is required";
+    if (!String(editForm.price ?? "").trim())
+      errors.price = "Price is required";
     setEditErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -707,13 +964,13 @@ export default function AdminListingsPage() {
                 kmDriven: editForm.kmDriven ?? item.kmDriven,
                 raw: { ...(item.raw || {}), ...editForm },
               }
-            : item
-        )
+            : item,
+        ),
       );
       setMessage(`${editItem.type} updated successfully.`);
       setEditSaving(false);
       closeEdit();
-    }, 200);
+    }, 300);
   }
 
   function openDelete(item) {
@@ -735,217 +992,347 @@ export default function AdminListingsPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", background: UI.bg, p: { xs: 1.5, md: 3 } }}>
-      <Card sx={{ ...cardSx, p: { xs: 1.5, md: 2.5 }, mb: 2 }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          alignItems={{ xs: "stretch", sm: "center" }}
-          justifyContent="space-between"
-        >
-          <Box>
-            <Typography sx={{ fontSize: "1.5rem", fontWeight: 900, color: UI.text }}>
-              Admin Listings
-            </Typography>
-            <Typography sx={{ color: UI.muted, fontSize: "0.85rem" }}>
-              Edit or delete property and vehicle listings
-            </Typography>
-          </Box>
-
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {["All", "Property", "Vehicle"].map((key) => (
-              <Button
-                key={key}
-                onClick={() => setFilter(key)}
-                sx={{
-                  ...btnOutlined,
-                  ...(filter === key
-                    ? {
-                        background: UI.primarySoft,
-                        color: UI.primary,
-                        border: `1px solid rgba(15,118,110,0.18)`,
-                      }
-                    : {}),
-                }}
-              >
-                {key} ({counts[key]})
-              </Button>
-            ))}
-          </Stack>
-        </Stack>
-
-        {message ? (
-          <Alert sx={{ mt: 2, borderRadius: "14px" }} severity="success" onClose={() => setMessage("")}>
-            {message}
-          </Alert>
-        ) : null}
-
-        <TextField
-          fullWidth
-          placeholder="Search listings..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ mt: 2, ...inputSx }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon sx={{ color: UI.faint }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Card>
-
-      {filtered.length === 0 ? (
-        <Box
+      <Box sx={{ maxWidth: 1600, mx: "auto" }}>
+        <Card
           sx={{
-            py: 8,
-            textAlign: "center",
-            border: `1.5px dashed ${UI.border}`,
-            borderRadius: "20px",
+            borderRadius: "24px",
+            border: `1px solid ${UI.border}`,
             background: UI.surface,
+            boxShadow: UI.shadowSm,
+            overflow: "hidden",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            mb: 2.5,
+            "&:hover": {
+              transform: "translateY(-3px)",
+              boxShadow: UI.shadowMd,
+            },
           }}
         >
-          <FilterListRoundedIcon sx={{ fontSize: 40, color: UI.faint, mb: 1 }} />
-          <Typography sx={{ fontWeight: 800, color: UI.muted }}>
-            No listings found
-          </Typography>
-          <Typography sx={{ fontSize: "0.82rem", color: UI.faint, mt: 0.5 }}>
-            Try adjusting your search or filter.
-          </Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={2.2}>
-          {filtered.map((item) => (
-            <Grid item xs={12} sm={6} lg={4} key={item.id}>
-              <ListingCard item={item} onEdit={openEdit} onDelete={openDelete} />
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      <Dialog open={editOpen} onClose={closeEdit} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: "24px", p: 0.5 } }}>
-        <DialogTitle sx={{ px: 3, pt: 2.8, pb: 0.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "14px",
-                background: editItem?.type === "Property" ? UI.primarySoft : UI.blueSoft,
-                color: editItem?.type === "Property" ? UI.primary : UI.blue,
-                display: "grid",
-                placeItems: "center",
-              }}
-            >
-              {editItem?.type === "Property" ? (
-                <HomeWorkRoundedIcon sx={{ fontSize: 22 }} />
-              ) : (
-                <DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />
-              )}
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "1.12rem", fontWeight: 900, color: UI.text }}>
-                Edit Listing
-              </Typography>
-              <Typography sx={{ fontSize: "0.78rem", color: UI.muted, fontWeight: 600 }}>
-                {editItem?.type} · ID: {editItem?.id}
-              </Typography>
-            </Box>
-          </Stack>
-          <Button onClick={closeEdit} sx={{ minWidth: 0, color: UI.muted }}>
-            <CloseRoundedIcon />
-          </Button>
-        </DialogTitle>
-
-        <Divider sx={{ mx: 3, mt: 2, borderColor: UI.border }} />
-
-        <DialogContent sx={{ px: 3, py: 2.5, background: UI.bg }}>
-          <EditDialogContent
-            editItem={editItem}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            editErrors={editErrors}
-            setEditErrors={setEditErrors}
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.8, gap: 1 }}>
-          <Button onClick={closeEdit} sx={btnOutlined}>
-            Cancel
-          </Button>
-          <Button
-            onClick={saveEdit}
-            disabled={editSaving}
-            startIcon={editSaving ? null : <SaveRoundedIcon />}
-            sx={btnPrimary}
-          >
-            {editSaving ? "Saving..." : "Save changes"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={deleteOpen} onClose={closeDelete} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "24px", p: 0.5 } }}>
-        <DialogTitle sx={{ px: 3, pt: 2.8, pb: 0.5 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "14px",
-                background: UI.dangerSoft,
-                color: UI.danger,
-                display: "grid",
-                placeItems: "center",
-              }}
-            >
-              <WarningAmberRoundedIcon sx={{ fontSize: 22 }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "1.12rem", fontWeight: 900, color: UI.text }}>
-                Delete listing?
-              </Typography>
-              <Typography sx={{ fontSize: "0.78rem", color: UI.muted, fontWeight: 600 }}>
-                This action cannot be undone.
-              </Typography>
-            </Box>
-          </Stack>
-        </DialogTitle>
-
-        <Divider sx={{ mx: 3, mt: 2, borderColor: UI.border }} />
-
-        <DialogContent sx={{ px: 3, py: 2.2 }}>
           <Box
             sx={{
-              borderRadius: "16px",
-              border: `1px solid ${UI.border}`,
-              background: UI.surfaceSoft,
-              p: 2,
+              p: { xs: 2, md: 3 },
+              background:
+                "linear-gradient(135deg, rgba(15,118,110,0.08) 0%, rgba(37,99,235,0.06) 100%)",
+              borderBottom: `1px solid ${UI.border}`,
             }}
           >
-            <Typography sx={{ fontSize: "0.78rem", color: UI.muted, fontWeight: 700, mb: 0.5 }}>
-              Listing to be deleted
-            </Typography>
-            <Typography sx={{ fontSize: "0.95rem", fontWeight: 900, color: UI.text }}>
-              {deleteTarget?.title}
-            </Typography>
-            <Stack direction="row" spacing={0.6} alignItems="center" sx={{ mt: 0.5 }}>
-              <LocationOnRoundedIcon sx={{ fontSize: 13, color: UI.faint }} />
-              <Typography sx={{ fontSize: "0.78rem", color: UI.muted }}>
+            <Stack
+              direction={{ xs: "column", lg: "row" }}
+              spacing={2.5}
+              alignItems={{ xs: "stretch", lg: "center" }}
+              justifyContent="space-between"
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "1.6rem", md: "2rem" },
+                    fontWeight: 950,
+                    color: UI.text,
+                    letterSpacing: "-0.04em",
+                  }}
+                >
+                  Admin Listings
+                </Typography>
+                <Typography
+                  sx={{ color: UI.muted, fontSize: "0.92rem", mt: 0.5 }}
+                >
+                  Manage property and vehicle listings in a clean card-based
+                  workspace.
+                </Typography>
+              </Box>
+
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {[
+                  { key: "All", label: "All" },
+                  { key: "Property", label: "Properties" },
+                  { key: "Vehicle", label: "Vehicles" },
+                ].map((item) => (
+                  <Button
+                    key={item.key}
+                    onClick={() => setFilter(item.key)}
+                    sx={{
+                      ...btnOutlined,
+                      background:
+                        filter === item.key
+                          ? "rgba(15,118,110,0.10)"
+                          : UI.surface,
+                      color: filter === item.key ? UI.primary : UI.text,
+                      borderColor:
+                        filter === item.key
+                          ? "rgba(15,118,110,0.18)"
+                          : UI.border,
+                      minWidth: 118,
+                    }}
+                  >
+                    {item.label} ({counts[item.key]})
+                  </Button>
+                ))}
+              </Stack>
+            </Stack>
+
+            {message ? (
+              <Alert
+                sx={{ mt: 2.2, borderRadius: "16px" }}
+                severity="success"
+                onClose={() => setMessage("")}
+              >
+                {message}
+              </Alert>
+            ) : null}
+
+            <Grid container spacing={2} sx={{ mt: 0.25 }}>
+              <Grid item xs={12} md={8}>
+                <TextField
+                  fullWidth
+                  placeholder="Search listings by title or location"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  sx={{ ...inputSx, background: UI.surface }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRoundedIcon sx={{ color: UI.faint }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Button
+                  fullWidth
+                  startIcon={<TuneRoundedIcon />}
+                  sx={btnPrimary}
+                >
+                  Filters
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </Card>
+
+        <Grid container spacing={2.5}>
+          {filtered.length === 0 ? (
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  py: 10,
+                  textAlign: "center",
+                  border: `1.5px dashed ${UI.border}`,
+                  borderRadius: "24px",
+                  background: UI.surface,
+                }}
+              >
+                <FilterEmpty />
+                <Typography sx={{ mt: 1, fontWeight: 900, color: UI.text }}>
+                  No listings found
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "0.88rem", color: UI.muted, mt: 0.5 }}
+                >
+                  Try changing the search term or filter.
+                </Typography>
+              </Box>
+            </Grid>
+          ) : (
+            filtered.map((item) => (
+              <Grid item xs={12} sm={6} lg={4} xl={3} key={item.id}>
+                <ListingCard
+                  item={item}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              </Grid>
+            ))
+          )}
+        </Grid>
+
+        <Dialog
+          open={editOpen}
+          onClose={closeEdit}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: "28px", background: UI.bg } }}
+        >
+          <DialogTitle
+            sx={{
+              px: 3,
+              pt: 2.5,
+              pb: 1.5,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "16px",
+                  background:
+                    editItem?.type === "Property"
+                      ? UI.primarySoft
+                      : UI.blueSoft,
+                  color: editItem?.type === "Property" ? UI.primary : UI.blue,
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                {editItem?.type === "Property" ? (
+                  <HomeWorkRoundedIcon />
+                ) : (
+                  <DirectionsCarRoundedIcon />
+                )}
+              </Box>
+              <Box>
+                <Typography
+                  sx={{ fontSize: "1.2rem", fontWeight: 950, color: UI.text }}
+                >
+                  Edit Listing
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "0.82rem", color: UI.muted, fontWeight: 600 }}
+                >
+                  {editItem?.type} · ID: {editItem?.id}
+                </Typography>
+              </Box>
+            </Stack>
+            <IconButton
+              onClick={closeEdit}
+              size="small"
+              sx={{ color: UI.muted }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <Divider sx={{ mx: 3, borderColor: UI.border }} />
+
+          <DialogContent sx={{ px: 3, py: 2.5 }}>
+            <EditDialogContent
+              editItem={editItem}
+              editForm={editForm}
+              setEditForm={setEditForm}
+              editErrors={editErrors}
+              setEditErrors={setEditErrors}
+            />
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button onClick={closeEdit} sx={btnOutlined}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveEdit}
+              disabled={editSaving}
+              startIcon={<SaveRoundedIcon />}
+              sx={btnPrimary}
+            >
+              {editSaving ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={deleteOpen}
+          onClose={closeDelete}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: "28px" } }}
+        >
+          <DialogTitle sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "16px",
+                  background: UI.dangerSoft,
+                  color: UI.danger,
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <WarningAmberRoundedIcon />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{ fontSize: "1.12rem", fontWeight: 950, color: UI.text }}
+                >
+                  Delete listing?
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "0.8rem", color: UI.muted, fontWeight: 600 }}
+                >
+                  This action cannot be undone.
+                </Typography>
+              </Box>
+            </Stack>
+          </DialogTitle>
+          <Divider sx={{ mx: 3, borderColor: UI.border }} />
+          <DialogContent sx={{ px: 3, py: 2.2 }}>
+            <Box
+              sx={{
+                borderRadius: "18px",
+                border: `1px solid ${UI.border}`,
+                background: UI.surfaceSoft,
+                p: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.78rem",
+                  color: UI.faint,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                }}
+              >
+                Listing to be deleted
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.98rem",
+                  fontWeight: 900,
+                  color: UI.text,
+                  mt: 0.4,
+                }}
+              >
+                {deleteTarget?.title}
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.82rem", color: UI.muted, mt: 0.3 }}
+              >
                 {deleteTarget?.location}
               </Typography>
-            </Stack>
-          </Box>
-        </DialogContent>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button onClick={closeDelete} sx={btnOutlined}>
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} sx={btnDanger}>
+              Yes, delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Box>
+  );
+}
 
-        <DialogActions sx={{ px: 3, pb: 2.8, gap: 1 }}>
-          <Button onClick={closeDelete} sx={btnOutlined}>
-            Cancel
-          </Button>
-          <Button onClick={confirmDelete} sx={btnDanger}>
-            Yes, delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+function FilterEmpty() {
+  return (
+    <Box sx={{ display: "grid", placeItems: "center", mb: 1 }}>
+      <Avatar
+        sx={{
+          width: 72,
+          height: 72,
+          bgcolor: UI.primarySoft,
+          color: UI.primary,
+        }}
+      >
+        <SearchRoundedIcon sx={{ fontSize: 34 }} />
+      </Avatar>
     </Box>
   );
 }

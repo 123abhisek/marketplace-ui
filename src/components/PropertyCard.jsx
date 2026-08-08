@@ -35,6 +35,7 @@ export default function PropertyCard({ item }) {
         boxShadow: '0 2px 20px rgba(15,23,42,0.07)',
         overflow: 'hidden',
         height: '100%',
+        width: '30vw',
         display: 'flex',
         flexDirection: 'column',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',

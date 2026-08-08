@@ -226,7 +226,7 @@ const btnSx = {
 function getRedirectPath(normalizedUser) {
   if (!normalizedUser?.loggedIn) return "/login";
   if (normalizedUser?.role === "admin") return "/admin";
-  if (normalizedUser?.isPremium) return "/dashboard";
+  if (normalizedUser?.isPremium) return "/";
   return "/";
 }
 

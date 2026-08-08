@@ -1,11 +1,17 @@
 
 // src/layouts/AdminGate.jsx
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 import { useAppState } from "../hooks/useAppState";
 
 export default function AdminGate() {
-  const { hydrated, isLoggedIn, user } = useAppState();
+  const {
+    hydrated,
+    isLoggedIn,
+    user,
+  } = useAppState();
+
   const location = useLocation();
 
   if (!hydrated) {
@@ -24,11 +30,31 @@ export default function AdminGate() {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location }}
+      />
+    );
   }
 
-  if (user?.role !== "admin") {
-    return <Navigate to={user?.isPremium ? "/dashboard" : "/free-dashboard"} replace />;
+  const userRole = String(user?.role ?? "")
+    .trim()
+    .toLowerCase();
+
+  const isAdmin =
+    userRole === "admin" ||
+    user?.is_admin === true ||
+    user?.isAdmin === true;
+
+  if (!isAdmin) {
+    return (
+      <Navigate
+        to={user?.isPremium ? "/dashboard" : "/free-dashboard"}
+        replace
+      />
+    );
   }
 
   return <Outlet />;

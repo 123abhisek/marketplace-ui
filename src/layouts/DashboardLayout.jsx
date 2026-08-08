@@ -144,7 +144,7 @@ function SidebarContent({ pathname, onNavigate, isAdmin }) {
 
                 {isAdmin && (
                   <SidebarLink
-                    to="/dashboard/properties/add"
+                    to="/admin/properties/add"
                     icon={AddBoxRoundedIcon}
                     label="Add Property"
                     onClick={onNavigate}
@@ -160,7 +160,7 @@ function SidebarContent({ pathname, onNavigate, isAdmin }) {
 
                 {isAdmin && (
                   <SidebarLink
-                    to="/dashboard/vehicles/add"
+                    to="/admin/vehicles/add"
                     icon={AddBoxRoundedIcon}
                     label="Add Vehicle"
                     onClick={onNavigate}
@@ -337,14 +337,14 @@ export default function DashboardLayout() {
                 {isAdmin && !isFreeDashboard && (
                   <div className="flex items-center gap-3">
                     <Link
-                      to="/dashboard/properties/add"
+                      to="/admin/properties/add"
                       className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                     >
                       Add Property
                     </Link>
 
                     <Link
-                      to="/dashboard/vehicles/add"
+                      to="/admin/vehicles/add"
                       className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       Add Vehicle

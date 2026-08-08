@@ -1,3 +1,4 @@
+
 import { Navigate } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
@@ -16,7 +17,6 @@ import FAQPage from "../pages/FAQPage";
 import ContactPage from "../pages/ContactPage";
 import ExplorePage from "../pages/ExplorePage";
 import SubscriptionPage from "../pages/SubscriptionPage";
-
 import PropertyDetailPage from "../pages/PropertyDetailPage";
 import VehicleDetailPage from "../pages/VehicleDetailPage";
 
@@ -36,6 +36,8 @@ import MyBookingsPage from "../dashboard/MyBookingsPage";
 import MyListingsPage from "../dashboard/MyListingsPage";
 import PropertiesPage from "../dashboard/PropertiesPage";
 import VehiclesPage from "../dashboard/VehiclesPage";
+
+/* Admin creation pages */
 import AddPropertyPage from "../dashboard/AddPropertyPage";
 import AddVehiclePage from "../dashboard/AddVehiclePage";
 
@@ -53,32 +55,83 @@ import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
 
 export const routes = [
+  /*
+   * Public routes
+   */
   {
     element: <PublicLayout />,
     children: [
-      { path: "/", element: <LandingPage /> },
-      { path: "/about", element: <AboutPage /> },
-      { path: "/how-it-works", element: <HowItWorksPage /> },
-      { path: "/faq", element: <FAQPage /> },
-      { path: "/contact", element: <ContactPage /> },
-      { path: "/explore", element: <ExplorePage /> },
-      { path: "/subscription", element: <SubscriptionPage /> },
-      { path: "/properties/:id", element: <PropertyDetailPage /> },
-      { path: "/vehicles/:id", element: <VehicleDetailPage /> },
-      { path: "/privacy-policy", element: <PrivacyPolicyPage /> },
-      { path: "/terms", element: <TermsOfServicePage /> },
-      { path: "/refund-policy", element: <RefundPolicyPage /> },
+      {
+        path: "/",
+        element: <LandingPage />,
+      },
+      {
+        path: "/about",
+        element: <AboutPage />,
+      },
+      {
+        path: "/how-it-works",
+        element: <HowItWorksPage />,
+      },
+      {
+        path: "/faq",
+        element: <FAQPage />,
+      },
+      {
+        path: "/contact",
+        element: <ContactPage />,
+      },
+      {
+        path: "/explore",
+        element: <ExplorePage />,
+      },
+      {
+        path: "/subscription",
+        element: <SubscriptionPage />,
+      },
+      {
+        path: "/properties/:id",
+        element: <PropertyDetailPage />,
+      },
+      {
+        path: "/vehicles/:id",
+        element: <VehicleDetailPage />,
+      },
+      {
+        path: "/privacy-policy",
+        element: <PrivacyPolicyPage />,
+      },
+      {
+        path: "/terms",
+        element: <TermsOfServicePage />,
+      },
+      {
+        path: "/refund-policy",
+        element: <RefundPolicyPage />,
+      },
     ],
   },
 
+  /*
+   * Authentication routes
+   */
   {
     element: <AuthLayout />,
     children: [
-      { path: "/login", element: <LoginPage /> },
-      { path: "/register", element: <RegisterPage /> },
+      {
+        path: "/login",
+        element: <LoginPage />,
+      },
+      {
+        path: "/register",
+        element: <RegisterPage />,
+      },
     ],
   },
 
+  /*
+   * Free dashboard routes
+   */
   {
     path: "/free-dashboard",
     element: (
@@ -110,6 +163,12 @@ export const routes = [
     ],
   },
 
+  /*
+   * Premium dashboard routes
+   *
+   * AddPropertyPage and AddVehiclePage have been removed from here.
+   * They now exist under /admin and therefore do not pass through PremiumGate.
+   */
   {
     path: "/dashboard",
     element: (
@@ -153,18 +212,6 @@ export const routes = [
         },
       },
       {
-        path: "properties/add",
-        element: (
-          <AdminGate>
-            <AddPropertyPage />
-          </AdminGate>
-        ),
-        handle: {
-          title: "Add Property",
-          sub: "Create a new property listing",
-        },
-      },
-      {
         path: "properties/:id",
         element: <PropertyDetailPage />,
         handle: {
@@ -178,18 +225,6 @@ export const routes = [
         handle: {
           title: "Vehicles",
           sub: "Browse all vehicle listings",
-        },
-      },
-      {
-        path: "vehicles/add",
-        element: (
-          <AdminGate>
-            <AddVehiclePage />
-          </AdminGate>
-        ),
-        handle: {
-          title: "Add Vehicle",
-          sub: "Create a new vehicle listing",
         },
       },
       {
@@ -243,6 +278,11 @@ export const routes = [
     ],
   },
 
+  /*
+   * Admin routes
+   *
+   * All routes inside this branch are protected by AdminGate.
+   */
   {
     path: "/admin",
     element: <AdminGate />,
@@ -250,18 +290,50 @@ export const routes = [
       {
         element: <AdminLayout />,
         children: [
-          { index: true, element: <Navigate to="overview" replace /> },
-          { path: "overview", element: <AdminOverviewPage /> },
-          { path: "users", element: <AdminUsersPage /> },
-          { path: "listings", element: <AdminListingsPage /> },
-          { path: "orders", element: <AdminOrdersPage /> },
-          { path: "reports", element: <AdminReportsPage /> },
-          { path: "settings", element: <AdminSettingsPage /> },
+          {
+            index: true,
+            element: <Navigate to="overview" replace />,
+          },
+          {
+            path: "overview",
+            element: <AdminOverviewPage />,
+          },
+          {
+            path: "users",
+            element: <AdminUsersPage />,
+          },
+          {
+            path: "properties/add",
+            element: <AddPropertyPage />,
+          },
+          {
+            path: "vehicles/add",
+            element: <AddVehiclePage />,
+          },
+          {
+            path: "listings",
+            element: <AdminListingsPage />,
+          },
+          {
+            path: "orders",
+            element: <AdminOrdersPage />,
+          },
+          {
+            path: "reports",
+            element: <AdminReportsPage />,
+          },
+          {
+            path: "settings",
+            element: <AdminSettingsPage />,
+          },
         ],
       },
     ],
   },
 
+  /*
+   * Fallback route
+   */
   {
     path: "*",
     element: <Navigate to="/" replace />,
