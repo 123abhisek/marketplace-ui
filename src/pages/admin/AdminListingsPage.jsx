@@ -1112,7 +1112,7 @@ export default function AdminListingsPage() {
 
         <Grid container spacing={2.5}>
           {filtered.length === 0 ? (
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{width:"100%",}}>
               <Box
                 sx={{
                   py: 10,
@@ -1120,6 +1120,7 @@ export default function AdminListingsPage() {
                   border: `1.5px dashed ${UI.border}`,
                   borderRadius: "24px",
                   background: UI.surface,
+                  width:"100%",
                 }}
               >
                 <FilterEmpty />
