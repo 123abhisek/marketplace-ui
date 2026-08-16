@@ -132,42 +132,6 @@ function SidebarContent({ pathname, onNavigate, isAdmin }) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className={sectionTitleClass}>Manage Listings</p>
-              <div className="space-y-1.5">
-                <SidebarLink
-                  to="/dashboard/properties"
-                  icon={ApartmentRoundedIcon}
-                  label="Properties"
-                  onClick={onNavigate}
-                />
-
-                {isAdmin && (
-                  <SidebarLink
-                    to="/admin/properties/add"
-                    icon={AddBoxRoundedIcon}
-                    label="Add Property"
-                    onClick={onNavigate}
-                  />
-                )}
-
-                <SidebarLink
-                  to="/dashboard/vehicles"
-                  icon={DirectionsCarRoundedIcon}
-                  label="Vehicles"
-                  onClick={onNavigate}
-                />
-
-                {isAdmin && (
-                  <SidebarLink
-                    to="/admin/vehicles/add"
-                    icon={AddBoxRoundedIcon}
-                    label="Add Vehicle"
-                    onClick={onNavigate}
-                  />
-                )}
-              </div>
-            </div>
 
             <div className="space-y-2">
               <p className={sectionTitleClass}>Account</p>

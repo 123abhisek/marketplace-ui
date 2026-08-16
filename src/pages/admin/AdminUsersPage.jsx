@@ -132,6 +132,7 @@ export default function AdminUsersPage() {
     setError("");
     try {
       const data = await adminUsersService.getAll({ skip: 0, limit: 100 });
+      console.log("All users:-", data);
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       setUsers([]);
@@ -166,7 +167,13 @@ export default function AdminUsersPage() {
         .toLowerCase()
         .includes("admin"),
     ).length;
-    return { premium, free, admin };
+    const seller = users.filter((user) =>
+      String(user.role || "")
+        .toLowerCase()
+        .includes("seller"),
+    ).length;
+
+    return { premium, free, admin, seller };
   }, [users]);
 
   return (
@@ -281,7 +288,7 @@ export default function AdminUsersPage() {
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
-                sm: "repeat(3, minmax(0,1fr))",
+                sm: "repeat(4, minmax(0,1fr))",
               },
               gap: 1.6,
             }}
@@ -306,6 +313,14 @@ export default function AdminUsersPage() {
               title="Admin Users"
               value={counts.admin}
               subtitle="Users with admin role"
+              icon={<ShieldRoundedIcon sx={{ fontSize: 22 }} />}
+              color={UI.blue}
+              bg={UI.blueSoft}
+            />
+            <StatCard
+              title="Seller Users"
+              value={counts.seller}
+              subtitle="Users with Seller role"
               icon={<ShieldRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.blue}
               bg={UI.blueSoft}
@@ -480,7 +495,9 @@ export default function AdminUsersPage() {
                                     ? "Premium"
                                     : user.role === "admin"
                                       ? "Admin"
-                                      : "Free"
+                                      : user.role === "seller"
+                                        ? "Seller"
+                                        : "Free"
                                 }
                                 sx={{
                                   height: 30,

@@ -1,6 +1,6 @@
 
 
-// src/layouts/AdminLayout.jsx
+// src/layouts/SellerLayout.jsx
 
 import {
   Outlet,
@@ -23,10 +23,10 @@ const navItems = [
     label: "Overview",
     path: "/admin/overview",
   },
-  {
-    label: "Users",
-    path: "/admin/users",
-  },
+//   {
+//     label: "Users",
+//     path: "/admin/users",
+//   },
   {
     label: "Add Property",
     path: "/admin/properties/add",
@@ -35,25 +35,25 @@ const navItems = [
     label: "Add Vehicle",
     path: "/admin/vehicles/add",
   },
-  {
-    label: "Listings",
-    path: "/admin/listings",
-  },
+//   {
+//     label: "Listings",
+//     path: "/admin/listings",
+//   },
   {
     label: "Orders",
     path: "/admin/orders",
   },
-  // {
-  //   label: "Reports",
-  //   path: "/admin/reports",
-  // },
-  // {
-  //   label: "Settings",
-  //   path: "/admin/settings",
-  // },
+  {
+    label: "Reports",
+    path: "/admin/reports",
+  },
+//   {
+//     label: "Settings",
+//     path: "/admin/settings",
+//   },
 ];
 
-export default function AdminLayout() {
+export default function SellerLayout() {
   const location = useLocation();
 
   return (

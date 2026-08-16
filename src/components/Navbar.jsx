@@ -62,18 +62,14 @@ const C = {
   freePurple: "#6d28d9",
   freeSoft: "rgba(109,40,217,0.08)",
   shadow: "0 1px 3px rgba(15,23,42,0.06), 0 8px 32px rgba(15,23,42,0.06)",
-  shadowLifted: "0 2px 8px rgba(15,23,42,0.08), 0 20px 48px rgba(15,23,42,0.10)",
+  shadowLifted:
+    "0 2px 8px rgba(15,23,42,0.08), 0 20px 48px rgba(15,23,42,0.10)",
 };
 
 function resolveRole(user) {
+  const isLoggedIn = user?.loggedIn || user?.is_logged_in;
 
-  const isLoggedIn =
-    user?.loggedIn ||
-    user?.is_logged_in;
-
-  const isPremium =
-    user?.isPremium ||
-    user?.is_premium;
+  const isPremium = user?.isPremium || user?.is_premium;
 
   const role = user?.role?.toLowerCase?.();
 
@@ -82,14 +78,15 @@ function resolveRole(user) {
     return "admin";
   }
 
+  // Seller
+  if (isLoggedIn && role === "seller") {
+    return "seller";
+  }
+
   // premium
   if (
     isLoggedIn &&
-    (
-      isPremium ||
-      role === "premium" ||
-      user?.subscription === "active"
-    )
+    (isPremium || role === "premium" || user?.subscription === "active")
   ) {
     return "premium";
   }
@@ -102,7 +99,6 @@ function resolveRole(user) {
   return "guest";
 }
 
-
 function getNavConfig() {
   return {
     guest: {
@@ -114,14 +110,42 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Pricing", to: "/subscription", icon: <CurrencyRupeeRoundedIcon fontSize="small" /> },
-        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
-        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
-        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
+        {
+          label: "Pricing",
+          to: "/subscription",
+          icon: <CurrencyRupeeRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "About Us",
+          to: "/about",
+          icon: <InfoOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "How It Works",
+          to: "/how-it-works",
+          icon: <LightbulbOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "FAQ",
+          to: "/faq",
+          icon: <HelpOutlineRoundedIcon fontSize="small" />,
+        },
         // { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
-        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
-        { label: "Login", to: "/login", icon: <LoginRoundedIcon fontSize="small" /> },
-        { label: "Register", to: "/register", icon: <PersonAddAlt1RoundedIcon fontSize="small" /> },
+        {
+          label: "Contact Us",
+          to: "/contact",
+          icon: <ContactSupportRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Login",
+          to: "/login",
+          icon: <LoginRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Register",
+          to: "/register",
+          icon: <PersonAddAlt1RoundedIcon fontSize="small" />,
+        },
       ],
       dropdown: [],
     },
@@ -137,18 +161,58 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Explore", to: "/explore", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Upgrade", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
-        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
-        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
-        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
-         { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
+        {
+          label: "Explore",
+          to: "/explore",
+          icon: <DashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Upgrade",
+          to: "/subscription",
+          icon: <WorkspacePremiumRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "About Us",
+          to: "/about",
+          icon: <InfoOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "How It Works",
+          to: "/how-it-works",
+          icon: <LightbulbOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "FAQ",
+          to: "/faq",
+          icon: <HelpOutlineRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Profile",
+          to: "/free-dashboard",
+          icon: <DashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Contact Us",
+          to: "/contact",
+          icon: <ContactSupportRoundedIcon fontSize="small" />,
+        },
       ],
       dropdown: [
-        { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Upgrade Premium", to: "/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
-        {label: "My Bookings", to: "/free-dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
+        {
+          label: "Profile",
+          to: "/free-dashboard",
+          icon: <DashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Upgrade Premium",
+          to: "/subscription",
+          icon: <WorkspacePremiumRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "My Bookings",
+          to: "/free-dashboard/my-bookings",
+          icon: <ArticleOutlinedIcon fontSize="small" />,
+        },
       ],
     },
 
@@ -163,22 +227,62 @@ function getNavConfig() {
         { label: "Contact Us", to: "/contact" },
       ],
       mobile: [
-        { label: "Explore", to: "/explore", icon: <DashboardRoundedIcon fontSize="small" /> },
-        { label: "Post Listing", to: "/dashboard/add-property", icon: <AddCircleOutlineRoundedIcon fontSize="small" /> },
-        { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
-        { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
-        { label: "About Us", to: "/about", icon: <InfoOutlinedIcon fontSize="small" /> },
-        { label: "How It Works", to: "/how-it-works", icon: <LightbulbOutlinedIcon fontSize="small" /> },
-        { label: "FAQ", to: "/faq", icon: <HelpOutlineRoundedIcon fontSize="small" /> },
+        {
+          label: "Explore",
+          to: "/explore",
+          icon: <DashboardRoundedIcon fontSize="small" />,
+        },
+        // { label: "Post Listing", to: "/dashboard/add-property", icon: <AddCircleOutlineRoundedIcon fontSize="small" /> },
+        {
+          label: "My Listings",
+          to: "/dashboard/my-listings",
+          icon: <ListAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Profile",
+          to: "/dashboard/profile",
+          icon: <PersonRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "About Us",
+          to: "/about",
+          icon: <InfoOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "How It Works",
+          to: "/how-it-works",
+          icon: <LightbulbOutlinedIcon fontSize="small" />,
+        },
+        {
+          label: "FAQ",
+          to: "/faq",
+          icon: <HelpOutlineRoundedIcon fontSize="small" />,
+        },
         // { label: "Blog", to: "/blog", icon: <ArticleOutlinedIcon fontSize="small" /> },
-        { label: "Contact Us", to: "/contact", icon: <ContactSupportRoundedIcon fontSize="small" /> },
+        {
+          label: "Contact Us",
+          to: "/contact",
+          icon: <ContactSupportRoundedIcon fontSize="small" />,
+        },
       ],
       dropdown: [
-        { label: "Dashboard", to: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
+        {
+          label: "Dashboard",
+          to: "/dashboard",
+          icon: <DashboardRoundedIcon fontSize="small" />,
+        },
         // { label: "My Listings", to: "/dashboard/my-listings", icon: <ListAltRoundedIcon fontSize="small" /> },
         // { label: "Subscription", to: "/dashboard/subscription", icon: <WorkspacePremiumRoundedIcon fontSize="small" /> },
-        { label: "Profile", to: "/dashboard/profile", icon: <PersonRoundedIcon fontSize="small" /> },
-        {label: "My Bookings", to: "/dashboard/my-bookings", icon: <ArticleOutlinedIcon fontSize="small" />},
+        {
+          label: "Profile",
+          to: "/dashboard/profile",
+          icon: <PersonRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "My Bookings",
+          to: "/dashboard/my-bookings",
+          icon: <ArticleOutlinedIcon fontSize="small" />,
+        },
       ],
     },
 
@@ -190,17 +294,111 @@ function getNavConfig() {
         { label: "Reports", to: "/admin/reports" },
       ],
       mobile: [
-        { label: "Overview", to: "/admin", icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
-        { label: "Users", to: "/admin/users", icon: <PeopleAltRoundedIcon fontSize="small" /> },
-        { label: "Listings", to: "/admin/listings", icon: <ListAltRoundedIcon fontSize="small" /> },
-        { label: "Reports", to: "/admin/reports", icon: <BarChartRoundedIcon fontSize="small" /> },
-        { label: "Settings", to: "/admin/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
+        {
+          label: "Overview",
+          to: "/admin",
+          icon: <SpaceDashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Users",
+          to: "/admin/users",
+          icon: <PeopleAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Listings",
+          to: "/admin/listings",
+          icon: <ListAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Reports",
+          to: "/admin/reports",
+          icon: <BarChartRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Settings",
+          to: "/admin/settings",
+          icon: <SettingsRoundedIcon fontSize="small" />,
+        },
       ],
       dropdown: [
-        { label: "Admin Panel", to: "/admin", icon: <AdminPanelSettingsRoundedIcon fontSize="small" /> },
-        { label: "Manage Users", to: "/admin/users", icon: <PeopleAltRoundedIcon fontSize="small" /> },
-        { label: "Reports", to: "/admin/reports", icon: <BarChartRoundedIcon fontSize="small" /> },
-        { label: "Settings", to: "/admin/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
+        {
+          label: "Admin Panel",
+          to: "/admin",
+          icon: <AdminPanelSettingsRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Manage Users",
+          to: "/admin/users",
+          icon: <PeopleAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Reports",
+          to: "/admin/reports",
+          icon: <BarChartRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Settings",
+          to: "/admin/settings",
+          icon: <SettingsRoundedIcon fontSize="small" />,
+        },
+      ],
+    },
+
+    seller: {
+      desktop: [
+        { label: "Overview", to: "/seller" },
+        { label: "Users", to: "/seller/users" },
+        { label: "Listings", to: "/seller/listings" },
+        { label: "Reports", to: "/seller/reports" },
+      ],
+      mobile: [
+        {
+          label: "Overview",
+          to: "/seller",
+          icon: <SpaceDashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Users",
+          to: "/seller/users",
+          icon: <PeopleAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Listings",
+          to: "/seller/listings",
+          icon: <ListAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Reports",
+          to: "/seller/reports",
+          icon: <BarChartRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Settings",
+          to: "/seller/settings",
+          icon: <SettingsRoundedIcon fontSize="small" />,
+        },
+      ],
+      dropdown: [
+        {
+          label: "seller Panel",
+          to: "/seller",
+          icon: <AdminPanelSettingsRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Manage Users",
+          to: "/seller/users",
+          icon: <PeopleAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Reports",
+          to: "/seller/reports",
+          icon: <BarChartRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Settings",
+          to: "/seller/settings",
+          icon: <SettingsRoundedIcon fontSize="small" />,
+        },
       ],
     },
   };
@@ -226,6 +424,12 @@ const ROLE_BADGE = {
     bg: C.adminSoft,
     border: "rgba(185,28,28,0.15)",
   },
+  seller: {
+    label: "Seller",
+    color: C.adminRed,
+    bg: C.adminSoft,
+    border: "rgba(28, 185, 54, 0.15)",
+  },
 };
 
 const AVATAR_COLORS = {
@@ -233,6 +437,7 @@ const AVATAR_COLORS = {
   free: { bg: C.freePurple, color: "#fff" },
   premium: { bg: "#d97706", color: "#fff" },
   admin: { bg: "#dc2626", color: "#fff" },
+  seller: { bg: "#83f594", color: "#fff" },
 };
 
 function RoleBadge({ roleKey }) {
@@ -243,7 +448,7 @@ function RoleBadge({ roleKey }) {
     <Chip
       size="small"
       icon={
-        roleKey === "admin" ? (
+        roleKey === "admin" || roleKey === "seller" ? (
           <VerifiedUserRoundedIcon sx={{ fontSize: "12px !important" }} />
         ) : (
           <WorkspacePremiumRoundedIcon sx={{ fontSize: "12px !important" }} />
@@ -374,7 +579,11 @@ function MobileNavItem({ item, active, onClick }) {
         {item.icon}
       </Box>
       <span style={{ flex: 1 }}>{item.label}</span>
-      {active && <ChevronRightRoundedIcon sx={{ fontSize: 16, color: C.primary, opacity: 0.6 }} />}
+      {active && (
+        <ChevronRightRoundedIcon
+          sx={{ fontSize: 16, color: C.primary, opacity: 0.6 }}
+        />
+      )}
     </Box>
   );
 }
@@ -419,7 +628,9 @@ export default function Navbar() {
     if (["/dashboard", "/admin", "/free-dashboard"].includes(path)) {
       return location.pathname === path;
     }
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return (
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
   };
 
   const closeMenu = () => setAnchorEl(null);
@@ -449,7 +660,11 @@ export default function Navbar() {
         }}
       >
         <Container maxWidth="xl">
-          <Stack direction="row" alignItems="center" sx={{ minHeight: { xs: 60, md: 66 }, gap: { xs: 1, md: 2 } }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            sx={{ minHeight: { xs: 60, md: 66 }, gap: { xs: 1, md: 2 } }}
+          >
             <Logo />
 
             <Stack
@@ -466,7 +681,12 @@ export default function Navbar() {
               }}
             >
               {navCfg.desktop.map((item) => (
-                <NavLink key={item.to + item.label} to={item.to} label={item.label} active={isActive(item.to)} />
+                <NavLink
+                  key={item.to + item.label}
+                  to={item.to}
+                  label={item.label}
+                  active={isActive(item.to)}
+                />
               ))}
             </Stack>
 
@@ -492,7 +712,10 @@ export default function Navbar() {
                       fontWeight: 600,
                       fontSize: "0.875rem",
                       color: C.muted,
-                      "&:hover": { bgcolor: "rgba(15,23,42,0.04)", color: C.text },
+                      "&:hover": {
+                        bgcolor: "rgba(15,23,42,0.04)",
+                        color: C.text,
+                      },
                     }}
                   >
                     Log in
@@ -510,7 +733,10 @@ export default function Navbar() {
                       fontSize: "0.875rem",
                       borderColor: C.border,
                       color: C.text,
-                      "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
+                      "&:hover": {
+                        borderColor: C.borderHover,
+                        bgcolor: "rgba(15,23,42,0.03)",
+                      },
                     }}
                   >
                     Sign up
@@ -525,7 +751,11 @@ export default function Navbar() {
                     component={RouterLink}
                     to="/subscription"
                     variant="contained"
-                    startIcon={<WorkspacePremiumRoundedIcon sx={{ fontSize: "15px !important" }} />}
+                    startIcon={
+                      <WorkspacePremiumRoundedIcon
+                        sx={{ fontSize: "15px !important" }}
+                      />
+                    }
                     sx={{
                       minHeight: 38,
                       px: 2,
@@ -544,9 +774,19 @@ export default function Navbar() {
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
                       size="small"
-                      sx={{ p: 0.375, borderRadius: "10px", border: `1.5px solid ${C.border}`, "&:hover": { borderColor: C.borderHover } }}
+                      sx={{
+                        p: 0.375,
+                        borderRadius: "10px",
+                        border: `1.5px solid ${C.border}`,
+                        "&:hover": { borderColor: C.borderHover },
+                      }}
                     >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="free" size={32} />
+                      <UserAvatar
+                        initials={initials}
+                        photo={user?.photo}
+                        roleKey="free"
+                        size={32}
+                      />
                     </IconButton>
                   </Tooltip>
                 </>
@@ -555,11 +795,90 @@ export default function Navbar() {
               {roleKey === "premium" && (
                 <>
                   <RoleBadge roleKey="premium" />
+                  <Tooltip title="Account" arrow placement="bottom">
+                    <IconButton
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      size="small"
+                      sx={{
+                        p: 0.375,
+                        borderRadius: "10px",
+                        border: `1.5px solid ${C.border}`,
+                        "&:hover": { borderColor: C.borderHover },
+                      }}
+                    >
+                      <UserAvatar
+                        initials={initials}
+                        photo={user?.photo}
+                        roleKey="premium"
+                        size={32}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+
+              {roleKey === "admin" && (
+                <>
+                  <RoleBadge roleKey="admin" />
                   <Button
                     component={RouterLink}
-                    to="/dashboard/add-property"
+                    to="/admin"
+                    variant="outlined"
+                    startIcon={
+                      <AdminPanelSettingsRoundedIcon
+                        sx={{ fontSize: "16px !important" }}
+                      />
+                    }
+                    sx={{
+                      minHeight: 38,
+                      px: 1.75,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      borderColor: "rgba(185,28,28,0.25)",
+                      color: C.adminRed,
+                      "&:hover": {
+                        borderColor: C.adminRed,
+                        bgcolor: C.adminSoft,
+                      },
+                    }}
+                  >
+                    Admin
+                  </Button>
+                  <Tooltip title="Admin account" arrow placement="bottom">
+                    <IconButton
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      size="small"
+                      sx={{
+                        p: 0.375,
+                        borderRadius: "10px",
+                        border: "1.5px solid rgba(185,28,28,0.18)",
+                        "&:hover": { borderColor: C.adminRed },
+                      }}
+                    >
+                      <UserAvatar
+                        initials={initials}
+                        photo={user?.photo}
+                        roleKey="admin"
+                        size={32}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+              {roleKey === "seller" && (
+                <>
+                  <RoleBadge roleKey="seller" />
+                  <Button
+                    component={RouterLink}
+                    to="/seller/add-property"
                     variant="contained"
-                    startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                    startIcon={
+                      <AddCircleOutlineRoundedIcon
+                        sx={{ fontSize: "16px !important" }}
+                      />
+                    }
                     sx={{
                       minHeight: 38,
                       px: 2,
@@ -574,26 +893,15 @@ export default function Navbar() {
                   >
                     Post Listing
                   </Button>
-                  <Tooltip title="Account" arrow placement="bottom">
-                    <IconButton
-                      onClick={(e) => setAnchorEl(e.currentTarget)}
-                      size="small"
-                      sx={{ p: 0.375, borderRadius: "10px", border: `1.5px solid ${C.border}`, "&:hover": { borderColor: C.borderHover } }}
-                    >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="premium" size={32} />
-                    </IconButton>
-                  </Tooltip>
-                </>
-              )}
-
-              {roleKey === "admin" && (
-                <>
-                  <RoleBadge roleKey="admin" />
                   <Button
                     component={RouterLink}
                     to="/admin"
                     variant="outlined"
-                    startIcon={<AdminPanelSettingsRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                    startIcon={
+                      <AdminPanelSettingsRoundedIcon
+                        sx={{ fontSize: "16px !important" }}
+                      />
+                    }
                     sx={{
                       minHeight: 38,
                       px: 1.75,
@@ -601,20 +909,33 @@ export default function Navbar() {
                       textTransform: "none",
                       fontWeight: 700,
                       fontSize: "0.875rem",
-                      borderColor: "rgba(185,28,28,0.25)",
+                      borderColor: "rgba(36, 207, 82, 0.25)",
                       color: C.adminRed,
-                      "&:hover": { borderColor: C.adminRed, bgcolor: C.adminSoft },
+                      "&:hover": {
+                        borderColor: C.adminRed,
+                        bgcolor: C.adminSoft,
+                      },
                     }}
                   >
-                    Admin
+                    Seller
                   </Button>
                   <Tooltip title="Admin account" arrow placement="bottom">
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
                       size="small"
-                      sx={{ p: 0.375, borderRadius: "10px", border: "1.5px solid rgba(185,28,28,0.18)", "&:hover": { borderColor: C.adminRed } }}
+                      sx={{
+                        p: 0.375,
+                        borderRadius: "10px",
+                        border: "1.5px solid rgba(59, 185, 28, 0.18)",
+                        "&:hover": { borderColor: C.adminRed },
+                      }}
                     >
-                      <UserAvatar initials={initials} photo={user?.photo} roleKey="admin" size={32} />
+                      <UserAvatar
+                        initials={initials}
+                        photo={user?.photo}
+                        roleKey="admin"
+                        size={32}
+                      />
                     </IconButton>
                   </Tooltip>
                 </>
@@ -631,7 +952,10 @@ export default function Navbar() {
                 borderRadius: "10px",
                 border: `1.5px solid ${C.border}`,
                 color: C.text,
-                "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
+                "&:hover": {
+                  borderColor: C.borderHover,
+                  bgcolor: "rgba(15,23,42,0.03)",
+                },
               }}
             >
               <MenuRoundedIcon sx={{ fontSize: 20 }} />
@@ -661,13 +985,38 @@ export default function Navbar() {
         >
           <Box sx={{ px: 2, pt: 2, pb: 1.5 }}>
             <Stack direction="row" spacing={1.25} alignItems="center">
-              <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={40} />
+              <UserAvatar
+                initials={initials}
+                photo={user?.photo}
+                roleKey={roleKey}
+                size={40}
+              />
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: C.text, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    color: C.text,
+                    lineHeight: 1.3,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {user?.name || "User"}
                 </Typography>
                 {user?.email && (
-                  <Typography sx={{ fontSize: "0.72rem", color: C.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", mt: 0.2, mb: 0.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      color: C.muted,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      mt: 0.2,
+                      mb: 0.5,
+                    }}
+                  >
                     {user.email}
                   </Typography>
                 )}
@@ -684,9 +1033,19 @@ export default function Navbar() {
               component={RouterLink}
               to={item.to}
               onClick={closeMenu}
-              sx={{ py: 1.25, px: 2, fontSize: "0.875rem", fontWeight: 500, color: C.text, gap: 0.5, "&:hover": { bgcolor: "rgba(15,23,42,0.04)" } }}
+              sx={{
+                py: 1.25,
+                px: 2,
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: C.text,
+                gap: 0.5,
+                "&:hover": { bgcolor: "rgba(15,23,42,0.04)" },
+              }}
             >
-              <ListItemIcon sx={{ minWidth: 32, color: C.muted, "& svg": { fontSize: 17 } }}>
+              <ListItemIcon
+                sx={{ minWidth: 32, color: C.muted, "& svg": { fontSize: 17 } }}
+              >
                 {item.icon}
               </ListItemIcon>
               {item.label}
@@ -697,9 +1056,19 @@ export default function Navbar() {
 
           <MenuItem
             onClick={handleLogout}
-            sx={{ py: 1.25, px: 2, fontSize: "0.875rem", fontWeight: 600, color: "#ef4444", gap: 0.5, "&:hover": { bgcolor: "rgba(239,68,68,0.04)" } }}
+            sx={{
+              py: 1.25,
+              px: 2,
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: "#ef4444",
+              gap: 0.5,
+              "&:hover": { bgcolor: "rgba(239,68,68,0.04)" },
+            }}
           >
-            <ListItemIcon sx={{ minWidth: 32, color: "#ef4444", "& svg": { fontSize: 17 } }}>
+            <ListItemIcon
+              sx={{ minWidth: 32, color: "#ef4444", "& svg": { fontSize: 17 } }}
+            >
               <LogoutRoundedIcon />
             </ListItemIcon>
             Log out
@@ -721,12 +1090,24 @@ export default function Navbar() {
         }}
       >
         <Stack sx={{ height: "100%" }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.75, borderBottom: `1px solid ${C.border}` }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ px: 2, py: 1.75, borderBottom: `1px solid ${C.border}` }}
+          >
             <Logo />
             <IconButton
               onClick={closeMobile}
               size="small"
-              sx={{ width: 36, height: 36, borderRadius: "9px", border: `1.5px solid ${C.border}`, color: C.muted, "&:hover": { borderColor: C.borderHover, color: C.text } }}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "9px",
+                border: `1.5px solid ${C.border}`,
+                color: C.muted,
+                "&:hover": { borderColor: C.borderHover, color: C.text },
+              }}
             >
               <CloseRoundedIcon sx={{ fontSize: 17 }} />
             </IconButton>
@@ -735,13 +1116,38 @@ export default function Navbar() {
           {loggedIn && (
             <Box sx={{ px: 2, py: 2, borderBottom: `1px solid ${C.border}` }}>
               <Stack direction="row" spacing={1.25} alignItems="center">
-                <UserAvatar initials={initials} photo={user?.photo} roleKey={roleKey} size={42} />
+                <UserAvatar
+                  initials={initials}
+                  photo={user?.photo}
+                  roleKey={roleKey}
+                  size={42}
+                />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: C.text, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "0.9rem",
+                      color: C.text,
+                      lineHeight: 1.3,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {user?.name || "User"}
                   </Typography>
                   {user?.email && (
-                    <Typography sx={{ fontSize: "0.72rem", color: C.muted, mt: 0.2, mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.72rem",
+                        color: C.muted,
+                        mt: 0.2,
+                        mb: 0.5,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {user.email}
                     </Typography>
                   )}
@@ -754,7 +1160,12 @@ export default function Navbar() {
           <Box sx={{ flex: 1, overflowY: "auto", px: 1.5, py: 1.5 }}>
             <Stack spacing={0.25}>
               {navCfg.mobile.map((item) => (
-                <MobileNavItem key={item.label} item={item} active={isActive(item.to)} onClick={closeMobile} />
+                <MobileNavItem
+                  key={item.label}
+                  item={item}
+                  active={isActive(item.to)}
+                  onClick={closeMobile}
+                />
               ))}
             </Stack>
 
@@ -776,16 +1187,33 @@ export default function Navbar() {
                   boxShadow: "0 4px 16px rgba(109,40,217,0.24)",
                 }}
               >
-                <WorkspacePremiumRoundedIcon sx={{ fontSize: 20, flexShrink: 0 }} />
+                <WorkspacePremiumRoundedIcon
+                  sx={{ fontSize: 20, flexShrink: 0 }}
+                />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", lineHeight: 1.3 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "0.85rem",
+                      color: "#fff",
+                      lineHeight: 1.3,
+                    }}
+                  >
                     Upgrade to Premium
                   </Typography>
-                  <Typography sx={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.72)", mt: 0.25 }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      color: "rgba(255,255,255,0.72)",
+                      mt: 0.25,
+                    }}
+                  >
                     Post listings &amp; unlock contacts — ₹299
                   </Typography>
                 </Box>
-                <ChevronRightRoundedIcon sx={{ ml: "auto", fontSize: 18, flexShrink: 0, opacity: 0.7 }} />
+                <ChevronRightRoundedIcon
+                  sx={{ ml: "auto", fontSize: 18, flexShrink: 0, opacity: 0.7 }}
+                />
               </Box>
             )}
 
@@ -806,7 +1234,10 @@ export default function Navbar() {
                     fontSize: "0.9rem",
                     borderColor: C.border,
                     color: C.text,
-                    "&:hover": { borderColor: C.borderHover, bgcolor: "rgba(15,23,42,0.03)" },
+                    "&:hover": {
+                      borderColor: C.borderHover,
+                      bgcolor: "rgba(15,23,42,0.03)",
+                    },
                   }}
                 >
                   Log in
@@ -841,7 +1272,9 @@ export default function Navbar() {
                 onClick={handleLogout}
                 fullWidth
                 variant="text"
-                startIcon={<LogoutRoundedIcon sx={{ fontSize: "17px !important" }} />}
+                startIcon={
+                  <LogoutRoundedIcon sx={{ fontSize: "17px !important" }} />
+                }
                 sx={{
                   minHeight: 42,
                   borderRadius: "10px",

@@ -826,19 +826,6 @@ export default function ExplorePage() {
                       Search across both properties and vehicles with filters.
                     </Typography>
                   </Box>
-
-                  <Chip
-                    label={`${filteredItems.length} results`}
-                    sx={{
-                      height: 32,
-                      borderRadius: "999px",
-                      fontWeight: 800,
-                      fontSize: "0.74rem",
-                      color: COLORS.primary,
-                      background: COLORS.primarySoft,
-                      border: `1px solid ${COLORS.primarySoft}`,
-                    }}
-                  />
                 </Stack>
 
                 <Grid container spacing={1.5}>

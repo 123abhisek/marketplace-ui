@@ -1,4 +1,3 @@
-
 // src/pages/PropertyDetailPage.jsx
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
@@ -31,7 +30,8 @@ import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import { propertyService } from "../services/api";
+import CelebrationRoundedIcon from "@mui/icons-material/CelebrationRounded";
+import { propertyService, bookingService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
 import BookNowButton from "../components/BookNowButton";
@@ -231,6 +231,100 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [alreadyBooked, setAlreadyBooked] = useState(false);
+  const [bookingStatusLoading, setBookingStatusLoading] = useState(true);
+  const [bookingSuccessOpen, setBookingSuccessOpen] = useState(false);
+
+  useEffect(() => {
+    if (!bookingSuccessOpen) return;
+
+    const timer = setTimeout(() => {
+      navigate("/dashboard/my-bookings");
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [bookingSuccessOpen, navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBookingStatus() {
+      setBookingStatusLoading(true);
+
+      try {
+        const response = await bookingService.myBookings();
+
+        const bookings = Array.isArray(response)
+          ? response
+          : response?.data || response?.bookings || [];
+
+        const hasBooked = bookings.some((booking) => {
+          const listingId = booking?.listing?.id;
+
+          const isSameProperty =
+            booking?.listing?.type === "property" &&
+            String(listingId) === String(id);
+
+          const isActiveBooking = ["PENDING", "CONFIRMED"].includes(
+            String(booking?.status).toUpperCase(),
+          );
+
+          return isSameProperty && isActiveBooking;
+        });
+
+        if (!cancelled) {
+          setAlreadyBooked(hasBooked);
+        }
+      } catch (error) {
+        console.error("Could not load booking status:", error);
+
+        if (!cancelled) {
+          setAlreadyBooked(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setBookingStatusLoading(false);
+        }
+      }
+    }
+
+    if (id) {
+      loadBookingStatus();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // useEffect(() => {
+  //   if (!id) return;
+
+  //   bookingService
+  //     .myBookings()
+  //     .then((bookings) => {
+  //       const bookingList = Array.isArray(bookings)
+  //         ? bookings
+  //         : bookings?.data || bookings?.bookings || [];
+
+  //       const hasBooked = bookingList.some((booking) => {
+  //         const listingId = booking?.listing?.id;
+
+  //         return (
+  //           booking?.listing?.type === "property" &&
+  //           String(listingId) === String(id) &&
+  //           ["PENDING", "CONFIRMED"].includes(
+  //             String(booking?.status).toUpperCase(),
+  //           )
+  //         );
+  //       });
+
+  //       setAlreadyBooked(hasBooked);
+  //     })
+  //     .catch((err) => {
+  //       console.error("Could not load booking status:", err);
+  //     });
+  // }, [id]);
 
   useEffect(() => {
     setLoading(true);
@@ -331,7 +425,7 @@ export default function PropertyDetailPage() {
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <IconButton
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/explore")}
               size="small"
               sx={{
                 border: "1px solid rgba(226,232,240,0.9)",
@@ -1144,7 +1238,7 @@ export default function PropertyDetailPage() {
                       </Typography>
                     </Stack>
 
-                    <Stack direction="row" justifyContent="space-between">
+                    {/* <Stack direction="row" justifyContent="space-between">
                       <Typography
                         sx={{
                           fontSize: "0.81rem",
@@ -1163,7 +1257,7 @@ export default function PropertyDetailPage() {
                       >
                         ₹1
                       </Typography>
-                    </Stack>
+                    </Stack> */}
 
                     <Divider
                       sx={{ my: 0.4, borderColor: "rgba(226,232,240,0.8)" }}
@@ -1192,7 +1286,7 @@ export default function PropertyDetailPage() {
                   </Stack>
                 </Box>
 
-                <Box sx={{ px: 3, py: 2.5 }}>
+                {/* <Box sx={{ px: 3, py: 2.5 }}>
                   <Stack spacing={1.2}>
                     <BookNowButton
                       propertyId={property.id || id}
@@ -1201,6 +1295,58 @@ export default function PropertyDetailPage() {
                       disabled={isOwner}
                       onSuccess={() => navigate("/dashboard/my-bookings")}
                     />
+
+                    {isOwner && (
+                      <Typography
+                        sx={{
+                          textAlign: "center",
+                          fontSize: "0.76rem",
+                          color: "#94a3b8",
+                          fontWeight: 700,
+                        }}
+                      >
+                        You cannot book your own property
+                      </Typography>
+                    )} */}
+
+                <Box sx={{ px: 3, py: 2.5 }}>
+                  <Stack spacing={1.2}>
+                    {isPremium ? (
+                      <BookNowButton
+                        propertyId={property.id || id}
+                        amount={property.price}
+                        label="Book & Pay Now"
+                        disabled={isOwner}
+                        initialAlreadyBooked={alreadyBooked}
+                        bookingStatusLoading={bookingStatusLoading}
+                        // onSuccess={() => navigate("/dashboard/my-bookings")}
+                        onSuccess={() => setBookingSuccessOpen(true)}
+                      />
+                    ) : (
+                      <Button
+                        fullWidth
+                        component={RouterLink}
+                        to="/subscription"
+                        variant="contained"
+                        startIcon={
+                          <WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />
+                        }
+                        sx={{
+                          borderRadius: "12px",
+                          py: 1.35,
+                          fontWeight: 800,
+                          fontSize: "0.9rem",
+                          textTransform: "none",
+                          background: "linear-gradient(135deg,#7c3aed,#6d28d9)",
+                          "&:hover": {
+                            background:
+                              "linear-gradient(135deg,#6d28d9,#5b21b6)",
+                          },
+                        }}
+                      >
+                        Upgrade to Premium to Book
+                      </Button>
+                    )}
 
                     {isOwner && (
                       <Typography
@@ -1288,6 +1434,132 @@ export default function PropertyDetailPage() {
           onPrev={prevImg}
           onNext={nextImg}
         />
+      )}
+
+      {bookingSuccessOpen && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1500,
+            background: "rgba(15, 23, 42, 0.62)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            px: 2,
+          }}
+        >
+          <Box
+            role="dialog"
+            aria-modal="true"
+            sx={{
+              width: "100%",
+              maxWidth: 430,
+              background: "#fff",
+              borderRadius: "24px",
+              px: { xs: 3, sm: 4 },
+              pt: 4,
+              pb: 3.5,
+              textAlign: "center",
+              boxShadow: "0 24px 80px rgba(15, 23, 42, 0.28)",
+              animation: "bookingSuccessIn .28s ease-out",
+              "@keyframes bookingSuccessIn": {
+                from: {
+                  opacity: 0,
+                  transform: "scale(.9) translateY(14px)",
+                },
+                to: {
+                  opacity: 1,
+                  transform: "scale(1) translateY(0)",
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: 94,
+                height: 94,
+                mx: "auto",
+                mb: 2.5,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "linear-gradient(135deg, #34d399, #10b981)",
+                boxShadow: "0 12px 30px rgba(16, 185, 129, .35)",
+              }}
+            >
+              <CheckCircleRoundedIcon
+                sx={{
+                  color: "#fff",
+                  fontSize: 62,
+                }}
+              />
+            </Box>
+
+            <CelebrationRoundedIcon
+              sx={{
+                color: "#0f766e",
+                fontSize: 26,
+                mb: 0.5,
+              }}
+            />
+
+            <Typography
+              sx={{
+                color: "#64748b",
+                fontSize: "1rem",
+                fontWeight: 600,
+                mb: 0.6,
+              }}
+            >
+              Booking
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "#0f172a",
+                fontSize: "1.65rem",
+                fontWeight: 900,
+                letterSpacing: "-0.03em",
+                mb: 1.5,
+              }}
+            >
+              Successfully Booked
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "#64748b",
+                fontSize: "0.88rem",
+                lineHeight: 1.6,
+                mb: 2.5,
+              }}
+            >
+              Your booking has been confirmed successfully.
+              <br />
+              Redirecting to your bookings...
+            </Typography>
+
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => navigate("/dashboard/my-bookings")}
+              sx={{
+                borderRadius: "12px",
+                py: 1.35,
+                fontWeight: 800,
+                textTransform: "none",
+                background: "linear-gradient(135deg, #0f766e, #0d9488)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #0a5c55, #0f766e)",
+                },
+              }}
+            >
+              View My Bookings
+            </Button>
+          </Box>
+        </Box>
       )}
     </Box>
   );

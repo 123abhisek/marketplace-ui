@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -225,6 +224,40 @@ function mapItemToForm(item) {
     state: item?.state || "",
     rtoCode: item?.rtoCode || item?.rto_code || "",
     kmDriven: item?.kmDriven || item?.km_driven || "",
+  };
+}
+
+function buildPropertyUpdatePayload(form) {
+  return {
+    title: form.title.trim(),
+    location: form.location.trim(),
+    price: Number(form.price),
+    property_type: form.propertyType || undefined,
+    contact: form.contactNumber || undefined,
+    apartment_name: form.apartmentName || undefined,
+    floor: form.floor || undefined,
+    rooms: form.rooms === "" ? undefined : Number(form.rooms),
+    bedrooms: form.bedrooms === "" ? undefined : Number(form.bedrooms),
+    area: form.area === "" ? undefined : Number(form.area),
+    land_area: form.landArea === "" ? undefined : Number(form.landArea),
+    crops_grown: form.cropsGrown || undefined,
+    rent_lease: form.rentLease || undefined,
+  };
+}
+
+function buildVehicleUpdatePayload(form) {
+  return {
+    title: form.title.trim(),
+    vehicle_number: form.vehicleNumber || undefined,
+    brand: form.brand || undefined,
+    model: form.model || undefined,
+    year: form.year === "" ? undefined : Number(form.year),
+    rto_code: form.rtoCode || undefined,
+    km_driven: form.kmDriven === "" ? undefined : Number(form.kmDriven),
+    state: form.state || undefined,
+    location: form.location || undefined,
+    price: Number(form.price),
+    contact: form.contactNumber || undefined,
   };
 }
 
@@ -823,7 +856,15 @@ function EditDialogContent({
 
 export default function AdminListingsPage() {
   const location = useLocation();
-  const { properties = [], vehicles = [], refreshListings } = useAppState();
+  const {
+    properties = [],
+    vehicles = [],
+    refreshListings,
+    updateVehicle,
+    updateProperty,
+    deleteVehicle,
+    deleteProperty,
+  } = useAppState();
 
   const [localItems, setLocalItems] = useState([]);
   const [search, setSearch] = useState("");
@@ -836,6 +877,7 @@ export default function AdminListingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [message, setMessage] = useState("");
+  const [deleteSaving, setDeleteSaving] = useState(false);
 
   useEffect(() => {
     refreshListings?.();
@@ -890,12 +932,16 @@ export default function AdminListingsPage() {
   }, [properties, vehicles]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+
     return localItems.filter((item) => {
-      const matchSearch =
-        item.title.toLowerCase().includes(q) ||
-        item.location.toLowerCase().includes(q);
+      const title = String(item.title || "").toLowerCase();
+      const listingLocation = String(item.location || "").toLowerCase();
+
+      const matchSearch = title.includes(q) || listingLocation.includes(q);
+
       const matchFilter = filter === "All" || item.type === filter;
+
       return matchSearch && matchFilter;
     });
   }, [localItems, search, filter]);
@@ -925,52 +971,69 @@ export default function AdminListingsPage() {
 
   function validateEdit() {
     const errors = {};
-    if (!editForm.title?.trim()) errors.title = "Title is required";
-    if (!editForm.location?.trim()) errors.location = "Location is required";
-    if (!String(editForm.price ?? "").trim())
+
+    if (!editForm.title?.trim()) {
+      errors.title = "Title is required";
+    }
+
+    if (!editForm.location?.trim()) {
+      errors.location = "Location is required";
+    }
+
+    if (!String(editForm.price ?? "").trim()) {
       errors.price = "Price is required";
+    } else if (
+      !Number.isFinite(Number(editForm.price)) ||
+      Number(editForm.price) <= 0
+    ) {
+      errors.price = "Price must be greater than 0";
+    }
+
     setEditErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
-  function saveEdit() {
+
+  async function saveEdit() {
+    if (!editItem || editSaving) return;
+
     if (!validateEdit()) return;
+
     setEditSaving(true);
-    setTimeout(() => {
-      setLocalItems((prev) =>
-        prev.map((item) =>
-          item.id === editItem.id
-            ? {
-                ...item,
-                title: editForm.title.trim(),
-                location: editForm.location.trim(),
-                price: editForm.price.trim(),
-                contact: editForm.contactNumber || item.contact,
-                propertyType: editForm.propertyType || item.propertyType,
-                apartmentName: editForm.apartmentName || item.apartmentName,
-                floor: editForm.floor || item.floor,
-                rooms: editForm.rooms ?? item.rooms,
-                bedrooms: editForm.bedrooms ?? item.bedrooms,
-                area: editForm.area ?? item.area,
-                landArea: editForm.landArea ?? item.landArea,
-                cropsGrown: editForm.cropsGrown || item.cropsGrown,
-                rentLease: editForm.rentLease || item.rentLease,
-                vehicleNumber: editForm.vehicleNumber || item.vehicleNumber,
-                brand: editForm.brand || item.brand,
-                model: editForm.model || item.model,
-                year: editForm.year || item.year,
-                state: editForm.state || item.state,
-                rtoCode: editForm.rtoCode || item.rtoCode,
-                kmDriven: editForm.kmDriven ?? item.kmDriven,
-                raw: { ...(item.raw || {}), ...editForm },
-              }
-            : item,
-        ),
-      );
+    setMessage("");
+
+    try {
+      let success = false;
+
+      if (editItem.type === "Property") {
+        const payload = buildPropertyUpdatePayload(editForm);
+
+        success = await updateProperty(editItem.id, payload);
+      } else {
+        const payload = buildVehicleUpdatePayload(editForm);
+
+        success = await updateVehicle(editItem.id, payload);
+      }
+
+      if (!success) {
+        return;
+      }
+
       setMessage(`${editItem.type} updated successfully.`);
-      setEditSaving(false);
       closeEdit();
-    }, 300);
+
+      // Fetch the latest backend data.
+      await refreshListings?.();
+    } catch (error) {
+      console.error("Update listing failed:", error);
+
+      setMessage(
+        error?.message ||
+          `Unable to update ${editItem.type.toLowerCase()} listing.`,
+      );
+    } finally {
+      setEditSaving(false);
+    }
   }
 
   function openDelete(item) {
@@ -983,11 +1046,36 @@ export default function AdminListingsPage() {
     setDeleteTarget(null);
   }
 
-  function confirmDelete() {
-    if (!deleteTarget) return;
-    setLocalItems((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-    setMessage(`${deleteTarget.type} deleted successfully.`);
-    closeDelete();
+  async function confirmDelete() {
+    if (!deleteTarget || deleteSaving) return;
+
+    const target = deleteTarget;
+
+    setDeleteSaving(true);
+    setMessage("");
+
+    try {
+      if (target.type === "Property") {
+        await deleteProperty(target.id);
+      } else {
+        await deleteVehicle(target.id);
+      }
+
+      setMessage(`${target.type} deleted successfully.`);
+      closeDelete();
+
+      // Fetch the latest backend data.
+      await refreshListings?.();
+    } catch (error) {
+      console.error("Delete listing failed:", error);
+
+      setMessage(
+        error?.message ||
+          `Unable to delete ${target.type.toLowerCase()} listing.`,
+      );
+    } finally {
+      setDeleteSaving(false);
+    }
   }
 
   return (
@@ -1112,7 +1200,7 @@ export default function AdminListingsPage() {
 
         <Grid container spacing={2.5}>
           {filtered.length === 0 ? (
-            <Grid item xs={12} sx={{width:"100%",}}>
+            <Grid item xs={12} sx={{ width: "100%" }}>
               <Box
                 sx={{
                   py: 10,
@@ -1120,7 +1208,7 @@ export default function AdminListingsPage() {
                   border: `1.5px dashed ${UI.border}`,
                   borderRadius: "24px",
                   background: UI.surface,
-                  width:"100%",
+                  width: "100%",
                 }}
               >
                 <FilterEmpty />
@@ -1311,8 +1399,13 @@ export default function AdminListingsPage() {
             <Button onClick={closeDelete} sx={btnOutlined}>
               Cancel
             </Button>
-            <Button onClick={confirmDelete} sx={btnDanger}>
-              Yes, delete
+
+            <Button
+              onClick={confirmDelete}
+              disabled={deleteSaving}
+              sx={btnDanger}
+            >
+              {deleteSaving ? "Deleting..." : "Yes, delete"}
             </Button>
           </DialogActions>
         </Dialog>

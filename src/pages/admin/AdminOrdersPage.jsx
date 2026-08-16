@@ -152,6 +152,7 @@ export default function AdminOrdersPage() {
     setError('');
     try {
       const data = await adminOrdersService.getAll();
+      console.log("All Orders:-", data);
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setOrders([]);

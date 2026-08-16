@@ -1,6 +1,7 @@
 
 import { Navigate } from "react-router-dom";
 
+/* Layouts */
 import PublicLayout from "../layouts/PublicLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -8,6 +9,8 @@ import DashboardGate from "../layouts/DashboardGate";
 import PremiumGate from "../layouts/PremiumGate";
 import AdminLayout from "../layouts/AdminLayout";
 import AdminGate from "../layouts/AdminGate";
+import SellerLayout from "../layouts/SellerLayout";
+import SellerGate from "../layouts/SellerGate";
 
 /* Public Pages */
 import LandingPage from "../pages/LandingPage";
@@ -53,6 +56,7 @@ import AdminListingsPage from "../pages/admin/AdminListingsPage";
 import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
 import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+
 
 export const routes = [
   /*
@@ -289,6 +293,59 @@ export const routes = [
     children: [
       {
         element: <AdminLayout />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="overview" replace />,
+          },
+          {
+            path: "overview",
+            element: <AdminOverviewPage />,
+          },
+          {
+            path: "users",
+            element: <AdminUsersPage />,
+          },
+          {
+            path: "properties/add",
+            element: <AddPropertyPage />,
+          },
+          {
+            path: "vehicles/add",
+            element: <AddVehiclePage />,
+          },
+          {
+            path: "listings",
+            element: <AdminListingsPage />,
+          },
+          {
+            path: "orders",
+            element: <AdminOrdersPage />,
+          },
+          {
+            path: "reports",
+            element: <AdminReportsPage />,
+          },
+          {
+            path: "settings",
+            element: <AdminSettingsPage />,
+          },
+        ],
+      },
+    ],
+  },
+
+  /*
+   * Seller routes
+   *
+   * All routes inside this branch are protected by SellerGate.
+   */
+  {
+    path: "/seller",
+    element: <SellerGate />,
+    children: [
+      {
+        element: <SellerLayout />,
         children: [
           {
             index: true,

@@ -27,51 +27,6 @@ export const tokenStore = (() => {
   };
 })();
 
-// async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
-//   const headers = {}
-
-//   if (body !== undefined) {
-//     headers['Content-Type'] = isFormEncoded
-//       ? 'application/x-www-form-urlencoded'
-//       : 'application/json'
-//   }
-
-//   const token = tokenStore.get()
-//   if (token) headers['Authorization'] = `Bearer ${token}`
-
-//   const cleanPath = String(path || '').replace(/^\/+/, '')
-
-//   const res = await fetch(`${API}${cleanPath}`, {
-//     method,
-//     headers,
-//     body:
-//       body === undefined
-//         ? undefined
-//         : isFormEncoded
-//           ? new URLSearchParams(body).toString()
-//           : JSON.stringify(body),
-//   })
-
-//   const ct = res.headers.get('content-type') ?? ''
-//   const data = ct.includes('application/json')
-//     ? await res.json()
-//     : await res.text()
-
-//   if (!res.ok) {
-//     const err = new Error(`HTTP ${res.status}`)
-//     err.status = res.status
-//     err.response = data
-
-//     if (res.status === 401) tokenStore.clear()
-//     if (res.status === 422) {
-//       console.error('422 Validation Error:', JSON.stringify(data, null, 2))
-//     }
-
-//     throw err
-//   }
-
-//   return data
-// }
 
 async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
   const headers = {};
@@ -119,7 +74,12 @@ async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
   }
 
   if (!res.ok) {
-    const err = new Error(`HTTP ${res.status}`);
+    const backendMessage =
+      typeof data === "object" && data !== null
+        ? data.detail || data.message
+        : null;
+
+    const err = new Error(backendMessage || `HTTP ${res.status}`);
 
     err.status = res.status;
     err.response = data;
@@ -316,12 +276,24 @@ export const bookingService = {
       listing_type: listingType,
       amount,
       payment_method: paymentMethod,
-    };
+    }
 
-    if (payerUpiId) payload.payer_upi_id = payerUpiId;
-    return post("booking/create", payload);
+    if (payerUpiId) payload.payer_upi_id = payerUpiId
+
+    return post("booking/create", payload)
   },
 
-  myBookings: () => get("booking/mybookings"),
+  myBookings: (status = null) => {
+    const query = new URLSearchParams()
+
+    if (status) {
+      query.set("status", status)
+    }
+
+    return get(
+      `booking/my${query.toString() ? `?${query}` : ""}`,
+    )
+  },
+
   getOne: (id) => get(`booking/${id}`),
-};
+}

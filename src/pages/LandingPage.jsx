@@ -13,7 +13,7 @@ export default function LandingPage() {
   return (
     <>
       <Carousel />
-      <Hero />
+      {/* <Hero /> */}
       <Categories />
       <FeaturedListings />
       <Pricing />

@@ -1,4 +1,3 @@
-
 // src/hooks/useAppState.jsx
 import {
   createContext,
@@ -51,7 +50,7 @@ const getStoredToken = () => {
 
 const saveUserToStorage = (user) => {
   try {
-    console.log("user :",user);
+    console.log("user :", user);
     localStorage.setItem(LS_USER_KEY, JSON.stringify(user));
   } catch {}
 };
@@ -75,9 +74,7 @@ const loadUserFromStorage = () => {
 
 const normalizeUser = (u = {}, hasToken = true) => {
   const isPremium =
-    u?.is_premium === true ||
-    u?.ispremium === true ||
-    u?.isPremium === true;
+    u?.is_premium === true || u?.ispremium === true || u?.isPremium === true;
 
   const role = String(u?.role || "").toLowerCase();
 
@@ -255,9 +252,13 @@ export function AppProvider({ children }) {
         const response = await authService.login({ email, password });
         const payload = response?.data ?? response;
 
-        const accessToken = payload?.access_token || payload?.token || getStoredToken();
+        const accessToken =
+          payload?.access_token || payload?.token || getStoredToken();
 
-        if (payload?.access_token && tokenStore?.get?.() !== payload.access_token) {
+        if (
+          payload?.access_token &&
+          tokenStore?.get?.() !== payload.access_token
+        ) {
           tokenStore?.set?.(payload.access_token);
         }
 
@@ -316,7 +317,10 @@ export function AppProvider({ children }) {
         const response = await authService.login({ email, password });
         const payload = response?.data ?? response;
 
-        if (payload?.access_token && tokenStore?.get?.() !== payload.access_token) {
+        if (
+          payload?.access_token &&
+          tokenStore?.get?.() !== payload.access_token
+        ) {
           tokenStore?.set?.(payload.access_token);
         }
 
@@ -348,8 +352,11 @@ export function AppProvider({ children }) {
 
   const addVehicle = useCallback(
     async (payload) => {
-      if (!user.role || user.role !== "admin") {
-        notify("Only admins are allowed to post vehicle listings", "warning");
+      if (user.role !== "admin" && user.role !== "seller") {
+        notify(
+          "Only admins or sellers can update property listings",
+          "warning",
+        );
         return false;
       }
 
@@ -362,14 +369,55 @@ export function AppProvider({ children }) {
     [user.role, notify],
   );
 
+  const updateVehicle = useCallback(
+    async (id, payload) => {
+      if (user.role !== "admin" && user.role !== "seller") {
+        notify(
+          "Only admins or sellers can update property listings",
+          "warning",
+        );
+        return false;
+      }
+
+      const newVehicle = await vehicleService.update(id, payload);
+      const normalized = normalizeVehicle(newVehicle?.data ?? newVehicle, 0);
+      setVehicles((prev) => [normalized, ...prev]);
+      notify("Vehicle listing posted!");
+      return true;
+    },
+    [user.role, notify],
+  );
+
   const addProperty = useCallback(
     async (payload) => {
-      if (!user.role || user.role !== "admin") {
-        notify("Only admins are allowed to post property listings", "warning");
+      if (user.role !== "admin" && user.role !== "seller") {
+        notify(
+          "Only admins or sellers can update property listings",
+          "warning",
+        );
         return false;
       }
 
       const newProperty = await propertyService.add(payload);
+      const normalized = normalizeProperty(newProperty?.data ?? newProperty, 0);
+      setProperties((prev) => [normalized, ...prev]);
+      notify("Property listing posted!");
+      return true;
+    },
+    [user.role, notify],
+  );
+
+  const updateProperty = useCallback(
+    async (id, payload) => {
+      if (user.role !== "admin" && user.role !== "seller") {
+        notify(
+          "Only admins or sellers can update property listings",
+          "warning",
+        );
+        return false;
+      }
+
+      const newProperty = await propertyService.update(id, payload);
       const normalized = normalizeProperty(newProperty?.data ?? newProperty, 0);
       setProperties((prev) => [normalized, ...prev]);
       notify("Property listing posted!");
@@ -431,7 +479,9 @@ export function AppProvider({ children }) {
       upgradePremium,
       updateProfile,
       addVehicle,
+      updateVehicle,
       addProperty,
+      updateProperty,
       deleteVehicle,
       deleteProperty,
       refreshListings,
