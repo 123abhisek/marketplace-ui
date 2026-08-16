@@ -1,4 +1,3 @@
-
 // src/components/CarouselHero.jsx
 
 import { useEffect, useState } from "react";
@@ -29,7 +28,7 @@ const slides = [
   {
     id: 1,
     image:
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80",
+      "https://i.pinimg.com/736x/e1/a0/c2/e1a0c23570a458b1b15abcdd6a9b8d8f.jpg",
     badge: "EasyDeal Homes",
     eyebrow: "Buy • Rent • Explore",
     title: "Find verified properties faster",
@@ -44,21 +43,6 @@ const slides = [
   {
     id: 2,
     image:
-      "https://images.unsplash.com/photo-1494976688153-cd7f9d7b85c6?auto=format&fit=crop&w=1600&q=80",
-    badge: "EasyDeal Vehicles",
-    eyebrow: "Cars • Bikes • More",
-    title: "Discover trusted vehicles near you",
-    description:
-      "Browse cars, bikes, and commercial vehicles in one clean marketplace designed for easy comparison and fast discovery.",
-    primaryLabel: "Explore Vehicles",
-    secondaryLabel: "Featured Listings",
-    primaryPath: "/vehicles",
-    secondaryId: "featured-listings",
-    icon: "vehicle",
-  },
-  {
-    id: 3,
-    image:
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
     badge: "EasyDeal Premium",
     eyebrow: "Post • Promote • Sell",
@@ -71,6 +55,51 @@ const slides = [
     secondaryId: "pricing",
     icon: "premium",
   },
+  {
+    id: 3,
+    image:
+      "https://i.pinimg.com/1200x/08/31/aa/0831aa47a2daf7104fc4a40e18b299cf.jpg",
+    badge: "EasyDeal Homes",
+    eyebrow: "Buy • Rent • Explore",
+    title: "Find verified properties faster",
+    description:
+      "Search flats, houses, plots, and rentals across India with a premium marketplace built for smarter discovery and better decisions.",
+    primaryLabel: "Explore Properties",
+    secondaryLabel: "How It Works",
+    primaryPath: "/properties",
+    secondaryId: "how-it-works",
+    icon: "property",
+  },
+  {
+    id: 4,
+    image:
+      "https://i.pinimg.com/1200x/27/e8/54/27e85448f171d24855dbfc841f88c8d4.jpg",
+    badge: "EasyDeal Premium",
+    eyebrow: "Post • Promote • Sell",
+    title: "Sell smarter with EasyDeal Premium",
+    description:
+      "Unlock premium access to publish listings faster, increase visibility, and connect with more buyers and sellers.",
+    primaryLabel: "Get Premium",
+    secondaryLabel: "View Pricing",
+    primaryPath: "/subscription",
+    secondaryId: "pricing",
+    icon: "premium",
+  },
+    // {
+  //   id: 2,
+  //   image:
+  //     "https://i.pinimg.com/1200x/4d/6e/31/4d6e313f8d82aa69846ef03f4eb56947.jpg",
+  //   badge: "EasyDeal Vehicles",
+  //   eyebrow: "Cars • Bikes • More",
+  //   title: "Discover trusted vehicles near you",
+  //   description:
+  //     "Browse cars, bikes, and commercial vehicles in one clean marketplace designed for easy comparison and fast discovery.",
+  //   primaryLabel: "Explore Vehicles",
+  //   secondaryLabel: "Featured Listings",
+  //   primaryPath: "/vehicles",
+  //   secondaryId: "featured-listings",
+  //   icon: "vehicle",
+  // },
 ];
 
 export default function CarouselHero() {
@@ -86,9 +115,7 @@ export default function CarouselHero() {
   }, []);
 
   const goPrev = () => {
-    setActive((prev) =>
-      prev === 0 ? slides.length - 1 : prev - 1
-    );
+    setActive((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   const goNext = () => {
@@ -170,14 +197,9 @@ export default function CarouselHero() {
             position: "absolute",
             inset: 0,
             opacity: index === active ? 1 : 0,
-            transform:
-              index === active
-                ? "scale(1)"
-                : "scale(1.02)",
-            transition:
-              "opacity .8s ease, transform .8s ease",
-            pointerEvents:
-              index === active ? "auto" : "none",
+            transform: index === active ? "scale(1)" : "scale(1.02)",
+            transition: "opacity .8s ease, transform .8s ease",
+            pointerEvents: index === active ? "auto" : "none",
           }}
         >
           <Box
@@ -189,9 +211,7 @@ export default function CarouselHero() {
               height: "100%",
               objectFit: "cover",
               animation:
-                index === active
-                  ? "easydealZoom 6s linear both"
-                  : "none",
+                index === active ? "easydealZoom 6s linear both" : "none",
             }}
           />
 
@@ -250,17 +270,14 @@ export default function CarouselHero() {
                 width: 52,
                 height: 52,
                 borderRadius: "16px",
-                background:
-                  "rgba(15,118,110,0.20)",
-                border:
-                  "1px solid rgba(255,255,255,0.14)",
+                background: "rgba(15,118,110,0.20)",
+                border: "1px solid rgba(255,255,255,0.14)",
                 backdropFilter: "blur(12px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#ffffff",
-                animation:
-                  "easydealFloat 4s ease-in-out infinite",
+                animation: "easydealFloat 4s ease-in-out infinite",
 
                 "& svg": {
                   fontSize: 28,
@@ -279,10 +296,8 @@ export default function CarouselHero() {
                 fontWeight: 800,
                 fontSize: "0.82rem",
                 color: "#ffffff",
-                background:
-                  "rgba(255,255,255,0.10)",
-                border:
-                  "1px solid rgba(255,255,255,0.16)",
+                background: "rgba(255,255,255,0.10)",
+                border: "1px solid rgba(255,255,255,0.16)",
                 backdropFilter: "blur(12px)",
               }}
             />
@@ -367,9 +382,7 @@ export default function CarouselHero() {
             }}
           >
             <Button
-              onClick={() =>
-                navigate(currentSlide.primaryPath)
-              }
+              onClick={() => navigate(currentSlide.primaryPath)}
               endIcon={<ArrowForwardRoundedIcon />}
               sx={{
                 minHeight: 56,
@@ -388,8 +401,7 @@ export default function CarouselHero() {
                   )
                 `,
 
-                boxShadow:
-                  "0 12px 30px rgba(15,118,110,0.30)",
+                boxShadow: "0 12px 30px rgba(15,118,110,0.30)",
 
                 "&:hover": {
                   background: `
@@ -416,17 +428,14 @@ export default function CarouselHero() {
                 fontSize: "1rem",
                 color: "#ffffff",
 
-                border:
-                  "1px solid rgba(255,255,255,0.18)",
+                border: "1px solid rgba(255,255,255,0.18)",
 
-                background:
-                  "rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.08)",
 
                 backdropFilter: "blur(8px)",
 
                 "&:hover": {
-                  background:
-                    "rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.14)",
                 },
               }}
             >
@@ -459,8 +468,7 @@ export default function CarouselHero() {
                 width: 5,
                 height: 5,
                 borderRadius: "50%",
-                background:
-                  "rgba(255,255,255,0.42)",
+                background: "rgba(255,255,255,0.42)",
               }}
             />
 
@@ -553,17 +561,14 @@ export default function CarouselHero() {
             height: 52,
             color: "#ffffff",
 
-            background:
-              "rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.08)",
 
-            border:
-              "1px solid rgba(255,255,255,0.14)",
+            border: "1px solid rgba(255,255,255,0.14)",
 
             backdropFilter: "blur(10px)",
 
             "&:hover": {
-              background:
-                "rgba(255,255,255,0.14)",
+              background: "rgba(255,255,255,0.14)",
             },
           }}
         >
@@ -578,17 +583,14 @@ export default function CarouselHero() {
             height: 52,
             color: "#ffffff",
 
-            background:
-              "rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.08)",
 
-            border:
-              "1px solid rgba(255,255,255,0.14)",
+            border: "1px solid rgba(255,255,255,0.14)",
 
             backdropFilter: "blur(10px)",
 
             "&:hover": {
-              background:
-                "rgba(255,255,255,0.14)",
+              background: "rgba(255,255,255,0.14)",
             },
           }}
         >
