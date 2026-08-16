@@ -347,7 +347,7 @@ function getNavConfig() {
     seller: {
       desktop: [
         { label: "Overview", to: "/seller" },
-        { label: "Users", to: "/seller/users" },
+        // { label: "Users", to: "/seller/users" },
         { label: "Listings", to: "/seller/listings" },
         { label: "Reports", to: "/seller/reports" },
       ],
@@ -357,11 +357,11 @@ function getNavConfig() {
           to: "/seller",
           icon: <SpaceDashboardRoundedIcon fontSize="small" />,
         },
-        {
-          label: "Users",
-          to: "/seller/users",
-          icon: <PeopleAltRoundedIcon fontSize="small" />,
-        },
+        // {
+        //   label: "Users",
+        //   to: "/seller/users",
+        //   icon: <PeopleAltRoundedIcon fontSize="small" />,
+        // },
         {
           label: "Listings",
           to: "/seller/listings",
@@ -384,11 +384,11 @@ function getNavConfig() {
           to: "/seller",
           icon: <AdminPanelSettingsRoundedIcon fontSize="small" />,
         },
-        {
-          label: "Manage Users",
-          to: "/seller/users",
-          icon: <PeopleAltRoundedIcon fontSize="small" />,
-        },
+        // {
+        //   label: "Manage Users",
+        //   to: "/seller/users",
+        //   icon: <PeopleAltRoundedIcon fontSize="small" />,
+        // },
         {
           label: "Reports",
           to: "/seller/reports",
@@ -872,7 +872,7 @@ export default function Navbar() {
                   <RoleBadge roleKey="seller" />
                   <Button
                     component={RouterLink}
-                    to="/seller/add-property"
+                    to="/seller/properties/add"
                     variant="contained"
                     startIcon={
                       <AddCircleOutlineRoundedIcon

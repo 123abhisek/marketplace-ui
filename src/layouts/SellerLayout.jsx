@@ -21,7 +21,7 @@ import Navbar from "../components/Navbar";
 const navItems = [
   {
     label: "Overview",
-    path: "/admin/overview",
+    path: "/seller/overview",
   },
 //   {
 //     label: "Users",
@@ -29,23 +29,23 @@ const navItems = [
 //   },
   {
     label: "Add Property",
-    path: "/admin/properties/add",
+    path: "/seller/properties/add",
   },
   {
     label: "Add Vehicle",
-    path: "/admin/vehicles/add",
+    path: "/seller/vehicles/add",
   },
-//   {
-//     label: "Listings",
-//     path: "/admin/listings",
-//   },
+  {
+    label: "Listings",
+    path: "/seller/listings",
+  },
   {
     label: "Orders",
-    path: "/admin/orders",
+    path: "/seller/orders",
   },
   {
     label: "Reports",
-    path: "/admin/reports",
+    path: "/seller/reports",
   },
 //   {
 //     label: "Settings",
@@ -85,7 +85,7 @@ export default function SellerLayout() {
               mb: 2,
             }}
           >
-            Admin Panel
+            Seller Panel
           </Typography>
 
           <Divider sx={{ mb: 2 }} />

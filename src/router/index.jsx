@@ -56,6 +56,9 @@ import AdminListingsPage from "../pages/admin/AdminListingsPage";
 import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
 import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+import SellerOverviewPage from "../pages/seller/SellerOverviewPage";
+import SellerListingsPage from "../pages/seller/SellerListingsPage";
+import SellerOrdersPage from "../pages/seller/SellerOrdersPage";
 
 
 export const routes = [
@@ -353,7 +356,7 @@ export const routes = [
           },
           {
             path: "overview",
-            element: <AdminOverviewPage />,
+            element: <SellerOverviewPage />,
           },
           {
             path: "users",
@@ -369,11 +372,11 @@ export const routes = [
           },
           {
             path: "listings",
-            element: <AdminListingsPage />,
+            element: <SellerListingsPage />,
           },
           {
             path: "orders",
-            element: <AdminOrdersPage />,
+            element: <SellerOrdersPage />,
           },
           {
             path: "reports",
