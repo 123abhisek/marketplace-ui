@@ -412,11 +412,11 @@ function ListingCard({ item, onEdit, onDelete }) {
                 {money(item.price)}
               </Typography>
             </Stack>
-            <Typography
+            {/* <Typography
               sx={{ fontSize: "0.75rem", fontWeight: 700, color: UI.muted }}
             >
               ID: {item.id}
-            </Typography>
+            </Typography> */}
           </Stack>
 
           <Divider sx={{ borderColor: UI.border }} />
@@ -1119,7 +1119,7 @@ export default function SellerListingsPage() {
                     letterSpacing: "-0.04em",
                   }}
                 >
-                  Admin Listings
+                  Seller Listings
                 </Typography>
                 <Typography
                   sx={{ color: UI.muted, fontSize: "0.92rem", mt: 0.5 }}

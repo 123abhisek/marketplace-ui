@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -79,7 +78,10 @@ function SectionHeader({ icon, title, description }) {
         >
           {icon}
         </Box>
-        <Typography fontWeight={800} sx={{ color: "#1E293B", fontSize: "0.95rem" }}>
+        <Typography
+          fontWeight={800}
+          sx={{ color: "#1E293B", fontSize: "0.95rem" }}
+        >
           {title}
         </Typography>
       </Stack>
@@ -124,14 +126,22 @@ export default function AddPropertyPage() {
   });
 
   const propType = watch("propertyType");
-  const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(propType);
+  const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(
+    propType,
+  );
   const isAgri = propType === "Agricultural";
 
   const onSubmit = async (data) => {
-    if (user.role !== "admin") {
+    console.log("Role :-", user.role);
+    if (user.role !== "admin" && user.role !== "seller") {
       notify("Only admins are allowed to post listings", "warning");
       return;
     }
+
+    // if (user.role !== "seller") {
+    //   notify("Only Seller are allowed to post listings", "warning");
+    //   return;
+    // }
 
     setSubmitting(true);
     setApiError("");
@@ -141,21 +151,21 @@ export default function AddPropertyPage() {
 
       const payload = {
         // ── strings ───────────────────────────────────────────────────────────
-        title:          toStr(data.title),
-        property_type:  toStr(data.propertyType),
-        location:       toStr(data.location),
+        title: toStr(data.title),
+        property_type: toStr(data.propertyType),
+        location: toStr(data.location),
         apartment_name: toStr(data.apartmentName),
-        contact:        toStr(data.contactNumber),
-        floor:          toStr(data.floor),       // backend expects string
-        rooms:          toStr(data.rooms),       // backend expects string
-        bedrooms:       toStr(data.bedrooms),    // backend expects string
-        crops_grown:    toStr(data.cropsGrown),
-        rent_lease:     toStr(data.rentLease),
+        contact: toStr(data.contactNumber),
+        floor: toStr(data.floor), // backend expects string
+        rooms: toStr(data.rooms), // backend expects string
+        bedrooms: toStr(data.bedrooms), // backend expects string
+        crops_grown: toStr(data.cropsGrown),
+        rent_lease: toStr(data.rentLease),
 
         // ── numbers ───────────────────────────────────────────────────────────
-        area:           toFloatOrNull(data.area),
-        land_area:      toFloatOrNull(data.landArea),
-        price:          toFloatOrNull(data.expectedPrice),
+        area: toFloatOrNull(data.area),
+        land_area: toFloatOrNull(data.landArea),
+        price: toFloatOrNull(data.expectedPrice),
 
         // ── images ───────────────────────────────────────────────────────────
         images: base64Images,
@@ -163,7 +173,11 @@ export default function AddPropertyPage() {
 
       await propertyService.add(payload);
       notify("Property listing posted!");
-      navigate("/admin/listings");
+      if (user.role === "admin") {
+        navigate("/admin/listings");
+      } else {
+        navigate("/seller/listings");
+      }
     } catch (err) {
       setApiError(extractError(err));
     } finally {
@@ -190,16 +204,24 @@ export default function AddPropertyPage() {
       </Stack>
 
       {apiError && (
-        <Alert severity="error" sx={{ borderRadius: "14px" }} onClose={() => setApiError("")}>
+        <Alert
+          severity="error"
+          sx={{ borderRadius: "14px" }}
+          onClose={() => setApiError("")}
+        >
           {apiError}
         </Alert>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={2.5}>
-
           {/* ── Section 1: Basic Information ── */}
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
+          <Card
+            sx={{
+              borderRadius: "20px",
+              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<AddHomeRoundedIcon sx={{ fontSize: 18 }} />}
@@ -259,7 +281,12 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 2: Property Details ── */}
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
+          <Card
+            sx={{
+              borderRadius: "20px",
+              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>📐</span>}
@@ -280,11 +307,7 @@ export default function AddPropertyPage() {
                     </Grid>
                     <Grid item xs={6} sm={4}>
                       {/* rooms → string on backend */}
-                      <FormInput
-                        name="rooms"
-                        label="Rooms"
-                        control={control}
-                      />
+                      <FormInput name="rooms" label="Rooms" control={control} />
                     </Grid>
                     <Grid item xs={6} sm={4}>
                       {/* bedrooms → string on backend */}
@@ -332,7 +355,12 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 3: Pricing & Terms ── */}
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
+          <Card
+            sx={{
+              borderRadius: "20px",
+              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>💰</span>}
@@ -364,7 +392,12 @@ export default function AddPropertyPage() {
           </Card>
 
           {/* ── Section 4: Images ── */}
-          <Card sx={{ borderRadius: "20px", boxShadow: "0 2px 20px rgba(15,23,42,0.07)" }}>
+          <Card
+            sx={{
+              borderRadius: "20px",
+              boxShadow: "0 2px 20px rgba(15,23,42,0.07)",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>🖼️</span>}

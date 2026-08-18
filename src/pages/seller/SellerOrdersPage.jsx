@@ -28,7 +28,7 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
-import adminOrdersService from './../../services/adminOrdersApi';
+import SellerOrdersService from '../../services/SellerOrdersApi';
 
 const UI = {
   bg: '#f5f7fb',
@@ -152,7 +152,7 @@ export default function SellerOrdersPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await adminOrdersService.getAll();
+      const data = await SellerOrdersService.getAll();
       console.log("All Orders:-", data);
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {

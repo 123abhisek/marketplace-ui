@@ -173,7 +173,7 @@ export const authService = {
 export const propertyService = {
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
-    return get(`property/all${query ? `?${query}` : ""}`);
+    return get(`seller/properties${query ? `?${query}` : ""}`);
   },
 
   getOne: (id) => get(`property/${id}`),
@@ -211,7 +211,7 @@ export const propertyService = {
 export const vehicleService = {
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
-    return get(`vehicle/all${query ? `?${query}` : ""}`);
+    return get(`seller/vehicles${query ? `?${query}` : ""}`);
   },
 
   getOne: (id) => get(`vehicle/${id}`),

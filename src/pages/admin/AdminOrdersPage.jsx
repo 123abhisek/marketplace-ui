@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -24,10 +25,13 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CurrencyRupeeRoundedIcon from '@mui/icons-material/CurrencyRupeeRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
-import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import NotesRoundedIcon from '@mui/icons-material/NotesRounded';
+import PersonPinCircleRoundedIcon from '@mui/icons-material/PersonPinCircleRounded';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import adminOrdersService from './../../services/adminOrdersApi';
 
 const UI = {
@@ -50,6 +54,8 @@ const UI = {
   successSoft: 'rgba(22,163,74,0.10)',
   warning: '#d97706',
   warningSoft: 'rgba(217,119,6,0.10)',
+  danger: '#dc2626',
+  dangerSoft: 'rgba(220,38,38,0.10)',
   shadowSm: '0 2px 10px rgba(15,23,42,0.04)',
   shadowMd: '0 10px 32px rgba(15,23,42,0.06)',
 };
@@ -65,7 +71,13 @@ function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function getInitials(name = '') {
@@ -76,19 +88,19 @@ function getInitials(name = '') {
 
 function getListingTone(type = '') {
   const lower = String(type).toLowerCase();
-  if (lower === 'property') {
+  if (lower === 'vehicle') {
     return {
-      icon: <HomeWorkRoundedIcon sx={{ fontSize: 22 }} />,
-      color: UI.primary,
-      bg: UI.primarySoft,
-      label: 'Property',
+      icon: <DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />,
+      color: UI.blue,
+      bg: UI.blueSoft,
+      label: 'Vehicle',
     };
   }
   return {
-    icon: <DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />,
-    color: UI.blue,
-    bg: UI.blueSoft,
-    label: 'Vehicle',
+    icon: <HomeWorkRoundedIcon sx={{ fontSize: 22 }} />,
+    color: UI.primary,
+    bg: UI.primarySoft,
+    label: 'Property',
   };
 }
 
@@ -101,9 +113,16 @@ function getStatusTone(status = '') {
       icon: <CheckCircleRoundedIcon sx={{ fontSize: '15px !important' }} />,
     };
   }
+  if (value === 'PENDING') {
+    return {
+      color: UI.warning,
+      bg: UI.warningSoft,
+      icon: <AccessTimeRoundedIcon sx={{ fontSize: '15px !important' }} />,
+    };
+  }
   return {
-    color: UI.warning,
-    bg: UI.warningSoft,
+    color: UI.danger,
+    bg: UI.dangerSoft,
     icon: <AccessTimeRoundedIcon sx={{ fontSize: '15px !important' }} />,
   };
 }
@@ -141,6 +160,48 @@ function StatCard({ title, value, subtitle, icon, color, bg }) {
   );
 }
 
+function DetailBlock({ title, icon, color, children }) {
+  return (
+    <Box sx={{ p: 1.4, borderRadius: '16px', background: UI.surfaceSoft, border: `1px solid ${UI.border}`, height: '100%' }}>
+      <Stack direction="row" spacing={0.8} alignItems="center">
+        {icon && React.cloneElement(icon, { sx: { fontSize: 15, color: color || UI.faint } })}
+        <Typography sx={{ fontSize: '0.72rem', color: UI.faint, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {title}
+        </Typography>
+      </Stack>
+      <Stack spacing={0.65} sx={{ mt: 1 }}>
+        {children}
+      </Stack>
+    </Box>
+  );
+}
+
+function InfoRow({ icon, label, value, noWrap = false, mono = false }) {
+  return (
+    <Stack direction="row" spacing={0.8} alignItems="flex-start" sx={{ minWidth: 0 }}>
+      {icon && React.cloneElement(icon, { sx: { fontSize: 16, color: UI.faint, mt: '2px', flexShrink: 0 } })}
+      <Box sx={{ minWidth: 0 }}>
+        {label && (
+          <Typography sx={{ fontSize: '0.68rem', color: UI.faint, fontWeight: 700 }}>
+            {label}
+          </Typography>
+        )}
+        <Typography
+          sx={{
+            fontSize: '0.82rem',
+            color: UI.text,
+            fontWeight: 700,
+            wordBreak: mono ? 'break-all' : 'normal',
+          }}
+          noWrap={noWrap}
+        >
+          {value ?? '-'}
+        </Typography>
+      </Box>
+    </Stack>
+  );
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -152,7 +213,6 @@ export default function AdminOrdersPage() {
     setError('');
     try {
       const data = await adminOrdersService.getAll();
-      console.log("All Orders:-", data);
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setOrders([]);
@@ -172,16 +232,16 @@ export default function AdminOrdersPage() {
 
     return orders.filter((order) =>
       [
-        order.id,
-        order.status,
         order.listing?.title,
         order.listing?.type,
-        order.listing?.location,
+        order.booking?.status,
+        order.buyer?.name,
+        order.buyer?.phone,
+        order.buyer?.email,
         order.owner?.name,
         order.owner?.phone,
         order.owner?.email,
-        order.payment?.payment_status,
-        order.payment?.payment_method,
+        order.booking?.notes,
       ]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
@@ -190,10 +250,10 @@ export default function AdminOrdersPage() {
 
   const counts = useMemo(() => {
     const total = orders.length;
-    const confirmed = orders.filter((order) => String(order.status).toUpperCase() === 'CONFIRMED').length;
-    const paid = orders.filter((order) => String(order.payment?.payment_status).toUpperCase() === 'SUCCESS').length;
-    const totalAmount = orders.reduce((sum, order) => sum + Number(order.payment?.amount || 0), 0);
-    return { total, confirmed, paid, totalAmount };
+    const confirmed = orders.filter((order) => String(order.booking?.status).toUpperCase() === 'CONFIRMED').length;
+    const pending = orders.filter((order) => String(order.booking?.status).toUpperCase() === 'PENDING').length;
+    const totalAmount = orders.reduce((sum, order) => sum + Number(order.booking?.amount || 0), 0);
+    return { total, confirmed, pending, totalAmount };
   }, [orders]);
 
   return (
@@ -223,7 +283,7 @@ export default function AdminOrdersPage() {
                     Orders Management
                   </Typography>
                   <Typography sx={{ mt: 0.7, fontSize: '0.9rem', color: UI.muted, lineHeight: 1.65 }}>
-                    Displaying all bookings from the admin orders endpoint with listing, owner, payment, and timeline details.
+                    All bookings with listing, buyer, owner, and timeline details.
                   </Typography>
                 </Box>
 
@@ -232,7 +292,7 @@ export default function AdminOrdersPage() {
                     fullWidth
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by order, listing, owner, payment, location"
+                    placeholder="Search by listing, buyer, owner, status"
                     size="small"
                     InputProps={{
                       startAdornment: (
@@ -298,17 +358,17 @@ export default function AdminOrdersPage() {
               bg={UI.successSoft}
             />
             <StatCard
-              title="Payments Success"
-              value={counts.paid}
-              subtitle="Orders with successful payment"
-              icon={<PaymentsRoundedIcon sx={{ fontSize: 22 }} />}
-              color={UI.blue}
-              bg={UI.blueSoft}
+              title="Pending"
+              value={counts.pending}
+              subtitle="Orders awaiting confirmation"
+              icon={<AccessTimeRoundedIcon sx={{ fontSize: 22 }} />}
+              color={UI.warning}
+              bg={UI.warningSoft}
             />
             <StatCard
               title="Total Amount"
-              value={`₹${counts.totalAmount}`}
-              subtitle="Sum of payment amounts"
+              value={`\u20b9${counts.totalAmount.toLocaleString('en-IN')}`}
+              subtitle="Sum of booking amounts"
               icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.purple}
               bg={UI.purpleSoft}
@@ -351,7 +411,8 @@ export default function AdminOrdersPage() {
                   <Stack spacing={1.5}>
                     {filteredOrders.map((order) => {
                       const listingTone = getListingTone(order.listing?.type);
-                      const statusTone = getStatusTone(order.status);
+                      const statusTone = getStatusTone(order.booking?.status);
+                      const gateway = order.payment?.razorpay_order_id ? 'Razorpay' : 'Direct';
 
                       return (
                         <Card
@@ -395,7 +456,7 @@ export default function AdminOrdersPage() {
                                       {order.listing?.title || 'Untitled Listing'}
                                     </Typography>
                                     <Typography sx={{ mt: 0.35, fontSize: '0.8rem', color: UI.muted }} noWrap>
-                                      Order ID: {order.id}
+                                      Created {formatDate(order.created_at)}
                                     </Typography>
                                   </Box>
                                 </Stack>
@@ -418,7 +479,7 @@ export default function AdminOrdersPage() {
                                   <Chip
                                     size="small"
                                     icon={statusTone.icon}
-                                    label={order.status || 'Pending'}
+                                    label={order.booking?.status || 'Unknown'}
                                     sx={{
                                       height: 30,
                                       borderRadius: '999px',
@@ -432,7 +493,7 @@ export default function AdminOrdersPage() {
                                   <Chip
                                     size="small"
                                     icon={<PaymentsRoundedIcon sx={{ fontSize: '15px !important' }} />}
-                                    label={order.payment?.payment_status || 'Unknown'}
+                                    label={`${gateway} \u2022 \u20b9${order.booking?.amount ?? 0}`}
                                     sx={{
                                       height: 30,
                                       borderRadius: '999px',
@@ -449,74 +510,50 @@ export default function AdminOrdersPage() {
                               <Box
                                 sx={{
                                   display: 'grid',
-                                  gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0,1fr))' },
+                                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' },
                                   gap: 1.2,
                                 }}
                               >
-                                <Box sx={{ p: 1.4, borderRadius: '16px', background: UI.surfaceSoft, border: `1px solid ${UI.border}` }}>
-                                  <Typography sx={{ fontSize: '0.72rem', color: UI.faint, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                    Listing Details
-                                  </Typography>
-                                  <Stack spacing={0.65} sx={{ mt: 1 }}>
-                                    <Stack direction="row" spacing={0.8} alignItems="center">
-                                      <LocationOnRoundedIcon sx={{ fontSize: 16, color: UI.faint }} />
-                                      <Typography sx={{ fontSize: '0.82rem', color: UI.muted }}>
-                                        {order.listing?.location || '-'}
-                                      </Typography>
-                                    </Stack>
-                                    <Typography sx={{ fontSize: '0.82rem', color: UI.text, fontWeight: 800 }}>
-                                      Price: ₹{order.listing?.price ?? '-'}
-                                    </Typography>
-                                    <Typography sx={{ fontSize: '0.8rem', color: UI.muted }}>
-                                      Listing ID: {order.listing?.id || '-'}
-                                    </Typography>
-                                  </Stack>
-                                </Box>
+                                <DetailBlock title="Listing" icon={<StorefrontRoundedIcon />} color={listingTone.color}>
+                                  <InfoRow label="Type" value={listingTone.label} />
+                                  <InfoRow label="Title" value={order.listing?.title} noWrap />
+                                </DetailBlock>
 
-                                <Box sx={{ p: 1.4, borderRadius: '16px', background: UI.surfaceSoft, border: `1px solid ${UI.border}` }}>
-                                  <Typography sx={{ fontSize: '0.72rem', color: UI.faint, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                    Owner Details
-                                  </Typography>
-                                  <Stack spacing={0.65} sx={{ mt: 1 }}>
-                                    <Stack direction="row" spacing={0.8} alignItems="center">
-                                      <Avatar sx={{ width: 24, height: 24, bgcolor: UI.primary, fontWeight: 800, fontSize: '0.7rem' }}>
-                                        {getInitials(order.owner?.name || 'U')}
-                                      </Avatar>
-                                      <Typography sx={{ fontSize: '0.82rem', color: UI.text, fontWeight: 800 }}>
-                                        {order.owner?.name || '-'}
-                                      </Typography>
-                                    </Stack>
-                                    <Stack direction="row" spacing={0.8} alignItems="center">
-                                      <PhoneRoundedIcon sx={{ fontSize: 16, color: UI.faint }} />
-                                      <Typography sx={{ fontSize: '0.8rem', color: UI.muted }}>
-                                        {order.owner?.phone || '-'}
-                                      </Typography>
-                                    </Stack>
-                                    <Stack direction="row" spacing={0.8} alignItems="center" sx={{ minWidth: 0 }}>
-                                      <EmailRoundedIcon sx={{ fontSize: 16, color: UI.faint }} />
-                                      <Typography sx={{ fontSize: '0.8rem', color: UI.muted }} noWrap>
-                                        {order.owner?.email || '-'}
-                                      </Typography>
-                                    </Stack>
-                                  </Stack>
-                                </Box>
-
-                                <Box sx={{ p: 1.4, borderRadius: '16px', background: UI.surfaceSoft, border: `1px solid ${UI.border}` }}>
-                                  <Typography sx={{ fontSize: '0.72rem', color: UI.faint, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                    Payment Details
-                                  </Typography>
-                                  <Stack spacing={0.65} sx={{ mt: 1 }}>
+                                <DetailBlock title="Buyer" icon={<PersonPinCircleRoundedIcon />} color={UI.primary}>
+                                  <Stack direction="row" spacing={0.8} alignItems="center">
+                                    <Avatar sx={{ width: 22, height: 22, bgcolor: UI.primary, fontWeight: 800, fontSize: '0.65rem' }}>
+                                      {getInitials(order.buyer?.name)}
+                                    </Avatar>
                                     <Typography sx={{ fontSize: '0.82rem', color: UI.text, fontWeight: 800 }}>
-                                      Amount: ₹{order.payment?.amount ?? 0} {order.payment?.currency || 'INR'}
-                                    </Typography>
-                                    <Typography sx={{ fontSize: '0.8rem', color: UI.muted }}>
-                                      Method: {order.payment?.payment_method || '-'}
-                                    </Typography>
-                                    <Typography sx={{ fontSize: '0.8rem', color: UI.muted, wordBreak: 'break-all' }}>
-                                      Payment ID: {order.payment?.payment_id || '-'}
+                                      {order.buyer?.name || '-'}
                                     </Typography>
                                   </Stack>
-                                </Box>
+                                  <InfoRow icon={<PhoneRoundedIcon />} value={order.buyer?.phone} />
+                                  <InfoRow icon={<EmailRoundedIcon />} value={order.buyer?.email} noWrap />
+                                </DetailBlock>
+
+                                <DetailBlock title="Owner" icon={<PersonPinCircleRoundedIcon />} color={UI.purple}>
+                                  <Stack direction="row" spacing={0.8} alignItems="center">
+                                    <Avatar sx={{ width: 22, height: 22, bgcolor: UI.purple, fontWeight: 800, fontSize: '0.65rem' }}>
+                                      {getInitials(order.owner?.name)}
+                                    </Avatar>
+                                    <Typography sx={{ fontSize: '0.82rem', color: UI.text, fontWeight: 800 }}>
+                                      {order.owner?.name || '-'}
+                                    </Typography>
+                                  </Stack>
+                                  <InfoRow icon={<PhoneRoundedIcon />} value={order.owner?.phone} />
+                                  <InfoRow icon={<EmailRoundedIcon />} value={order.owner?.email} noWrap />
+                                </DetailBlock>
+
+                                <DetailBlock title="Booking" icon={<CurrencyRupeeRoundedIcon />} color={UI.warning}>
+                                  <InfoRow label="Amount" value={`\u20b9${order.booking?.amount ?? 0} ${order.booking?.currency || 'INR'}`} />
+                                  <InfoRow icon={<CalendarMonthRoundedIcon />} label="Start" value={order.booking?.start_date ? formatDate(order.booking.start_date) : 'N/A'} />
+                                  <InfoRow icon={<CalendarMonthRoundedIcon />} label="End" value={order.booking?.end_date ? formatDate(order.booking.end_date) : 'N/A'} />
+                                  <InfoRow icon={<GroupsRoundedIcon />} label="Guests" value={order.booking?.guests ?? 'N/A'} />
+                                  {order.booking?.notes && (
+                                    <InfoRow icon={<NotesRoundedIcon />} label="Notes" value={order.booking.notes} />
+                                  )}
+                                </DetailBlock>
                               </Box>
 
                               <Box sx={{ p: 1.45, borderRadius: '18px', background: '#fbfcfe', border: `1px solid ${UI.border}` }}>
@@ -526,9 +563,19 @@ export default function AdminOrdersPage() {
                                 <Stack spacing={1} sx={{ mt: 1.2 }}>
                                   {(order.timeline || []).map((item, index) => (
                                     <Stack key={`${order.id}-${index}`} direction={{ xs: 'column', sm: 'row' }} spacing={0.7} justifyContent="space-between">
-                                      <Typography sx={{ fontSize: '0.82rem', color: UI.text, fontWeight: 800 }}>
-                                        {item.status}
-                                      </Typography>
+                                      <Chip
+                                        size="small"
+                                        label={item.status}
+                                        sx={{
+                                          height: 24,
+                                          width: 'fit-content',
+                                          borderRadius: '999px',
+                                          fontWeight: 800,
+                                          fontSize: '0.7rem',
+                                          color: getStatusTone(item.status).color,
+                                          background: getStatusTone(item.status).bg,
+                                        }}
+                                      />
                                       <Typography sx={{ fontSize: '0.8rem', color: UI.muted }}>
                                         {formatDate(item.time)}
                                       </Typography>
