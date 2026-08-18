@@ -22,7 +22,7 @@ import LockOpenRoundedIcon from "@mui/icons-material/LockOpenRounded";
 import { useAppState } from "../hooks/useAppState";
 import api from "../services/api";
 
-const PLAN_AMOUNT = 299;
+const PLAN_AMOUNT = 1;
 const GST_RATE = 0.06;
 
 const gstAmount = Math.round(PLAN_AMOUNT * GST_RATE);
