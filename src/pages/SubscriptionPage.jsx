@@ -25,8 +25,10 @@ import api from "../services/api";
 const PLAN_AMOUNT = 299;
 const GST_RATE = 0.06;
 
-const gstAmount = PLAN_AMOUNT * GST_RATE;
-const finalPayableAmount = PLAN_AMOUNT + gstAmount;
+const gstAmount = Math.round(PLAN_AMOUNT * GST_RATE);
+const finalPayableAmount = Math.round(PLAN_AMOUNT + gstAmount);
+const amountInPaise = finalPayableAmount * 100;
+
 
 console.log("Base Subscription:", PLAN_AMOUNT);        // ₹299
 console.log("GST (6%):", gstAmount);                  // ₹17.94
@@ -97,7 +99,7 @@ export default function SubscriptionPage() {
         await loadRazorpaySDK();
 
         const orderResponse = await api.post("/payment/create-order", {
-          amount: finalPayableAmount,
+          amount: amountInPaise,
           currency: "INR",
           purpose: "subscription_upgrade",
           plan_months: PLAN_MONTHS,
