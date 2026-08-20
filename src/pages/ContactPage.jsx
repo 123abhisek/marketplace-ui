@@ -472,7 +472,7 @@ export default function ContactPage() {
         mt: 0.8,
       },
     }),
-    []
+    [],
   );
 
   const handleChange = (e) => {
@@ -485,15 +485,42 @@ export default function ContactPage() {
     const e = {};
     if (!form.name.trim()) e.name = "Name is required";
     if (!form.email.trim()) e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      e.email = "Enter a valid email address";
     if (!form.message.trim()) e.message = "Message is required";
-    else if (form.message.trim().length < 20) e.message = "Message must be at least 20 characters";
+    else if (form.message.trim().length < 20)
+      e.message = "Message must be at least 20 characters";
     return e;
   };
 
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const errs = validate();
+  //   if (Object.keys(errs).length) {
+  //     setErrors(errs);
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     setSuccess(true);
+  //     setForm({
+  //       name: "",
+  //       email: "",
+  //       phone: "",
+  //       subject: "general",
+  //       message: "",
+  //     });
+  //   }, 1800);
+  // };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const errs = validate();
+
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -501,17 +528,36 @@ export default function ContactPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "general",
-        message: "",
-      });
-    }, 1800);
+    const message = `Hello, this is ${form.name}.
+
+Below are my contact details:
+
+Email: ${form.email}
+Phone Number: ${form.phone}
+
+Subject: ${form.subject}
+
+Additional Details/Message:
+${form.message}
+
+Looking forward to discussing further. Thank you.`;
+
+    const whatsappUrl = `https://wa.me/918088185203?text=${encodeURIComponent(
+      message,
+    )}`;
+
+    window.open(whatsappUrl, "_blank");
+
+    setLoading(false);
+    setSuccess(true);
+
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      subject: "general",
+      message: "",
+    });
   };
 
   return (
@@ -522,14 +568,33 @@ export default function ContactPage() {
           pt: { xs: 9, md: 13 },
           pb: { xs: 8, md: 11 },
           overflow: "hidden",
-          background: "linear-gradient(160deg, #ffffff 0%, #f0fdf9 45%, #eff6ff 100%)",
+          background:
+            "linear-gradient(160deg, #ffffff 0%, #f0fdf9 45%, #eff6ff 100%)",
         }}
       >
-        <Blob top="-80px" left="-80px" size={320} color="rgba(186,230,253,0.38)" />
-        <Blob top="10px" right="-60px" size={260} color="rgba(196,181,253,0.30)" />
-        <Blob bottom="-60px" left="38%" size={220} color="rgba(187,247,208,0.35)" />
+        <Blob
+          top="-80px"
+          left="-80px"
+          size={320}
+          color="rgba(186,230,253,0.38)"
+        />
+        <Blob
+          top="10px"
+          right="-60px"
+          size={260}
+          color="rgba(196,181,253,0.30)"
+        />
+        <Blob
+          bottom="-60px"
+          left="38%"
+          size={220}
+          color="rgba(187,247,208,0.35)"
+        />
 
-        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <Container
+          maxWidth="md"
+          sx={{ position: "relative", zIndex: 1, textAlign: "center" }}
+        >
           <SectionLabel>Get in Touch</SectionLabel>
 
           <SectionHeading center sx={{ mb: 2 }}>
@@ -550,14 +615,22 @@ export default function ContactPage() {
               mx: "auto",
             }}
           >
-            Have a question, issue, or just want to say hello? Our team is here to help with listings,
-            premium plans, billing, and platform support.
+            Have a question, issue, or just want to say hello? Our team is here
+            to help with listings, premium plans, billing, and platform support.
           </Typography>
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={{ xs: 2, sm: 0 }}
-            divider={<Box sx={{ width: "1px", bgcolor: C.border, display: { xs: "none", sm: "block" } }} />}
+            divider={
+              <Box
+                sx={{
+                  width: "1px",
+                  bgcolor: C.border,
+                  display: { xs: "none", sm: "block" },
+                }}
+              />
+            }
             sx={{
               bgcolor: "#ffffff",
               borderRadius: "24px",
@@ -612,7 +685,8 @@ export default function ContactPage() {
                       mx: "auto",
                     }}
                   >
-                    Fill in the form below and our team will get back to you as soon as possible.
+                    Fill in the form below and our team will get back to you as
+                    soon as possible.
                   </Typography>
                 </Box>
 
@@ -639,9 +713,18 @@ export default function ContactPage() {
                       {[
                         { value: "24h", label: "Average Reply" },
                         { value: "Mon–Sat", label: "Support Window" },
-                        { value: "Fast Help", label: "Billing · Listings · Tech" },
+                        {
+                          value: "Fast Help",
+                          label: "Billing · Listings · Tech",
+                        },
                       ].map((item, i) => (
-                        <Grid item xs={12} sm={4} key={i} sx={{ display: "flex" }}>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={4}
+                          key={i}
+                          sx={{ display: "flex" }}
+                        >
                           <Box
                             sx={{
                               width: "100%",
@@ -672,7 +755,10 @@ export default function ContactPage() {
                             </Typography>
                             <Typography
                               sx={{
-                                fontSize: item.value === "Fast Help" ? "0.82rem" : "1rem",
+                                fontSize:
+                                  item.value === "Fast Help"
+                                    ? "0.82rem"
+                                    : "1rem",
                                 fontWeight: 800,
                                 color: C.text,
                                 lineHeight: 1.35,
@@ -863,7 +949,11 @@ export default function ContactPage() {
                           }}
                         >
                           {SUBJECTS.map((s) => (
-                            <MenuItem key={s.value} value={s.value} sx={{ fontSize: "0.9rem" }}>
+                            <MenuItem
+                              key={s.value}
+                              value={s.value}
+                              sx={{ fontSize: "0.9rem" }}
+                            >
                               {s.label}
                             </MenuItem>
                           ))}
@@ -892,7 +982,10 @@ export default function ContactPage() {
                           value={form.message}
                           onChange={handleChange}
                           error={!!errors.message}
-                          helperText={errors.message || `${form.message.length} characters`}
+                          helperText={
+                            errors.message ||
+                            `${form.message.length} characters`
+                          }
                           placeholder="Tell us how we can help. The more detail you provide, the faster we can assist you."
                           sx={{
                             ...inputSx,
@@ -940,14 +1033,21 @@ export default function ContactPage() {
                               mx: "auto",
                             }}
                           >
-                            Please include enough detail so we can resolve your issue faster.
+                            Please include enough detail so we can resolve your
+                            issue faster.
                           </Typography>
 
                           <Button
                             type="submit"
                             variant="contained"
                             disabled={loading}
-                            endIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
+                            endIcon={
+                              loading ? (
+                                <CircularProgress size={16} color="inherit" />
+                              ) : (
+                                <SendRoundedIcon />
+                              )
+                            }
                             sx={{
                               minHeight: 54,
                               minWidth: { xs: "100%", sm: 260 },
@@ -1025,7 +1125,8 @@ export default function ContactPage() {
                       width: "100%",
                       p: 3,
                       borderRadius: "28px",
-                      background: "linear-gradient(135deg, rgba(187,247,208,0.5), rgba(186,230,253,0.4))",
+                      background:
+                        "linear-gradient(135deg, rgba(187,247,208,0.5), rgba(186,230,253,0.4))",
                       border: "1px solid rgba(255,255,255,0.88)",
                       textAlign: "center",
                       boxShadow: "0 14px 36px rgba(15,23,42,0.05)",
@@ -1047,7 +1148,13 @@ export default function ContactPage() {
                         <SupportAgentRoundedIcon />
                       </Box>
 
-                      <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: C.text }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: "1rem",
+                          color: C.text,
+                        }}
+                      >
                         What to expect
                       </Typography>
 
@@ -1066,7 +1173,12 @@ export default function ContactPage() {
                           sx={{ maxWidth: 330 }}
                         >
                           <CheckCircleRoundedIcon
-                            sx={{ fontSize: 16, color: "#166534", mt: "2px", flexShrink: 0 }}
+                            sx={{
+                              fontSize: 16,
+                              color: "#166534",
+                              mt: "2px",
+                              flexShrink: 0,
+                            }}
                           />
                           <Typography
                             sx={{
@@ -1088,20 +1200,40 @@ export default function ContactPage() {
                       width: "100%",
                       p: 3,
                       borderRadius: "28px",
-                      background: "linear-gradient(135deg, rgba(196,181,253,0.45), rgba(254,202,202,0.30))",
+                      background:
+                        "linear-gradient(135deg, rgba(196,181,253,0.45), rgba(254,202,202,0.30))",
                       border: "1px solid rgba(255,255,255,0.88)",
                       textAlign: "center",
                       boxShadow: "0 14px 36px rgba(15,23,42,0.05)",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: C.text, mb: 0.5 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1rem",
+                        color: C.text,
+                        mb: 0.5,
+                      }}
+                    >
                       Follow EasyDeal
                     </Typography>
-                    <Typography sx={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.7, mb: 2.2 }}>
-                      Stay updated with the latest listings, platform tips, and product news.
+                    <Typography
+                      sx={{
+                        fontSize: "0.82rem",
+                        color: C.muted,
+                        lineHeight: 1.7,
+                        mb: 2.2,
+                      }}
+                    >
+                      Stay updated with the latest listings, platform tips, and
+                      product news.
                     </Typography>
 
-                    <Stack direction="row" spacing={1.2} justifyContent="center">
+                    <Stack
+                      direction="row"
+                      spacing={1.2}
+                      justifyContent="center"
+                    >
                       {SOCIALS.map((s, i) => (
                         <Box
                           key={i}
@@ -1138,13 +1270,24 @@ export default function ContactPage() {
       <Box
         sx={{
           py: { xs: 8, md: 11 },
-          background: "linear-gradient(160deg, #f0fdf9 0%, #eff6ff 60%, #fdf4ff 100%)",
+          background:
+            "linear-gradient(160deg, #f0fdf9 0%, #eff6ff 60%, #fdf4ff 100%)",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        <Blob top="-60px" right="-40px" size={280} color="rgba(196,181,253,0.28)" />
-        <Blob bottom="-60px" left="-40px" size={260} color="rgba(187,247,208,0.32)" />
+        <Blob
+          top="-60px"
+          right="-40px"
+          size={280}
+          color="rgba(196,181,253,0.28)"
+        />
+        <Blob
+          bottom="-60px"
+          left="-40px"
+          size={260}
+          color="rgba(187,247,208,0.32)"
+        />
 
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
           <Box sx={{ textAlign: "center", mb: 6.5 }}>
@@ -1161,7 +1304,8 @@ export default function ContactPage() {
                 lineHeight: 1.85,
               }}
             >
-              Whether you prefer chat, email, or self-service help, we’ve got every support channel covered.
+              Whether you prefer chat, email, or self-service help, we’ve got
+              every support channel covered.
             </Typography>
           </Box>
 
@@ -1187,7 +1331,13 @@ export default function ContactPage() {
                     },
                   }}
                 >
-                  <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.2} sx={{ mb: 2.4 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="center"
+                    spacing={1.2}
+                    sx={{ mb: 2.4 }}
+                  >
                     <Box
                       sx={{
                         width: 58,
@@ -1223,7 +1373,14 @@ export default function ContactPage() {
                     </Box>
                   </Stack>
 
-                  <Typography sx={{ fontWeight: 800, fontSize: "1.08rem", color: C.text, mb: 1 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: "1.08rem",
+                      color: C.text,
+                      mb: 1,
+                    }}
+                  >
                     {card.title}
                   </Typography>
 
@@ -1244,7 +1401,11 @@ export default function ContactPage() {
                     component={card.to ? RouterLink : "button"}
                     to={card.to}
                     variant="outlined"
-                    endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: "15px !important" }} />}
+                    endIcon={
+                      <ArrowForwardRoundedIcon
+                        sx={{ fontSize: "15px !important" }}
+                      />
+                    }
                     sx={{
                       borderRadius: "12px",
                       textTransform: "none",
@@ -1281,8 +1442,18 @@ export default function ContactPage() {
         }}
       >
         {[
-          { top: "-50px", left: "-50px", size: 240, color: "rgba(255,255,255,0.06)" },
-          { bottom: "-50px", right: "-50px", size: 280, color: "rgba(255,255,255,0.06)" },
+          {
+            top: "-50px",
+            left: "-50px",
+            size: 240,
+            color: "rgba(255,255,255,0.06)",
+          },
+          {
+            bottom: "-50px",
+            right: "-50px",
+            size: 280,
+            color: "rgba(255,255,255,0.06)",
+          },
         ].map((b, i) => (
           <Box
             key={i}
@@ -1346,7 +1517,11 @@ export default function ContactPage() {
               : "Join thousands of happy users, sign up free, and get live in minutes."}
           </Typography>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            justifyContent="center"
+          >
             {!isLoggedIn && (
               <Button
                 component={RouterLink}
