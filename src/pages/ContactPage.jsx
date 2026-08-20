@@ -60,7 +60,7 @@ const CONTACT_CARDS = [
   {
     icon: <EmailRoundedIcon />,
     label: "Email Us",
-    value: "support@easydeal.in",
+    value: "support@easydeal.com",
     sub: "We usually reply within 24 hours.",
     color: "#0369a1",
     iconBg: "rgba(3,105,161,0.10)",
@@ -78,7 +78,7 @@ const CONTACT_CARDS = [
   {
     icon: <LocationOnRoundedIcon />,
     label: "Office",
-    value: "Bengaluru, Karnataka",
+    value: "Bengaluru, Karnataka, IN",
     sub: "560001, India",
     color: "#c2410c",
     iconBg: "rgba(194,65,12,0.10)",
