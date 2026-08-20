@@ -85,7 +85,8 @@ export default function InvoiceDialog({ open, onClose, booking }) {
     const discount = 0;
     const taxRate = 0.18;
     const gst = +(subtotal * taxRate).toFixed(2);
-    const finalTotal = +(subtotal + gst - discount).toFixed(2);
+    // const finalTotal = +(subtotal + gst - discount).toFixed(2);
+    const finalTotal = subtotal
 
     return {
       invoiceId: `INV-${booking?.id || "NA"}`,
@@ -455,9 +456,9 @@ export default function InvoiceDialog({ open, onClose, booking }) {
                     <TableCell sx={{ fontWeight: 800, color: "#64748b" }}>
                       Price
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: "#64748b" }}>
+                    {/* <TableCell sx={{ fontWeight: 800, color: "#64748b" }}>
                       Tax
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell
                       sx={{ fontWeight: 800, color: "#64748b" }}
                       align="right"
@@ -475,7 +476,7 @@ export default function InvoiceDialog({ open, onClose, booking }) {
                     </TableCell>
                     <TableCell>{data.quantity}</TableCell>
                     <TableCell>{fmtMoney(data.unitPrice)}</TableCell>
-                    <TableCell>{fmtMoney(data.gst)}</TableCell>
+                    {/* <TableCell>{fmtMoney(data.gst)}</TableCell> */}
                     <TableCell align="right" sx={{ fontWeight: 800 }}>
                       {fmtMoney(data.total)}
                     </TableCell>
@@ -532,12 +533,12 @@ export default function InvoiceDialog({ open, onClose, booking }) {
                       {fmtMoney(data.subtotal)}
                     </Typography>
                   </Stack>
-                  <Stack direction="row" justifyContent="space-between">
+                  {/* <Stack direction="row" justifyContent="space-between">
                     <Typography sx={{ color: "#64748b" }}>GST / Tax</Typography>
                     <Typography sx={{ fontWeight: 700 }}>
                       {fmtMoney(data.gst)}
                     </Typography>
-                  </Stack>
+                  </Stack> */}
                   <Stack direction="row" justifyContent="space-between">
                     <Typography sx={{ color: "#64748b" }}>Discount</Typography>
                     <Typography sx={{ fontWeight: 700 }}>
