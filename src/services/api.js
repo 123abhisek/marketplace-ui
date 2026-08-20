@@ -1,9 +1,17 @@
 // src/services/api.js
 
-const BASE_URL = (
-  import.meta.env?.VITE_API_URL ?? "http://localhost:8000"
-).replace(/\/$/, "");
-const API = `${BASE_URL}/v1/api/`;
+// const BASE_URL = (
+//   import.meta.env?.VITE_API_URL ?? "http://localhost:8000"
+// ).replace(/\/$/, "");
+// const API = `${BASE_URL}/v1/api/`;
+
+const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+const BASE_URL =
+  configuredBaseUrl ||
+  (import.meta.env.DEV ? "http://localhost:8000" : "");
+
+const API = `${BASE_URL.replace(/\/$/, "")}/v1/api/`;
 
 const LS_TOKEN_KEY = "access_token";
 
