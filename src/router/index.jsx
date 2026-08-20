@@ -1,4 +1,3 @@
-
 import { Navigate } from "react-router-dom";
 
 /* Layouts */
@@ -60,6 +59,9 @@ import SellerOverviewPage from "../pages/seller/SellerOverviewPage";
 import SellerListingsPage from "../pages/seller/SellerListingsPage";
 import SellerOrdersPage from "../pages/seller/SellerOrdersPage";
 
+/* Seller Request Pages */
+import SellerRequest from "../dashboard/SellerRequest";
+import AdminSellerRequests from "../pages/admin/AdminSellerRequests";
 
 export const routes = [
   /*
@@ -165,6 +167,14 @@ export const routes = [
         handle: {
           title: "My Bookings",
           sub: "View all your bookings",
+        },
+      },
+      {
+        path: "become-seller",
+        element: <SellerRequest />,
+        handle: {
+          title: "Become a Seller",
+          sub: "Submit your seller application",
         },
       },
     ],
@@ -324,6 +334,10 @@ export const routes = [
           {
             path: "orders",
             element: <AdminOrdersPage />,
+          },
+          {
+            path: "seller-requests",
+            element: <AdminSellerRequests />,
           },
           {
             path: "reports",

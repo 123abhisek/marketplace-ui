@@ -1,3 +1,4 @@
+
 // // src/components/Footer.jsx
 // import { Link as RouterLink } from "react-router-dom";
 // import {
@@ -13,7 +14,6 @@
 //   TextField,
 //   Typography,
 // } from "@mui/material";
-// import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 // import FacebookRoundedIcon from "@mui/icons-material/FacebookRounded";
 // import InstagramIcon from "@mui/icons-material/Instagram";
 // import LinkedInIcon from "@mui/icons-material/LinkedIn";
@@ -25,6 +25,22 @@
 // import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 // import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 // import SendRoundedIcon from "@mui/icons-material/SendRounded";
+// import { useAppState } from "../hooks/useAppState";
+
+// // ─── Role resolver ────────────────────────────────────────────────────────────
+
+// function resolveRole(user) {
+//   if (!user?.loggedIn) return "guest";
+//   if (user?.role === "admin") return "admin";
+//   if (
+//     user?.isPremium === true ||
+//     user?.role === "premium" ||
+//     user?.subscription === "active"
+//   ) {
+//     return "premium";
+//   }
+//   return "free";
+// }
 
 // // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -73,7 +89,11 @@
 //     href: "#",
 //     label: "LinkedIn",
 //   },
-//   { icon: <YouTubeIcon sx={{ fontSize: 18 }} />, href: "#", label: "YouTube" },
+//   {
+//     icon: <YouTubeIcon sx={{ fontSize: 18 }} />,
+//     href: "#",
+//     label: "YouTube",
+//   },
 // ];
 
 // const CONTACT = [
@@ -81,17 +101,24 @@
 //     icon: <EmailRoundedIcon sx={{ fontSize: 14 }} />,
 //     text: "support@easydeal.com",
 //   },
-//   { icon: <PhoneRoundedIcon sx={{ fontSize: 14 }} />, text: "+91 98765 43210" },
+//   {
+//     icon: <PhoneRoundedIcon sx={{ fontSize: 14 }} />,
+//     text: "+91 98765 43210",
+//   },
 //   {
 //     icon: <PlaceRoundedIcon sx={{ fontSize: 14 }} />,
 //     text: "Bengaluru, Karnataka, IN",
 //   },
 // ];
 
-// // ─── Reusable link component ───────────────────────────────────────────────────
+// // ─── Reusable link component ──────────────────────────────────────────────────
 
 // function FooterLink({ label, href }) {
-//   const isExternal = href.startsWith("http") || href.startsWith("mailto");
+//   const isExternal =
+//     href.startsWith("http") ||
+//     href.startsWith("mailto") ||
+//     href.startsWith("tel");
+
 //   const sx = {
 //     fontSize: "0.855rem",
 //     color: "rgba(255,255,255,0.56)",
@@ -101,26 +128,93 @@
 //     transition: "color .15s ease",
 //     "&:hover": { color: "#fff" },
 //   };
-//   return isExternal ? (
-//     <Box
-//       component="a"
-//       href={href}
-//       target="_blank"
-//       rel="noopener noreferrer"
-//       sx={sx}
-//     >
-//       {label}
-//     </Box>
-//   ) : (
+
+//   if (isExternal) {
+//     return (
+//       <Box
+//         component="a"
+//         href={href}
+//         target="_blank"
+//         rel="noopener noreferrer"
+//         sx={sx}
+//       >
+//         {label}
+//       </Box>
+//     );
+//   }
+
+//   if (href.startsWith("#")) {
+//     return (
+//       <Box component="a" href={href} sx={sx}>
+//         {label}
+//       </Box>
+//     );
+//   }
+
+//   return (
 //     <Box component={RouterLink} to={href} sx={sx}>
 //       {label}
 //     </Box>
 //   );
 // }
 
-// // ─── Pre-footer CTA strip ──────────────────────────────────────────────────────
+// // ─── Pre-footer CTA strip ─────────────────────────────────────────────────────
 
 // function PreFooterCTA() {
+//   const { user } = useAppState();
+//   const roleKey = resolveRole(user);
+
+//   const isAdmin = roleKey === "admin";
+//   const isPremium = roleKey === "premium";
+//   const isFreeUser = roleKey === "free";
+//   const isGuest = roleKey === "guest";
+
+//   const chipLabel = isAdmin
+//     ? "Administrator Access"
+//     : isPremium
+//     ? "Premium Active"
+//     : "Premium Plan — ₹299";
+
+//   const heading = isAdmin
+//     ? "You already have full marketplace control"
+//     : isPremium
+//     ? "You already have full marketplace access"
+//     : "Unlock the full marketplace experience today";
+
+//   const description = isAdmin
+//     ? "Manage users, listings, reports, and platform activity from your admin dashboard."
+//     : isPremium
+//     ? "Your premium membership is active. You can view prices, contact details, and post your own property and vehicle listings."
+//     : "Free users see images only. Premium members view prices, contact details, and can post their own property and vehicle listings.";
+
+//   const primaryButtonLabel = isAdmin
+//     ? "Go to Admin Panel"
+//     : isPremium
+//     ? "Premium Active"
+//     : "Get Premium — ₹299";
+
+//   const primaryButtonTo = isAdmin
+//     ? "/admin"
+//     : isPremium
+//     ? "/dashboard"
+//     : "/subscription";
+
+//   const secondaryButtonLabel = isAdmin
+//     ? "Open Dashboard"
+//     : isPremium
+//     ? "Open Dashboard"
+//     : isGuest
+//     ? "Register free"
+//     : isFreeUser
+//     ? "Explore Dashboard"
+//     : "Register free";
+
+//   const secondaryButtonTo = isAdmin || isPremium
+//     ? "/dashboard"
+//     : isGuest
+//     ? "/register"
+//     : "/free-dashboard";
+
 //   return (
 //     <Box
 //       sx={{
@@ -131,7 +225,6 @@
 //         overflow: "hidden",
 //       }}
 //     >
-//       {/* Decorative blobs */}
 //       {[
 //         { top: -60, right: 80, size: 220, opacity: 0.09 },
 //         { bottom: -40, left: -40, size: 200, opacity: 0.07 },
@@ -157,7 +250,6 @@
 
 //       <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
 //         <Grid container spacing={4} alignItems="center">
-//           {/* Left copy */}
 //           <Grid item xs={12} md={6}>
 //             <Stack spacing={1.5}>
 //               <Stack direction="row" spacing={1} alignItems="center">
@@ -165,7 +257,7 @@
 //                   sx={{ color: "rgba(255,255,255,0.80)", fontSize: 20 }}
 //                 />
 //                 <Chip
-//                   label="Premium Plan — ₹299"
+//                   label={chipLabel}
 //                   size="small"
 //                   sx={{
 //                     height: 26,
@@ -178,6 +270,7 @@
 //                   }}
 //                 />
 //               </Stack>
+
 //               <Typography
 //                 sx={{
 //                   fontWeight: 900,
@@ -187,10 +280,9 @@
 //                   letterSpacing: "-0.035em",
 //                 }}
 //               >
-//                 Unlock the full marketplace
-//                 <br />
-//                 experience today
+//                 {heading}
 //               </Typography>
+
 //               <Typography
 //                 sx={{
 //                   color: "rgba(255,255,255,0.65)",
@@ -199,9 +291,9 @@
 //                   maxWidth: 420,
 //                 }}
 //               >
-//                 Free users see images only. Premium members view prices, contact
-//                 details, and can post their own property and vehicle listings.
+//                 {description}
 //               </Typography>
+
 //               <Stack
 //                 direction={{ xs: "column", sm: "row" }}
 //                 spacing={1.5}
@@ -209,8 +301,9 @@
 //               >
 //                 <Button
 //                   component={RouterLink}
-//                   to="/subscription"
-//                   endIcon={<ArrowForwardRoundedIcon />}
+//                   to={primaryButtonTo}
+//                   endIcon={!isPremium ? <ArrowForwardRoundedIcon /> : null}
+//                   disabled={isPremium}
 //                   sx={{
 //                     borderRadius: "999px",
 //                     px: 2.8,
@@ -224,13 +317,19 @@
 //                       background: "rgba(255,255,255,0.92)",
 //                       boxShadow: "0 14px 36px rgba(0,0,0,0.22)",
 //                     },
+//                     "&.Mui-disabled": {
+//                       background: "rgba(255,255,255,0.78)",
+//                       color: "#0f766e",
+//                       boxShadow: "none",
+//                     },
 //                   }}
 //                 >
-//                   Get Premium — ₹299
+//                   {primaryButtonLabel}
 //                 </Button>
+
 //                 <Button
 //                   component={RouterLink}
-//                   to="/register"
+//                   to={secondaryButtonTo}
 //                   variant="outlined"
 //                   sx={{
 //                     borderRadius: "999px",
@@ -246,13 +345,12 @@
 //                     },
 //                   }}
 //                 >
-//                   Register free
+//                   {secondaryButtonLabel}
 //                 </Button>
 //               </Stack>
 //             </Stack>
 //           </Grid>
 
-//           {/* Right newsletter */}
 //           <Grid item xs={12} md={6}>
 //             <Box
 //               sx={{
@@ -273,6 +371,7 @@
 //               >
 //                 Get listing alerts by email
 //               </Typography>
+
 //               <Typography
 //                 sx={{
 //                   fontSize: "0.82rem",
@@ -284,6 +383,7 @@
 //                 Subscribe to receive curated property and vehicle updates in
 //                 your city.
 //               </Typography>
+
 //               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
 //                 <TextField
 //                   fullWidth
@@ -336,6 +436,7 @@
 //                   Subscribe
 //                 </Button>
 //               </Stack>
+
 //               <Typography
 //                 sx={{
 //                   fontSize: "0.69rem",
@@ -369,37 +470,15 @@
 //       >
 //         <Container maxWidth="xl" sx={{ pt: { xs: 7, md: 10 }, pb: 0 }}>
 //           <Grid container spacing={{ xs: 4, md: 5 }}>
-//             {/* ── Brand column ───────────────────────────────────── */}
 //             <Grid item xs={12} md={4}>
 //               <Stack spacing={2.5}>
-//                 {/* Logo */}
-//                 {/* <Stack direction="row" spacing={1.4} alignItems="center">
-//                   <Box sx={{
-//                     width: 42, height: 42, borderRadius: '14px',
-//                     background: 'linear-gradient(135deg,#0f766e,#0e8e7f)',
-//                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-//                     flexShrink: 0,
-//                   }}>
-//                     <HomeWorkRoundedIcon sx={{ color: '#fff', fontSize: 22 }} />
-//                   </Box>
-//                   <Box>
-//                     <Typography sx={{ fontWeight: 900, fontSize: '1.05rem', color: '#fff', lineHeight: 1.1 }}>
-//                       Easydeal
-//                     </Typography>
-//                     <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', fontWeight: 500 }}>
-//                       Premium Marketplace
-//                     </Typography>
-//                   </Box>
-//                 </Stack> */}
-
-//                 {/* Logo */}
 //                 <Stack direction="row" alignItems="center">
 //                   <Box
 //                     component="img"
 //                     src="/logo.png"
 //                     alt="Easydeal Logo"
 //                     sx={{
-//                       height: 65, // adjust as needed
+//                       height: 65,
 //                       width: "auto",
 //                       objectFit: "contain",
 //                     }}
@@ -419,7 +498,6 @@
 //                   and posting access for just ₹299.
 //                 </Typography>
 
-//                 {/* Contact details */}
 //                 <Stack spacing={1.3}>
 //                   {CONTACT.map((c) => (
 //                     <Stack
@@ -450,7 +528,6 @@
 //                   ))}
 //                 </Stack>
 
-//                 {/* Social icons */}
 //                 <Stack direction="row" spacing={0.8}>
 //                   {SOCIALS.map((s) => (
 //                     <IconButton
@@ -484,7 +561,6 @@
 //               </Stack>
 //             </Grid>
 
-//             {/* ── Link columns ───────────────────────────────────── */}
 //             {Object.entries(LINKS).map(([heading, items]) => (
 //               <Grid item xs={6} sm={4} md={2} key={heading}>
 //                 <Typography
@@ -511,7 +587,6 @@
 //               </Grid>
 //             ))}
 
-//             {/* ── App badge column ────────────────────────────────── */}
 //             <Grid item xs={12} sm={4} md={2}>
 //               <Typography
 //                 sx={{
@@ -543,7 +618,6 @@
 //             </Grid>
 //           </Grid>
 
-//           {/* ── Bottom bar ──────────────────────────────────────── */}
 //           <Divider
 //             sx={{
 //               borderColor: "rgba(255,255,255,0.07)",
@@ -570,26 +644,16 @@
 
 //             <Stack direction="row" spacing={2.5} flexWrap="wrap">
 //               {[
-//                 "Privacy Policy",
-//                 "Terms of Service",
-//                 "Cookie Policy",
-//                 "Sitemap",
-//               ].map((label) => (
-//                 <Box
-//                   key={label}
-//                   component="a"
-//                   href="#"
-//                   sx={{
-//                     fontSize: "0.76rem",
-//                     color: "rgba(255,255,255,0.36)",
-//                     fontWeight: 500,
-//                     textDecoration: "none",
-//                     transition: "color .15s ease",
-//                     "&:hover": { color: "rgba(255,255,255,0.75)" },
-//                   }}
-//                 >
-//                   {label}
-//                 </Box>
+//                 { label: "Privacy Policy", href: "/privacy-policy" },
+//                 { label: "Terms of Service", href: "/terms" },
+//                 { label: "Cookie Policy", href: "#" },
+//                 { label: "Sitemap", href: "#" },
+//               ].map((item) => (
+//                 <FooterLink
+//                   key={item.label}
+//                   label={item.label}
+//                   href={item.href}
+//                 />
 //               ))}
 //             </Stack>
 //           </Stack>
@@ -598,6 +662,8 @@
 //     </>
 //   );
 // }
+
+
 
 
 
@@ -630,7 +696,9 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { useAppState } from "../hooks/useAppState";
 
+
 // ─── Role resolver ────────────────────────────────────────────────────────────
+
 
 function resolveRole(user) {
   if (!user?.loggedIn) return "guest";
@@ -645,7 +713,9 @@ function resolveRole(user) {
   return "free";
 }
 
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
+
 
 const LINKS = {
   Platform: [
@@ -670,6 +740,7 @@ const LINKS = {
     { label: "Privacy policy", href: "/privacy-policy" },
   ],
 };
+
 
 const SOCIALS = [
   {
@@ -699,6 +770,7 @@ const SOCIALS = [
   },
 ];
 
+
 const CONTACT = [
   {
     icon: <EmailRoundedIcon sx={{ fontSize: 14 }} />,
@@ -714,13 +786,16 @@ const CONTACT = [
   },
 ];
 
+
 // ─── Reusable link component ──────────────────────────────────────────────────
+
 
 function FooterLink({ label, href }) {
   const isExternal =
     href.startsWith("http") ||
     href.startsWith("mailto") ||
     href.startsWith("tel");
+
 
   const sx = {
     fontSize: "0.855rem",
@@ -731,6 +806,7 @@ function FooterLink({ label, href }) {
     transition: "color .15s ease",
     "&:hover": { color: "#fff" },
   };
+
 
   if (isExternal) {
     return (
@@ -746,6 +822,7 @@ function FooterLink({ label, href }) {
     );
   }
 
+
   if (href.startsWith("#")) {
     return (
       <Box component="a" href={href} sx={sx}>
@@ -754,6 +831,7 @@ function FooterLink({ label, href }) {
     );
   }
 
+
   return (
     <Box component={RouterLink} to={href} sx={sx}>
       {label}
@@ -761,16 +839,20 @@ function FooterLink({ label, href }) {
   );
 }
 
+
 // ─── Pre-footer CTA strip ─────────────────────────────────────────────────────
+
 
 function PreFooterCTA() {
   const { user } = useAppState();
   const roleKey = resolveRole(user);
 
+
   const isAdmin = roleKey === "admin";
   const isPremium = roleKey === "premium";
   const isFreeUser = roleKey === "free";
   const isGuest = roleKey === "guest";
+
 
   const chipLabel = isAdmin
     ? "Administrator Access"
@@ -778,11 +860,13 @@ function PreFooterCTA() {
     ? "Premium Active"
     : "Premium Plan — ₹299";
 
+
   const heading = isAdmin
     ? "You already have full marketplace control"
     : isPremium
     ? "You already have full marketplace access"
     : "Unlock the full marketplace experience today";
+
 
   const description = isAdmin
     ? "Manage users, listings, reports, and platform activity from your admin dashboard."
@@ -790,17 +874,20 @@ function PreFooterCTA() {
     ? "Your premium membership is active. You can view prices, contact details, and post your own property and vehicle listings."
     : "Free users see images only. Premium members view prices, contact details, and can post their own property and vehicle listings.";
 
+
   const primaryButtonLabel = isAdmin
     ? "Go to Admin Panel"
     : isPremium
     ? "Premium Active"
     : "Get Premium — ₹299";
 
+
   const primaryButtonTo = isAdmin
     ? "/admin"
     : isPremium
     ? "/dashboard"
     : "/subscription";
+
 
   const secondaryButtonLabel = isAdmin
     ? "Open Dashboard"
@@ -812,11 +899,13 @@ function PreFooterCTA() {
     ? "Explore Dashboard"
     : "Register free";
 
+
   const secondaryButtonTo = isAdmin || isPremium
     ? "/dashboard"
     : isGuest
     ? "/register"
     : "/free-dashboard";
+
 
   return (
     <Box
@@ -851,6 +940,7 @@ function PreFooterCTA() {
         />
       ))}
 
+
       <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12} md={6}>
@@ -874,6 +964,7 @@ function PreFooterCTA() {
                 />
               </Stack>
 
+
               <Typography
                 sx={{
                   fontWeight: 900,
@@ -886,6 +977,7 @@ function PreFooterCTA() {
                 {heading}
               </Typography>
 
+
               <Typography
                 sx={{
                   color: "rgba(255,255,255,0.65)",
@@ -896,6 +988,7 @@ function PreFooterCTA() {
               >
                 {description}
               </Typography>
+
 
               <Stack
                 direction={{ xs: "column", sm: "row" }}
@@ -930,6 +1023,7 @@ function PreFooterCTA() {
                   {primaryButtonLabel}
                 </Button>
 
+
                 <Button
                   component={RouterLink}
                   to={secondaryButtonTo}
@@ -954,6 +1048,7 @@ function PreFooterCTA() {
             </Stack>
           </Grid>
 
+
           <Grid item xs={12} md={6}>
             <Box
               sx={{
@@ -975,6 +1070,7 @@ function PreFooterCTA() {
                 Get listing alerts by email
               </Typography>
 
+
               <Typography
                 sx={{
                   fontSize: "0.82rem",
@@ -986,6 +1082,7 @@ function PreFooterCTA() {
                 Subscribe to receive curated property and vehicle updates in
                 your city.
               </Typography>
+
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
                 <TextField
@@ -1040,6 +1137,7 @@ function PreFooterCTA() {
                 </Button>
               </Stack>
 
+
               <Typography
                 sx={{
                   fontSize: "0.69rem",
@@ -1057,12 +1155,20 @@ function PreFooterCTA() {
   );
 }
 
+
 // ─── Main footer ──────────────────────────────────────────────────────────────
 
+
 export default function Footer() {
+  const { user } = useAppState();
+  const roleKey = resolveRole(user);
+  const isFreeUser = roleKey === "free" || roleKey === "guest";
+
+
   return (
     <>
       <PreFooterCTA />
+
 
       <Box
         component="footer"
@@ -1088,6 +1194,7 @@ export default function Footer() {
                   />
                 </Stack>
 
+
                 <Typography
                   sx={{
                     fontSize: "0.86rem",
@@ -1100,6 +1207,7 @@ export default function Footer() {
                   and vehicle listings. Premium members unlock prices, contacts,
                   and posting access for just ₹299.
                 </Typography>
+
 
                 <Stack spacing={1.3}>
                   {CONTACT.map((c) => (
@@ -1130,6 +1238,7 @@ export default function Footer() {
                     </Stack>
                   ))}
                 </Stack>
+
 
                 <Stack direction="row" spacing={0.8}>
                   {SOCIALS.map((s) => (
@@ -1164,6 +1273,7 @@ export default function Footer() {
               </Stack>
             </Grid>
 
+
             {Object.entries(LINKS).map(([heading, items]) => (
               <Grid item xs={6} sm={4} md={2} key={heading}>
                 <Typography
@@ -1190,7 +1300,8 @@ export default function Footer() {
               </Grid>
             ))}
 
-            <Grid item xs={12} sm={4} md={2}>
+
+            <Grid item xs={6} sm={4} md={2}>
               <Typography
                 sx={{
                   fontWeight: 800,
@@ -1219,7 +1330,57 @@ export default function Footer() {
                 ))}
               </Stack>
             </Grid>
+
+
+            <Grid item xs={12} sm={4} md={2}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "0.80rem",
+                  color: "#fff",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  mb: 2,
+                }}
+              >
+                Sell on EasyDeal
+              </Typography>
+              <Stack spacing={1.5}>
+                {isFreeUser ? (
+                  <>
+                    <FooterLink
+                      label="Become a Seller"
+                      href="/free-dashboard/become-seller"
+                    />
+                    <FooterLink
+                      label="Seller Benefits"
+                      href="/#how-it-works"
+                    />
+                    <FooterLink
+                      label="Pricing Plans"
+                      href="/subscription"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <FooterLink
+                      label="Seller Dashboard"
+                      href="/seller"
+                    />
+                    <FooterLink
+                      label="My Listings"
+                      href="/dashboard/my-listings"
+                    />
+                    <FooterLink
+                      label="Seller Orders"
+                      href="/seller/orders"
+                    />
+                  </>
+                )}
+              </Stack>
+            </Grid>
           </Grid>
+
 
           <Divider
             sx={{
@@ -1227,6 +1388,7 @@ export default function Footer() {
               mt: { xs: 7, md: 10 },
             }}
           />
+
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -1244,6 +1406,7 @@ export default function Footer() {
             >
               © 2026 TeamCA Solutions Pvt. Ltd. All rights reserved.
             </Typography>
+
 
             <Stack direction="row" spacing={2.5} flexWrap="wrap">
               {[
