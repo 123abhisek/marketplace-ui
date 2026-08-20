@@ -320,10 +320,12 @@ import {
 
 import axios from "axios";
 
+// const API_BASE =
+//   "http://localhost:8000/v1/api/seller-request";
+
 
 const API_BASE =
-  "http://localhost:8000/v1/api/seller-request";
-
+  `${import.meta.env.VITE_API_BASE_URL}/v1/api/seller-request`;
 
 const initialForm = {
   business_name: "",
