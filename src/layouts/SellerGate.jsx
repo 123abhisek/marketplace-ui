@@ -51,7 +51,7 @@ export default function SellerGate() {
   if (!isSeller) {
     return (
       <Navigate
-        to={user?.isPremium ? "/dashboard" : "/free-dashboard"}
+        to={user?.isPremium ? "/dashboard" : "/"}
         replace
       />
     );

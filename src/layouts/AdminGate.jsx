@@ -51,7 +51,7 @@ export default function AdminGate() {
   if (!isAdmin) {
     return (
       <Navigate
-        to={user?.isPremium ? "/dashboard" : "/free-dashboard"}
+        to={user?.isPremium ? "/" : "/"}
         replace
       />
     );

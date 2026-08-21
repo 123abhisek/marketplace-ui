@@ -1350,7 +1350,7 @@ export default function Footer() {
                   <>
                     <FooterLink
                       label="Become a Seller"
-                      href="/free-dashboard/become-seller"
+                      href="/become-seller"
                     />
                     <FooterLink
                       label="Seller Benefits"

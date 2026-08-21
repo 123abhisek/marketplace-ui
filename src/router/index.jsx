@@ -142,7 +142,7 @@ export const routes = [
    * Free dashboard routes
    */
   {
-    path: "/free-dashboard",
+    path: "/",
     element: (
       <DashboardGate>
         <DashboardLayout />
@@ -154,7 +154,8 @@ export const routes = [
     },
     children: [
       {
-        index: true,
+        // index: true,
+        path: "/free-dashboard",
         element: <FreeDashboard />,
         handle: {
           title: "Dashboard",
