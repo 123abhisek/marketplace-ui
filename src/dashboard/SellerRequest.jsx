@@ -1,10 +1,21 @@
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+// import React, { useCallback, useEffect, useRef, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import axios from "axios";
 
-const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
-const SELLER_REQUEST_API = `${API_ROOT}/v1/api/seller-request`;
+// const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
+// const SELLER_REQUEST_API = `${API_ROOT}/v1/api/seller-request`;
+
+
+const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+const API_ROOT =
+  configuredBaseUrl ||
+  (import.meta.env.DEV ? "http://localhost:8000" : "");
+
+const SELLER_REQUEST_API =
+  `${API_ROOT.replace(/\/$/, "")}/v1/api/seller-request`;
+
 
 const initialForm = {
   business_name: "",
