@@ -304,6 +304,7 @@ function ContactInfoCard({ item }) {
     <Box
       sx={{
         height: "100%",
+         width:"40rem",
         p: { xs: 3, md: 3.5 },
         borderRadius: "26px",
         background: item.bg,
