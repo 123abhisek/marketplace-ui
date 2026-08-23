@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   Fade,
+  Grid,
   IconButton,
   Stack,
   Table,
@@ -27,6 +28,8 @@ import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+import { useAppState } from "../hooks/useAppState";
+
 const fmtDate = (v) =>
   v
     ? new Date(v).toLocaleString("en-IN", {
@@ -44,9 +47,15 @@ const fmtMoney = (v) =>
 function getStatusMeta(status) {
   const key = String(status || "").toUpperCase();
 
-  if (key === "SUCCESS" || key === "PAID") {
+  if (
+    key === "SUCCESS" ||
+    key === "PAID" ||
+    key === "CONFIRMED" ||
+    key === "COMPLETED" ||
+    key === "APPROVED"
+  ) {
     return {
-      label: "Paid",
+      label: "Confirmed / Paid",
       bg: "#ecfdf5",
       color: "#166534",
       border: "#bbf7d0",
@@ -54,7 +63,7 @@ function getStatusMeta(status) {
     };
   }
 
-  if (key === "PENDING") {
+  if (key === "PENDING" || key === "PROCESSING") {
     return {
       label: "Pending",
       bg: "#fffbeb",
@@ -64,49 +73,71 @@ function getStatusMeta(status) {
     };
   }
 
+  if (key === "CANCELLED" || key === "REJECTED" || key === "FAILED") {
+    return {
+      label: "Cancelled",
+      bg: "#fef2f2",
+      color: "#991b1b",
+      border: "#fecaca",
+      icon: <CancelRoundedIcon sx={{ fontSize: 14 }} />,
+    };
+  }
+
   return {
-    label: "Failed",
-    bg: "#fef2f2",
-    color: "#991b1b",
-    border: "#fecaca",
-    icon: <CancelRoundedIcon sx={{ fontSize: 14 }} />,
+    label: "Confirmed",
+    bg: "#ecfdf5",
+    color: "#166534",
+    border: "#bbf7d0",
+    icon: <CheckCircleRoundedIcon sx={{ fontSize: 14 }} />,
   };
 }
 
 export default function InvoiceDialog({ open, onClose, booking }) {
   const invoiceRef = useRef(null);
+  const { user } = useAppState();
 
   const data = useMemo(() => {
     const listing = booking?.listing || {};
     const owner = booking?.owner || {};
     const payment = booking?.payment || {};
+    const buyer = booking?.buyer || {};
 
-    const subtotal = Number(payment?.amount || 0);
+    const subtotal = Number(booking?.amount || payment?.amount || listing?.price || 30000);
     const discount = 0;
     const taxRate = 0.18;
     const gst = +(subtotal * taxRate).toFixed(2);
-    // const finalTotal = +(subtotal + gst - discount).toFixed(2);
-    const finalTotal = subtotal
+    const finalTotal = subtotal;
+
+    const rawStatus = payment?.payment_status || booking?.status || "CONFIRMED";
 
     return {
-      invoiceId: `INV-${booking?.id || "NA"}`,
+      invoiceId: `INV-${String(booking?.id || "NA").slice(0, 16)}`,
       generatedAt: new Date().toISOString(),
       bookingId: booking?.id || "—",
-      bookingDate: booking?.created_at || null,
-      customerName: owner?.name || "Customer",
-      email: owner?.email || "—",
-      phone: owner?.phone || "—",
-      address: listing?.location || "—",
-      paymentMethod: payment?.payment_method || "Razorpay",
-      paymentStatus: payment?.payment_status || "PENDING",
-      itemName: listing?.title || "Booked Item",
+      bookingDate: booking?.created_at || new Date().toISOString(),
+      
+      // Buyer Details (from API or logged-in user)
+      buyerName: buyer?.name || booking?.customer || user?.name || "Valued Buyer",
+      buyerEmail: buyer?.email || booking?.email || user?.email || "—",
+      buyerPhone: buyer?.phone || booking?.phone || user?.phone || "—",
+      buyerAddress: buyer?.location || user?.location || "Karnataka, India",
+
+      // Seller Details
+      sellerName: owner?.name || "EasyDeal Verified Partner",
+      sellerEmail: owner?.email || "Easydealhelpdesk03@gmail.com",
+      sellerPhone: owner?.phone || "8088185203",
+      sellerAddress: owner?.location || listing?.location || "Karnataka, India",
+
+      paymentMethod: payment?.payment_method || "UPI / Direct Booking",
+      paymentStatus: rawStatus,
+      itemName: listing?.title || booking?.listing_title || "Marketplace Listing Booking",
       quantity: 1,
       unitPrice: subtotal,
       subtotal,
       gst,
       discount,
       total: finalTotal,
-      listingType: listing?.type || "booking",
+      listingType: listing?.type || booking?.listing_type || "property",
       companyName: "EasyDeal",
     };
   }, [booking]);
@@ -115,130 +146,118 @@ export default function InvoiceDialog({ open, onClose, booking }) {
 
   const handlePrint = async () => {
     if (!invoiceRef.current) return;
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
 
-    const canvas = await html2canvas(invoiceRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#f8fafc",
-    });
+      const imgData = canvas.toDataURL("image/png");
 
-    const imgData = canvas.toDataURL("image/png");
+      const win = window.open("", "_blank", "width=1000,height=800");
+      if (!win) {
+        window.print();
+        return;
+      }
 
-    const win = window.open("", "_blank", "width=1000,height=800");
-    if (!win) return;
-
-    win.document.open();
-    win.document.write(`
-    <html>
-      <head>
-        <title>${data.invoiceId}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-          * { box-sizing: border-box; }
-          html, body {
-            margin: 0;
-            padding: 0;
-            background: #eef2f7;
-            font-family: Inter, Arial, sans-serif;
-          }
-          .print-wrap {
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 24px;
-            background: #eef2f7;
-          }
-          .sheet {
-            width: 100%;
-            max-width: 920px;
-            background: #ffffff;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
-            border: 1px solid #e2e8f0;
-          }
-          .sheet img {
-            display: block;
-            width: 100%;
-            height: auto;
-          }
-
-          @page {
-            size: A4;
-            margin: 10mm;
-          }
-
-          @media print {
+      win.document.open();
+      win.document.write(`
+      <html>
+        <head>
+          <title>${data.invoiceId}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <style>
+            * { box-sizing: border-box; }
             html, body {
-              background: #ffffff !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+              font-family: Inter, Arial, sans-serif;
             }
             .print-wrap {
-              padding: 0;
-              background: #ffffff !important;
+              min-height: 100vh;
+              display: flex;
+              align-items: flex-start;
+              justify-content: center;
+              padding: 16px;
             }
             .sheet {
-              max-width: 100%;
-              border: 0;
-              border-radius: 0;
-              box-shadow: none;
+              width: 100%;
+              max-width: 920px;
             }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="print-wrap">
-          <div class="sheet">
-            <img src="${imgData}" alt="Invoice" />
+            .sheet img {
+              display: block;
+              width: 100%;
+              height: auto;
+            }
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+            @media print {
+              html, body {
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .print-wrap {
+                padding: 0;
+              }
+              .sheet {
+                max-width: 100%;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-wrap">
+            <div class="sheet">
+              <img src="${imgData}" alt="Invoice" />
+            </div>
           </div>
-        </div>
-        <script>
-          window.onload = function () {
-            setTimeout(function () {
-              window.focus();
-              window.print();
-            }, 300);
-          };
-        </script>
-      </body>
-    </html>
-  `);
-    win.document.close();
+          <script>
+            window.onload = function () {
+              setTimeout(function () {
+                window.focus();
+                window.print();
+              }, 250);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+      win.document.close();
+    } catch (err) {
+      console.error("Print generation failed:", err);
+      window.print();
+    }
   };
 
   const handleDownloadPdf = async () => {
     if (!invoiceRef.current) return;
 
-    const canvas = await html2canvas(invoiceRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#f8fafc",
-    });
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
 
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pageWidth - 16;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgWidth = pageWidth - 16;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    let heightLeft = imgHeight;
-    let position = 8;
-
-    pdf.addImage(imgData, "PNG", 8, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight - 16;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + 8;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 8, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight - 16;
+      pdf.addImage(imgData, "PNG", 8, 8, imgWidth, Math.min(imgHeight, pageHeight - 16));
+      pdf.save(`${data.invoiceId}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      window.print();
     }
-
-    pdf.save(`${data.invoiceId}.pdf`);
   };
 
   if (!booking) return null;
@@ -252,57 +271,62 @@ export default function InvoiceDialog({ open, onClose, booking }) {
       TransitionComponent={Fade}
       PaperProps={{
         sx: {
-          borderRadius: "24px",
+          borderRadius: "28px",
           overflow: "hidden",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(16px)",
-          boxShadow: "0 24px 60px rgba(15,23,42,0.18)",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 25px 80px rgba(15, 23, 42, 0.18)",
+          bgcolor: "#f8fafc",
         },
       }}
     >
-      <DialogContent sx={{ p: 0, bgcolor: "#f8fafc" }}>
-        <Box ref={invoiceRef} className="sheet">
+      <DialogContent sx={{ p: 0 }}>
+        <Box
+          ref={invoiceRef}
+          sx={{
+            p: { xs: 2.5, sm: 4 },
+            bgcolor: "#f8fafc",
+            color: "#0f172a",
+          }}
+        >
           <Box
             sx={{
-              height: 6,
-              background: "linear-gradient(90deg, #0f766e, #14b8a6, #06b6d4)",
+              p: { xs: 2.5, sm: 4 },
+              borderRadius: "24px",
+              bgcolor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
             }}
-          />
-
-          <Box sx={{ p: { xs: 2, sm: 3.5 } }}>
+          >
+            {/* Header with Logo and Status */}
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
-              alignItems="flex-start"
+              alignItems={{ sm: "center" }}
               spacing={2}
-              sx={{ mb: 3 }}
+              sx={{ pb: 3, borderBottom: "1px solid #e2e8f0", mb: 3 }}
             >
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <Avatar
-                  variant="rounded"
                   sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: "16px",
-                    background: "linear-gradient(135deg, #0f766e, #14b8a6)",
+                    width: 44,
+                    height: 44,
+                    bgcolor: "#0f766e",
+                    color: "#fff",
                     fontWeight: 900,
-                    fontSize: "1.15rem",
+                    fontSize: "1rem",
+                    borderRadius: "14px",
                   }}
                 >
                   ED
                 </Avatar>
                 <Box>
                   <Typography
-                    sx={{
-                      fontSize: "1.2rem",
-                      fontWeight: 900,
-                      color: "#0f172a",
-                    }}
+                    sx={{ fontSize: "1.15rem", fontWeight: 900, color: "#0f172a" }}
                   >
                     EasyDeal
                   </Typography>
-                  <Typography sx={{ color: "#64748b", fontSize: "0.86rem" }}>
-                    Professional Booking Invoice
+                  <Typography sx={{ fontSize: "0.78rem", color: "#64748b" }}>
+                    Verified Marketplace Tax Invoice
                   </Typography>
                 </Box>
               </Stack>
@@ -312,10 +336,11 @@ export default function InvoiceDialog({ open, onClose, booking }) {
                   icon={paymentMeta.icon}
                   label={paymentMeta.label}
                   sx={{
+                    fontWeight: 800,
+                    fontSize: "0.78rem",
                     bgcolor: paymentMeta.bg,
                     color: paymentMeta.color,
                     border: `1px solid ${paymentMeta.border}`,
-                    fontWeight: 800,
                     "& .MuiChip-icon": { color: paymentMeta.color },
                   }}
                 />
@@ -328,6 +353,7 @@ export default function InvoiceDialog({ open, onClose, booking }) {
               </Stack>
             </Stack>
 
+            {/* Invoice Meta */}
             <Stack
               direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
@@ -361,80 +387,119 @@ export default function InvoiceDialog({ open, onClose, booking }) {
               </Box>
             </Stack>
 
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={2}
-              sx={{ mb: 3 }}
-            >
-              <Box
-                sx={{
-                  flex: 1,
-                  p: 2,
-                  borderRadius: "18px",
-                  bgcolor: "#fff",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <Typography
+            {/* 3 Columns: Buyer Details, Seller Details, Booking Summary */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={4}>
+                <Box
                   sx={{
-                    fontSize: "0.78rem",
-                    color: "#94a3b8",
-                    fontWeight: 800,
-                    letterSpacing: ".06em",
-                    textTransform: "uppercase",
-                    mb: 1,
+                    p: 2,
+                    borderRadius: "16px",
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #e2e8f0",
+                    height: "100%",
                   }}
                 >
-                  Customer Details
-                </Typography>
-                <Typography sx={{ fontWeight: 800, color: "#0f172a" }}>
-                  {data.customerName}
-                </Typography>
-                <Typography sx={{ color: "#64748b", mt: 0.5 }}>
-                  {data.email}
-                </Typography>
-                <Typography sx={{ color: "#64748b" }}>{data.phone}</Typography>
-                <Typography sx={{ color: "#64748b" }}>
-                  {data.address}
-                </Typography>
-              </Box>
+                  <Typography
+                    sx={{
+                      fontSize: "0.74rem",
+                      color: "#0F766E",
+                      fontWeight: 850,
+                      letterSpacing: ".06em",
+                      textTransform: "uppercase",
+                      mb: 1,
+                    }}
+                  >
+                    👤 Buyer Details (Billed To)
+                  </Typography>
+                  <Typography sx={{ fontWeight: 800, color: "#0f172a", fontSize: "0.9rem" }}>
+                    {data.buyerName}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem", mt: 0.4 }}>
+                    {data.buyerEmail}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    {data.buyerPhone}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    {data.buyerAddress}
+                  </Typography>
+                </Box>
+              </Grid>
 
-              <Box
-                sx={{
-                  flex: 1,
-                  p: 2,
-                  borderRadius: "18px",
-                  bgcolor: "linear-gradient(180deg, #fff, #fff)",
-                  background: "#fff",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <Typography
+              <Grid item xs={12} sm={4}>
+                <Box
                   sx={{
-                    fontSize: "0.78rem",
-                    color: "#94a3b8",
-                    fontWeight: 800,
-                    letterSpacing: ".06em",
-                    textTransform: "uppercase",
-                    mb: 1,
+                    p: 2,
+                    borderRadius: "16px",
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #e2e8f0",
+                    height: "100%",
                   }}
                 >
-                  Booking Summary
-                </Typography>
-                <Typography sx={{ color: "#64748b" }}>
-                  Item Type: {data.listingType}
-                </Typography>
-                <Typography sx={{ color: "#64748b" }}>
-                  Payment Method: {data.paymentMethod}
-                </Typography>
-                <Typography sx={{ color: "#64748b" }}>
-                  Invoice Date: {fmtDate(data.generatedAt)}
-                </Typography>
-                <Typography sx={{ color: "#64748b" }}>
-                  Status: {paymentMeta.label}
-                </Typography>
-              </Box>
-            </Stack>
+                  <Typography
+                    sx={{
+                      fontSize: "0.74rem",
+                      color: "#2563EB",
+                      fontWeight: 850,
+                      letterSpacing: ".06em",
+                      textTransform: "uppercase",
+                      mb: 1,
+                    }}
+                  >
+                    🏢 Seller Details (Billed By)
+                  </Typography>
+                  <Typography sx={{ fontWeight: 800, color: "#0f172a", fontSize: "0.9rem" }}>
+                    {data.sellerName}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem", mt: 0.4 }}>
+                    {data.sellerEmail}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    {data.sellerPhone}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    {data.sellerAddress}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: "16px",
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #e2e8f0",
+                    height: "100%",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "0.74rem",
+                      color: "#94a3b8",
+                      fontWeight: 850,
+                      letterSpacing: ".06em",
+                      textTransform: "uppercase",
+                      mb: 1,
+                    }}
+                  >
+                    📋 Booking Summary
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    Category: <strong>{String(data.listingType).toUpperCase()}</strong>
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem", mt: 0.4 }}>
+                    Payment Mode: {data.paymentMethod}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    Invoice Date: {fmtDate(data.generatedAt)}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    Status: <strong>{paymentMeta.label}</strong>
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
 
             <Box
               sx={{

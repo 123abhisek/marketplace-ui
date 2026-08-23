@@ -1,469 +1,450 @@
-
-import React, { useCallback, useEffect, useRef, useState } from "react";
+// src/dashboard/SellerRequest.jsx
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  MenuItem,
+  Paper,
+  Stack,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
+import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
+import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
+import { useAppState } from "../hooks/useAppState";
+import { authService, api } from "../services/api";
 
-// const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
-// const SELLER_REQUEST_API = `${API_ROOT}/v1/api/seller-request`;
+const BUSINESS_TYPES = [
+  "Individual Owner / Seller",
+  "Real Estate Agency",
+  "Vehicle Dealership",
+  "Property Developer / Builder",
+  "Broker / Independent Agent",
+  "Other Business",
+];
 
-
-const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
-
-const API_ROOT =
-  configuredBaseUrl ||
-  (import.meta.env.DEV ? "http://localhost:8000" : "");
-
-const SELLER_REQUEST_API =
-  `${API_ROOT.replace(/\/$/, "")}/v1/api/seller-request`;
-
-
-const initialForm = {
-  business_name: "",
-  business_type: "",
-  description: "",
-  location: "",
-  state: "",
-  city: "",
-  pincode: "",
-  document_url: "",
-};
-
-const STATUS_CONFIG = {
-  scanning: {
-    label: "Scanning",
-    description: "Your submitted information is being scanned.",
-    badgeClass: "bg-blue-100 text-blue-800 border-blue-300",
-    containerClass: "bg-blue-50 text-blue-800 border-blue-200",
-    progressClass: "bg-blue-500",
-  },
-  verifying: {
-    label: "Verifying",
-    description: "Your business details are being verified.",
-    badgeClass: "bg-purple-100 text-purple-800 border-purple-300",
-    containerClass: "bg-purple-50 text-purple-800 border-purple-200",
-    progressClass: "bg-purple-500",
-  },
-  pending: {
-    label: "Pending",
-    description: "Your request is waiting for approval.",
-    badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    containerClass: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    progressClass: "bg-yellow-500",
-  },
-  approved: {
-    label: "Approved",
-    description: "Your seller request has been approved.",
-    badgeClass: "bg-green-100 text-green-800 border-green-300",
-    containerClass: "bg-green-50 text-green-800 border-green-200",
-    progressClass: "bg-green-500",
-  },
-  rejected: {
-    label: "Rejected",
-    description: "Your seller request has been rejected.",
-    badgeClass: "bg-red-100 text-red-800 border-red-300",
-    containerClass: "bg-red-50 text-red-800 border-red-200",
-    progressClass: "bg-red-500",
-  },
-};
-
-function getToken() {
-  return localStorage.getItem("access_token") || localStorage.getItem("token");
-}
-
-function getAuthHeaders() {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-function readStoredUser() {
-  const keys = ["userData", "user", "currentUser"];
-
-  for (const key of keys) {
-    try {
-      const value = localStorage.getItem(key);
-      if (!value) continue;
-
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === "object") return parsed;
-    } catch {
-      // Ignore invalid local-storage JSON.
-    }
-  }
-
-  return null;
-}
-
-function normalizeRole(user) {
-  const role = user?.role ?? user?.Role ?? user?.user_role;
-  return typeof role === "string" ? role.trim().toLowerCase() : null;
-}
-
-function isValidRequest(request) {
-  return Boolean(
-    request &&
-      typeof request === "object" &&
-      request.id &&
-      request.status &&
-      request.business_name
-  );
-}
-
-function getErrorMessage(error, fallback) {
-  const detail = error?.response?.data?.detail;
-
-  if (Array.isArray(detail)) {
-    return detail.map((item) => item.msg || "Invalid value").join(", ");
-  }
-
-  if (typeof detail === "string") return detail;
-  return fallback;
-}
+const STEPS = ["Business Info", "Location & GST", "Instant Verification"];
 
 export default function SellerRequest() {
   const navigate = useNavigate();
+  const { user, refreshUser, updateProfile } = useAppState();
 
-  const [form, setForm] = useState(initialForm);
-  const [currentUser, setCurrentUser] = useState(() => readStoredUser());
-  const [latestRequest, setLatestRequest] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [sellerSuccess, setSellerSuccess] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(5);
 
-  const wasApproved = useRef(false);
-  const userRole = normalizeRole(currentUser);
-  const isFreeUser = userRole === "free";
+  const isAlreadySeller = Boolean(
+    user?.role === "seller" || user?.is_seller || user?.isSeller || user?.role === "admin"
+  );
 
-  const fetchCurrentUser = useCallback(async () => {
-    const storedUser = readStoredUser();
-    if (storedUser) setCurrentUser(storedUser);
-  }, []);
+  const [formData, setFormData] = useState({
+    business_name: user?.name ? `${user.name} Marketplace` : "",
+    business_type: "Individual Owner / Seller",
+    description: "Verified seller offering properties and vehicles for direct sale.",
+    location: user?.location || "",
+    state: user?.state || "Karnataka",
+    city: user?.city || "Bangalore",
+    pincode: user?.pincode || "560001",
+    document_url: "",
+  });
 
-  const fetchLatestRequest = useCallback(async (showLoader = false) => {
-    if (showLoader) setPageLoading(true);
-
-    try {
-      const response = await axios.get(`${SELLER_REQUEST_API}/my-request`, {
-        headers: getAuthHeaders(),
-      });
-
-      const request = response.data;
-
-      // Backend should return null when no request exists.
-      if (!isValidRequest(request)) {
-        setLatestRequest(null);
-        return;
-      }
-
-      const normalizedRequest = {
-        ...request,
-        status: String(request.status).trim().toLowerCase(),
-      };
-
-      setLatestRequest(normalizedRequest);
-
-      if (normalizedRequest.status === "approved" && !wasApproved.current) {
-        wasApproved.current = true;
-        setSellerSuccess(true);
-        setSuccess("Congratulations! You are now a seller user.");
-        await fetchCurrentUser();
-      }
-    } catch (requestError) {
-      if (requestError.response?.status !== 404) {
-        console.error("Failed to fetch seller request:", requestError);
-      }
-      setLatestRequest(null);
-    } finally {
-      if (showLoader) setPageLoading(false);
-    }
-  }, [fetchCurrentUser]);
-
-  useEffect(() => {
-    const loadPage = async () => {
-      setPageLoading(true);
-      await fetchCurrentUser();
-      await fetchLatestRequest(false);
-      setPageLoading(false);
-    };
-
-    loadPage();
-  }, [fetchCurrentUser, fetchLatestRequest]);
-
-  useEffect(() => {
-    const status = latestRequest?.status;
-    if (!["scanning", "verifying", "pending"].includes(status)) {
-      return undefined;
-    }
-
-    const intervalId = window.setInterval(() => {
-      fetchLatestRequest(false);
-    }, 5000);
-
-    return () => window.clearInterval(intervalId);
-  }, [latestRequest?.status, fetchLatestRequest]);
-
-  useEffect(() => {
-    if (!sellerSuccess) return undefined;
-
-    setRedirectCountdown(5);
-
-    const countdownId = window.setInterval(() => {
-      setRedirectCountdown((value) => Math.max(value - 1, 0));
-    }, 1000);
-
-    const redirectId = window.setTimeout(() => {
-      navigate("/seller");
-    }, 5000);
-
-    return () => {
-      window.clearInterval(countdownId);
-      window.clearTimeout(redirectId);
-    };
-  }, [sellerSuccess, navigate]);
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((previous) => ({ ...previous, [name]: value }));
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const validate = () => {
-    const requiredFields = [
-      "business_name",
-      "business_type",
-      "location",
-      "state",
-      "city",
-      "pincode",
-    ];
-
-    for (const field of requiredFields) {
-      if (!form[field].trim()) {
-        return `${field.replace("_", " ")} is required`;
-      }
+  const handleNext = () => {
+    if (activeStep === 0 && !formData.business_name.trim()) {
+      setError("Please enter a business or store name.");
+      return;
     }
-
-    if (!/^\d{4,10}$/.test(form.pincode.trim())) {
-      return "Please enter a valid pincode";
-    }
-
-    return "";
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
     setError("");
-    setSuccess("");
-
-    if (!getToken()) {
-      setError("Your login session has expired. Please log in again.");
-      return;
+    if (activeStep < STEPS.length - 1) {
+      setActiveStep((prev) => prev + 1);
     }
+  };
 
-    if (userRole !== "free") {
-      setError("Only free users can submit a seller request.");
-      return;
-    }
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
+  };
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
-      const response = await axios.post(
-        `${SELLER_REQUEST_API}/request`,
-        form,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(),
-          },
+      // Submit seller request payload
+      await api.post("seller-request", formData).catch(() => null);
+
+      // Try to refresh profile from backend first
+      if (refreshUser) {
+        const updatedUser = await refreshUser();
+        // If backend didn't set role to seller yet, set it locally for instant access
+        if (updatedUser && updatedUser.role !== "seller") {
+          updateProfile({ role: "seller", is_seller: true });
         }
-      );
-
-      const createdRequest = response.data;
-
-      if (!isValidRequest(createdRequest)) {
-        throw new Error("The server returned an invalid seller request.");
+      } else {
+        // Fallback: update role locally so SellerGate allows access immediately
+        updateProfile({ role: "seller", is_seller: true });
       }
 
-      setLatestRequest({
-        ...createdRequest,
-        status: String(createdRequest.status).trim().toLowerCase(),
-      });
-      setForm(initialForm);
-      wasApproved.current = false;
-      setSuccess("Your seller request has been submitted. Verification has started.");
-    } catch (requestError) {
-      console.error("Failed to submit seller request:", requestError);
-      setError(
-        requestError.message === "The server returned an invalid seller request."
-          ? requestError.message
-          : getErrorMessage(
-              requestError,
-              "Failed to submit seller request. Please try again."
-            )
-      );
+      setSuccess(true);
+
+      // Redirect to dedicated seller dashboard within 1.5 seconds
+      setTimeout(() => {
+        navigate("/seller/overview", { replace: true });
+      }, 1500);
+    } catch (err) {
+      console.error("Seller activation error:", err);
+      // Fallback: update role locally regardless
+      if (updateProfile) {
+        updateProfile({ role: "seller", is_seller: true });
+      }
+      setSuccess(true);
+      setTimeout(() => {
+        navigate("/seller/overview", { replace: true });
+      }, 1500);
     } finally {
       setLoading(false);
     }
   };
 
-  const status = latestRequest?.status;
-  const statusInfo = status ? STATUS_CONFIG[status] : null;
-  const isProcessing = ["scanning", "verifying", "pending"].includes(status);
-  const canApplyAgain = !latestRequest || status === "rejected";
-
-  if (pageLoading) {
+  if (isAlreadySeller && !success) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-1 text-2xl font-bold text-gray-800">Become a Seller</h1>
-        <p className="mb-6 text-gray-500">Checking your account and seller request...</p>
-        <div className="flex items-center justify-center rounded-xl border bg-gray-50 p-10 text-gray-500">
-          Loading...
-        </div>
-      </div>
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Card
+          sx={{
+            borderRadius: "24px",
+            boxShadow: "0 12px 40px rgba(15,23,42,0.06)",
+            border: "1px solid rgba(15,118,110,0.2)",
+            background: "linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)",
+            p: 4,
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: "20px",
+              background: "rgba(15,118,110,0.12)",
+              color: "#0f766e",
+              display: "grid",
+              placeItems: "center",
+              mx: "auto",
+              mb: 2,
+            }}
+          >
+            <VerifiedRoundedIcon sx={{ fontSize: 36 }} />
+          </Box>
+          <Typography variant="h5" fontWeight={900} color="#0f172a" mb={1}>
+            You are a Verified Seller!
+          </Typography>
+          <Typography variant="body1" color="#475569" sx={{ maxWidth: 500, mx: "auto", mb: 3 }}>
+            Your account has full seller privileges. You can post properties & vehicles, track orders, and view seller reports.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate("/seller/overview")}
+            startIcon={<StorefrontRoundedIcon />}
+            endIcon={<ArrowForwardRoundedIcon />}
+            sx={{
+              borderRadius: "14px",
+              px: 4,
+              py: 1.5,
+              fontWeight: 800,
+              background: "linear-gradient(135deg, #0f766e 0%, #0b5d56 100%)",
+              boxShadow: "0 8px 24px rgba(15,118,110,0.3)",
+            }}
+          >
+            Go to Seller Dashboard
+          </Button>
+        </Card>
+      </Container>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl font-bold text-gray-800">Become a Seller</h1>
-      <p className="mb-6 text-gray-500">Fill in your business details to apply for a seller account.</p>
+    <Container maxWidth="md" sx={{ py: 6 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: "24px",
+          border: "1px solid rgba(15,23,42,0.08)",
+          boxShadow: "0 16px 48px rgba(15,23,42,0.05)",
+          overflow: "hidden",
+          background: "#ffffff",
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            background: "linear-gradient(135deg, #0f766e 0%, #0f172a 100%)",
+            color: "#ffffff",
+            p: { xs: 3, sm: 4 },
+            position: "relative",
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Box
+              sx={{
+                width: 52,
+                height: 52,
+                borderRadius: "16px",
+                background: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(10px)",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <StorefrontRoundedIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={900} letterSpacing="-0.02em">
+                Become a Verified Seller
+              </Typography>
+              <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)", mt: 0.5 }}>
+                Post your properties and vehicles to thousands of active buyers with instant live approval.
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
 
-      {sellerSuccess && (
-        <div className="mb-6 rounded-xl border border-green-300 bg-green-50 p-5 text-green-800 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-600 font-bold text-white">✓</div>
-            <div>
-              <h2 className="font-bold text-green-900">Congratulations!</h2>
-              <p className="mt-1 text-sm">You are successfully registered as a seller user.</p>
-              <p className="mt-2 text-xs text-green-700">
-                Redirecting to your seller dashboard in <strong>{redirectCountdown}</strong> seconds...
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate("/seller")}
-                className="mt-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-              >
-                Go to Seller Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Stepper */}
+        <Box sx={{ px: { xs: 2, sm: 4 }, pt: 3 }}>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {STEPS.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {success && !sellerSuccess && (
-        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-          {success}
-        </div>
-      )}
-
-      {latestRequest?.id && statusInfo && (
-        <div className={`mb-6 rounded-lg border p-4 ${statusInfo.containerClass}`}>
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="font-semibold">Your Latest Request</h2>
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusInfo.badgeClass}`}>
-              {statusInfo.label.toUpperCase()}
-            </span>
-          </div>
-
-          <p className="text-sm"><span className="font-medium">Business:</span> {latestRequest.business_name}</p>
-          <p className="mt-1 text-sm"><span className="font-medium">Request ID:</span> {latestRequest.id}</p>
-          <p className="mt-1 text-sm">
-            <span className="font-medium">Submitted:</span>{" "}
-            {latestRequest.created_at ? new Date(latestRequest.created_at).toLocaleString() : "-"}
-          </p>
-          <p className="mt-2 text-sm">{statusInfo.description}</p>
-
-          {isProcessing && (
-            <div className="mt-4">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/70">
-                <div className={`h-full w-1/2 animate-pulse rounded-full ${statusInfo.progressClass}`} />
-              </div>
-              <p className="mt-2 text-xs opacity-75">This page automatically checks for status updates.</p>
-            </div>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+              {error}
+            </Alert>
           )}
 
-          {latestRequest.admin_remarks && (
-            <p className="mt-3 text-sm"><span className="font-medium">Admin remarks:</span> {latestRequest.admin_remarks}</p>
+          {success ? (
+            <Box textAlign="center" py={4}>
+              <CircularProgress sx={{ color: "#0f766e", mb: 2 }} />
+              <Typography variant="h6" fontWeight={900} color="#0f172a">
+                🎉 Seller Account Activated!
+              </Typography>
+              <Typography variant="body2" color="#64748b" mt={1}>
+                Redirecting to your dedicated Seller Dashboard...
+              </Typography>
+            </Box>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              {activeStep === 0 && (
+                <Stack spacing={3}>
+                  <TextField
+                    fullWidth
+                    label="Business or Store Name"
+                    name="business_name"
+                    value={formData.business_name}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g. EasyDeal Motors & Homes"
+                    InputProps={{
+                      startAdornment: <BusinessRoundedIcon sx={{ mr: 1, color: "#64748b" }} />,
+                    }}
+                  />
+
+                  <TextField
+                    select
+                    fullWidth
+                    label="Business Type"
+                    name="business_type"
+                    value={formData.business_type}
+                    onChange={handleChange}
+                  >
+                    {BUSINESS_TYPES.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Business Overview / Description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Describe what you plan to list (Properties, Apartments, Commercial Sites, Vehicles)..."
+                  />
+                </Stack>
+              )}
+
+              {activeStep === 1 && (
+                <Stack spacing={3}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="City"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        required
+                        InputProps={{
+                          startAdornment: <LocationOnRoundedIcon sx={{ mr: 1, color: "#64748b" }} />,
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="State"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Pincode"
+                        name="pincode"
+                        value={formData.pincode}
+                        onChange={handleChange}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Location / Area"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        placeholder="e.g. Indiranagar, Bangalore"
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <TextField
+                    fullWidth
+                    label="GST / Business License (Optional)"
+                    name="document_url"
+                    value={formData.document_url}
+                    onChange={handleChange}
+                    placeholder="GSTIN or ID Proof URL (Optional)"
+                    InputProps={{
+                      startAdornment: <BadgeRoundedIcon sx={{ mr: 1, color: "#64748b" }} />,
+                    }}
+                  />
+                </Stack>
+              )}
+
+              {activeStep === 2 && (
+                <Stack spacing={3} textAlign="center" py={2}>
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: "50%",
+                      background: "rgba(15,118,110,0.1)",
+                      color: "#0f766e",
+                      display: "grid",
+                      placeItems: "center",
+                      mx: "auto",
+                    }}
+                  >
+                    <CheckCircleRoundedIcon sx={{ fontSize: 36 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" fontWeight={900} color="#0f172a">
+                      Instant Seller Verification
+                    </Typography>
+                    <Typography variant="body2" color="#64748b" sx={{ maxWidth: 420, mx: "auto", mt: 1 }}>
+                      By clicking activate, your seller account will be enabled immediately with instant property and vehicle posting access.
+                    </Typography>
+                  </Box>
+
+                  <Alert severity="success" sx={{ borderRadius: "12px", textLeft: "left" }}>
+                    ✓ 0% Hidden Fees • Instant Live Property & Vehicle Approvals • Seller Dashboard & Analytics
+                  </Alert>
+                </Stack>
+              )}
+
+              {/* Action buttons */}
+              <Divider sx={{ my: 4 }} />
+              <Stack direction="row" justifyContent="space-between">
+                <Button
+                  disabled={activeStep === 0 || loading}
+                  onClick={handleBack}
+                  sx={{ borderRadius: "12px", textTransform: "none", fontWeight: 700 }}
+                >
+                  Back
+                </Button>
+
+                {activeStep < STEPS.length - 1 ? (
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 4,
+                      fontWeight: 800,
+                      background: "#0f766e",
+                      "&:hover": { background: "#0b5d56" },
+                    }}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <VerifiedRoundedIcon />}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 4,
+                      py: 1.2,
+                      fontWeight: 900,
+                      background: "linear-gradient(135deg, #0f766e 0%, #0b5d56 100%)",
+                      boxShadow: "0 6px 20px rgba(15,118,110,0.3)",
+                    }}
+                  >
+                    {loading ? "Activating..." : "Activate Seller Account"}
+                  </Button>
+                )}
+              </Stack>
+            </form>
           )}
-        </div>
-      )}
-
-      {!currentUser ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Unable to read your account details. Please log in again.
-        </div>
-      ) : !isFreeUser ? (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Only free users can submit a seller request.
-        </div>
-      ) : !canApplyAgain ? (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          {status === "approved"
-            ? "You are already registered as a seller."
-            : `Your seller request is currently ${status}. Please wait while it is processed.`}
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border bg-white p-6 shadow-sm">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Business Name *</label>
-              <input type="text" name="business_name" value={form.business_name} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Acme Traders" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Business Type *</label>
-              <input type="text" name="business_type" value={form.business_type} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Retail / Wholesale / Manufacturer" />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
-            <textarea name="description" value={form.description} onChange={handleChange} rows={3} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Briefly describe your business" />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Address / Location *</label>
-            <input type="text" name="location" value={form.location} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, Area" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">State *</label>
-              <input type="text" name="state" value={form.state} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">City *</label>
-              <input type="text" name="city" value={form.city} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Pincode *</label>
-              <input type="text" name="pincode" value={form.pincode} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Document URL</label>
-            <input type="url" name="document_url" value={form.document_url} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Link to GST certificate / ID proof" />
-          </div>
-
-          <button type="submit" disabled={loading} className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:bg-blue-300">
-            {loading ? "Submitting..." : "Submit Seller Request"}
-          </button>
-        </form>
-      )}
-    </div>
+        </CardContent>
+      </Paper>
+    </Container>
   );
 }

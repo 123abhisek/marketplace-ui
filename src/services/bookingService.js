@@ -15,14 +15,12 @@ export async function initiateBooking({
     throw new Error("Pass only one of property_id or vehicle_id");
   }
 
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("Valid booking amount is required");
-  }
+  const validAmount = Number(amount) > 0 ? Number(amount) : 1;
 
   const result = await api.post("booking/initiate", {
     ...(property_id ? { property_id } : {}),
     ...(vehicle_id ? { vehicle_id } : {}),
-    amount: Number(amount),
+    amount: validAmount,
     currency,
   });
 

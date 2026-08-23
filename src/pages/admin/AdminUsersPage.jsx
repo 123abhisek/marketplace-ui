@@ -486,30 +486,56 @@ export default function AdminUsersPage() {
                                 </Box>
                               </Stack>
 
-                              <Chip
-                                size="small"
-                                icon={roleTone.icon}
-                                // label={user.is_premium || 'User'}
-                                label={
-                                  user.is_premium
-                                    ? "Premium"
-                                    : user.role === "admin"
-                                      ? "Admin"
-                                      : user.role === "seller"
-                                        ? "Seller"
-                                        : "Free"
-                                }
-                                sx={{
-                                  height: 30,
-                                  borderRadius: "999px",
-                                  fontWeight: 800,
-                                  fontSize: "0.74rem",
-                                  color: roleTone.color,
-                                  background: roleTone.bg,
-                                  border: "none",
-                                  alignSelf: { xs: "flex-start", md: "center" },
-                                }}
-                              />
+                              <Stack direction="row" spacing={1} alignItems="center" sx={{ alignSelf: { xs: "flex-start", md: "center" } }}>
+                                <Chip
+                                  size="small"
+                                  icon={roleTone.icon}
+                                  label={
+                                    user.is_premium
+                                      ? "Premium"
+                                      : user.role === "admin"
+                                        ? "Admin"
+                                        : user.role === "seller"
+                                          ? "Seller"
+                                          : "Free"
+                                  }
+                                  sx={{
+                                    height: 30,
+                                    borderRadius: "999px",
+                                    fontWeight: 800,
+                                    fontSize: "0.74rem",
+                                    color: roleTone.color,
+                                    background: roleTone.bg,
+                                    border: "none",
+                                  }}
+                                />
+                                {user.role !== "admin" && (
+                                  <Chip
+                                    size="small"
+                                    label={user.is_active !== false ? "Active" : "Suspended"}
+                                    onClick={async () => {
+                                      const endpoint = user.is_active !== false ? `admin/users/${user.id}/suspend` : `admin/users/${user.id}/activate`;
+                                      try {
+                                        const { default: api } = await import("../../services/api");
+                                        await api.fetch("PATCH", endpoint);
+                                        loadUsers();
+                                      } catch (err) {
+                                        console.error("Failed to change user status:", err);
+                                      }
+                                    }}
+                                    sx={{
+                                      height: 30,
+                                      borderRadius: "999px",
+                                      fontWeight: 800,
+                                      fontSize: "0.74rem",
+                                      cursor: "pointer",
+                                      color: user.is_active !== false ? "#166534" : "#991B1B",
+                                      background: user.is_active !== false ? "#DCFCE7" : "#FEE2E2",
+                                      "&:hover": { opacity: 0.8 },
+                                    }}
+                                  />
+                                )}
+                              </Stack>
                             </Stack>
                           </CardContent>
                         </Card>

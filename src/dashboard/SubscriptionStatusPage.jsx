@@ -108,18 +108,20 @@ function StatCard({ value, label, color = '#4361EE', bg = '#EEF2FF' }) {
 
 /* ─── Main page ─────────────────────────────────────── */
 export default function SubscriptionStatusPage() {
-  const { user, upgradePremium, properties, vehicles } = useAppState()
-  const [activating, setActivating] = useState(false)
+  const { user, upgradePremium, properties = [], vehicles = [] } = useAppState();
+  const [activating, setActivating] = useState(false);
 
-  const myProperties = properties.filter((p) => p.ownerId === user.id).length
-  const myVehicles   = vehicles.filter((v) => v.ownerId === user.id).length
+  const isPremium = Boolean(user?.isPremium || user?.is_premium || user?.role === 'premium' || user?.role === 'admin');
+
+  const myProperties = (properties || []).filter((p) => p?.ownerId === user?.id || p?.user_id === user?.id).length;
+  const myVehicles   = (vehicles || []).filter((v) => v?.ownerId === user?.id || v?.user_id === user?.id).length;
 
   const handleDemoActivate = async () => {
-    setActivating(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    upgradePremium()
-    setActivating(false)
-  }
+    setActivating(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    upgradePremium();
+    setActivating(false);
+  };
 
   return (
     <Stack spacing={3}>
@@ -139,7 +141,7 @@ export default function SubscriptionStatusPage() {
       </Box>
 
       {/* ── Status hero card ── */}
-      {user.isPremium ? (
+      {isPremium ? (
         /* ─ Active Premium ─ */
         <Card
           sx={{

@@ -1,1430 +1,341 @@
-
-// // src/components/Footer.jsx
-// import { Link as RouterLink } from "react-router-dom";
-// import {
-//   Box,
-//   Button,
-//   Chip,
-//   Container,
-//   Divider,
-//   Grid,
-//   IconButton,
-//   InputAdornment,
-//   Stack,
-//   TextField,
-//   Typography,
-// } from "@mui/material";
-// import FacebookRoundedIcon from "@mui/icons-material/FacebookRounded";
-// import InstagramIcon from "@mui/icons-material/Instagram";
-// import LinkedInIcon from "@mui/icons-material/LinkedIn";
-// import TwitterIcon from "@mui/icons-material/Twitter";
-// import YouTubeIcon from "@mui/icons-material/YouTube";
-// import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
-// import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
-// import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
-// import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
-// import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-// import SendRoundedIcon from "@mui/icons-material/SendRounded";
-// import { useAppState } from "../hooks/useAppState";
-
-// // ─── Role resolver ────────────────────────────────────────────────────────────
-
-// function resolveRole(user) {
-//   if (!user?.loggedIn) return "guest";
-//   if (user?.role === "admin") return "admin";
-//   if (
-//     user?.isPremium === true ||
-//     user?.role === "premium" ||
-//     user?.subscription === "active"
-//   ) {
-//     return "premium";
-//   }
-//   return "free";
-// }
-
-// // ─── Data ─────────────────────────────────────────────────────────────────────
-
-// const LINKS = {
-//   Platform: [
-//     { label: "Home", href: "/" },
-//     { label: "Properties", href: "/dashboard/properties" },
-//     { label: "Vehicles", href: "/dashboard/vehicles" },
-//     { label: "Pricing", href: "/subscription" },
-//     { label: "How it works", href: "/#how-it-works" },
-//   ],
-//   Account: [
-//     { label: "Login", href: "/login" },
-//     { label: "Register", href: "/register" },
-//     { label: "Dashboard", href: "/dashboard" },
-//     { label: "My Listings", href: "/dashboard/my-listings" },
-//     { label: "Profile", href: "/dashboard/profile" },
-//   ],
-//   Support: [
-//     { label: "Help Centre", href: "#" },
-//     { label: "Report a listing", href: "#" },
-//     { label: "Refund policy", href: "/refund-policy" },
-//     { label: "Terms of service", href: "/terms" },
-//     { label: "Privacy policy", href: "/privacy-policy" },
-//   ],
-// };
-
-// const SOCIALS = [
-//   {
-//     icon: <FacebookRoundedIcon sx={{ fontSize: 18 }} />,
-//     href: "#",
-//     label: "Facebook",
-//   },
-//   {
-//     icon: <InstagramIcon sx={{ fontSize: 18 }} />,
-//     href: "#",
-//     label: "Instagram",
-//   },
-//   {
-//     icon: <TwitterIcon sx={{ fontSize: 18 }} />,
-//     href: "#",
-//     label: "Twitter / X",
-//   },
-//   {
-//     icon: <LinkedInIcon sx={{ fontSize: 18 }} />,
-//     href: "#",
-//     label: "LinkedIn",
-//   },
-//   {
-//     icon: <YouTubeIcon sx={{ fontSize: 18 }} />,
-//     href: "#",
-//     label: "YouTube",
-//   },
-// ];
-
-// const CONTACT = [
-//   {
-//     icon: <EmailRoundedIcon sx={{ fontSize: 14 }} />,
-//     text: "support@easydeal.com",
-//   },
-//   {
-//     icon: <PhoneRoundedIcon sx={{ fontSize: 14 }} />,
-//     text: "+91 98765 43210",
-//   },
-//   {
-//     icon: <PlaceRoundedIcon sx={{ fontSize: 14 }} />,
-//     text: "Bengaluru, Karnataka, IN",
-//   },
-// ];
-
-// // ─── Reusable link component ──────────────────────────────────────────────────
-
-// function FooterLink({ label, href }) {
-//   const isExternal =
-//     href.startsWith("http") ||
-//     href.startsWith("mailto") ||
-//     href.startsWith("tel");
-
-//   const sx = {
-//     fontSize: "0.855rem",
-//     color: "rgba(255,255,255,0.56)",
-//     fontWeight: 500,
-//     textDecoration: "none",
-//     lineHeight: 1,
-//     transition: "color .15s ease",
-//     "&:hover": { color: "#fff" },
-//   };
-
-//   if (isExternal) {
-//     return (
-//       <Box
-//         component="a"
-//         href={href}
-//         target="_blank"
-//         rel="noopener noreferrer"
-//         sx={sx}
-//       >
-//         {label}
-//       </Box>
-//     );
-//   }
-
-//   if (href.startsWith("#")) {
-//     return (
-//       <Box component="a" href={href} sx={sx}>
-//         {label}
-//       </Box>
-//     );
-//   }
-
-//   return (
-//     <Box component={RouterLink} to={href} sx={sx}>
-//       {label}
-//     </Box>
-//   );
-// }
-
-// // ─── Pre-footer CTA strip ─────────────────────────────────────────────────────
-
-// function PreFooterCTA() {
-//   const { user } = useAppState();
-//   const roleKey = resolveRole(user);
-
-//   const isAdmin = roleKey === "admin";
-//   const isPremium = roleKey === "premium";
-//   const isFreeUser = roleKey === "free";
-//   const isGuest = roleKey === "guest";
-
-//   const chipLabel = isAdmin
-//     ? "Administrator Access"
-//     : isPremium
-//     ? "Premium Active"
-//     : "Premium Plan — ₹299";
-
-//   const heading = isAdmin
-//     ? "You already have full marketplace control"
-//     : isPremium
-//     ? "You already have full marketplace access"
-//     : "Unlock the full marketplace experience today";
-
-//   const description = isAdmin
-//     ? "Manage users, listings, reports, and platform activity from your admin dashboard."
-//     : isPremium
-//     ? "Your premium membership is active. You can view prices, contact details, and post your own property and vehicle listings."
-//     : "Free users see images only. Premium members view prices, contact details, and can post their own property and vehicle listings.";
-
-//   const primaryButtonLabel = isAdmin
-//     ? "Go to Admin Panel"
-//     : isPremium
-//     ? "Premium Active"
-//     : "Get Premium — ₹299";
-
-//   const primaryButtonTo = isAdmin
-//     ? "/admin"
-//     : isPremium
-//     ? "/dashboard"
-//     : "/subscription";
-
-//   const secondaryButtonLabel = isAdmin
-//     ? "Open Dashboard"
-//     : isPremium
-//     ? "Open Dashboard"
-//     : isGuest
-//     ? "Register free"
-//     : isFreeUser
-//     ? "Explore Dashboard"
-//     : "Register free";
-
-//   const secondaryButtonTo = isAdmin || isPremium
-//     ? "/dashboard"
-//     : isGuest
-//     ? "/register"
-//     : "/free-dashboard";
-
-//   return (
-//     <Box
-//       sx={{
-//         background:
-//           "linear-gradient(135deg,#0f766e 0%,#0e5a6a 50%,#1e1b4b 100%)",
-//         py: { xs: 6, md: 8 },
-//         position: "relative",
-//         overflow: "hidden",
-//       }}
-//     >
-//       {[
-//         { top: -60, right: 80, size: 220, opacity: 0.09 },
-//         { bottom: -40, left: -40, size: 200, opacity: 0.07 },
-//         { top: "20%", right: "22%", size: 120, opacity: 0.06 },
-//       ].map((b, i) => (
-//         <Box
-//           key={i}
-//           aria-hidden
-//           sx={{
-//             position: "absolute",
-//             width: b.size,
-//             height: b.size,
-//             top: b.top ?? "auto",
-//             bottom: b.bottom ?? "auto",
-//             left: b.left ?? "auto",
-//             right: b.right ?? "auto",
-//             borderRadius: "50%",
-//             background: `rgba(255,255,255,${b.opacity})`,
-//             pointerEvents: "none",
-//           }}
-//         />
-//       ))}
-
-//       <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
-//         <Grid container spacing={4} alignItems="center">
-//           <Grid item xs={12} md={6}>
-//             <Stack spacing={1.5}>
-//               <Stack direction="row" spacing={1} alignItems="center">
-//                 <WorkspacePremiumRoundedIcon
-//                   sx={{ color: "rgba(255,255,255,0.80)", fontSize: 20 }}
-//                 />
-//                 <Chip
-//                   label={chipLabel}
-//                   size="small"
-//                   sx={{
-//                     height: 26,
-//                     borderRadius: "999px",
-//                     fontWeight: 800,
-//                     fontSize: "0.70rem",
-//                     background: "rgba(255,255,255,0.14)",
-//                     color: "#fff",
-//                     border: "1px solid rgba(255,255,255,0.22)",
-//                   }}
-//                 />
-//               </Stack>
-
-//               <Typography
-//                 sx={{
-//                   fontWeight: 900,
-//                   fontSize: { xs: "1.65rem", md: "2rem" },
-//                   color: "#fff",
-//                   lineHeight: 1.1,
-//                   letterSpacing: "-0.035em",
-//                 }}
-//               >
-//                 {heading}
-//               </Typography>
-
-//               <Typography
-//                 sx={{
-//                   color: "rgba(255,255,255,0.65)",
-//                   fontSize: "0.89rem",
-//                   lineHeight: 1.7,
-//                   maxWidth: 420,
-//                 }}
-//               >
-//                 {description}
-//               </Typography>
-
-//               <Stack
-//                 direction={{ xs: "column", sm: "row" }}
-//                 spacing={1.5}
-//                 sx={{ pt: 0.5 }}
-//               >
-//                 <Button
-//                   component={RouterLink}
-//                   to={primaryButtonTo}
-//                   endIcon={!isPremium ? <ArrowForwardRoundedIcon /> : null}
-//                   disabled={isPremium}
-//                   sx={{
-//                     borderRadius: "999px",
-//                     px: 2.8,
-//                     py: 1.2,
-//                     fontWeight: 800,
-//                     fontSize: "0.88rem",
-//                     background: "#fff",
-//                     color: "#0f766e",
-//                     boxShadow: "0 10px 28px rgba(0,0,0,0.16)",
-//                     "&:hover": {
-//                       background: "rgba(255,255,255,0.92)",
-//                       boxShadow: "0 14px 36px rgba(0,0,0,0.22)",
-//                     },
-//                     "&.Mui-disabled": {
-//                       background: "rgba(255,255,255,0.78)",
-//                       color: "#0f766e",
-//                       boxShadow: "none",
-//                     },
-//                   }}
-//                 >
-//                   {primaryButtonLabel}
-//                 </Button>
-
-//                 <Button
-//                   component={RouterLink}
-//                   to={secondaryButtonTo}
-//                   variant="outlined"
-//                   sx={{
-//                     borderRadius: "999px",
-//                     px: 2.5,
-//                     py: 1.1,
-//                     fontWeight: 700,
-//                     fontSize: "0.88rem",
-//                     borderColor: "rgba(255,255,255,0.32)",
-//                     color: "#fff",
-//                     "&:hover": {
-//                       borderColor: "#fff",
-//                       background: "rgba(255,255,255,0.08)",
-//                     },
-//                   }}
-//                 >
-//                   {secondaryButtonLabel}
-//                 </Button>
-//               </Stack>
-//             </Stack>
-//           </Grid>
-
-//           <Grid item xs={12} md={6}>
-//             <Box
-//               sx={{
-//                 p: { xs: 3, sm: "28px 32px" },
-//                 borderRadius: "24px",
-//                 background: "rgba(255,255,255,0.08)",
-//                 border: "1px solid rgba(255,255,255,0.14)",
-//                 backdropFilter: "blur(12px)",
-//               }}
-//             >
-//               <Typography
-//                 sx={{
-//                   fontWeight: 800,
-//                   fontSize: "1rem",
-//                   color: "#fff",
-//                   mb: 0.6,
-//                 }}
-//               >
-//                 Get listing alerts by email
-//               </Typography>
-
-//               <Typography
-//                 sx={{
-//                   fontSize: "0.82rem",
-//                   color: "rgba(255,255,255,0.60)",
-//                   mb: 2,
-//                   lineHeight: 1.6,
-//                 }}
-//               >
-//                 Subscribe to receive curated property and vehicle updates in
-//                 your city.
-//               </Typography>
-
-//               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-//                 <TextField
-//                   fullWidth
-//                   placeholder="your@email.com"
-//                   size="small"
-//                   InputProps={{
-//                     startAdornment: (
-//                       <InputAdornment position="start">
-//                         <EmailRoundedIcon
-//                           sx={{ fontSize: 16, color: "rgba(255,255,255,0.45)" }}
-//                         />
-//                       </InputAdornment>
-//                     ),
-//                   }}
-//                   sx={{
-//                     "& .MuiOutlinedInput-root": {
-//                       borderRadius: "13px",
-//                       background: "rgba(255,255,255,0.10)",
-//                       color: "#fff",
-//                       "& fieldset": { borderColor: "rgba(255,255,255,0.18)" },
-//                       "&:hover fieldset": {
-//                         borderColor: "rgba(255,255,255,0.36)",
-//                       },
-//                       "&.Mui-focused fieldset": {
-//                         borderColor: "rgba(255,255,255,0.55)",
-//                       },
-//                       "& input::placeholder": {
-//                         color: "rgba(255,255,255,0.38)",
-//                       },
-//                     },
-//                   }}
-//                 />
-//                 <Button
-//                   endIcon={
-//                     <SendRoundedIcon sx={{ fontSize: "15px !important" }} />
-//                   }
-//                   sx={{
-//                     flexShrink: 0,
-//                     borderRadius: "13px",
-//                     px: 2.2,
-//                     py: 1,
-//                     fontWeight: 800,
-//                     fontSize: "0.83rem",
-//                     background: "#fff",
-//                     color: "#0f766e",
-//                     whiteSpace: "nowrap",
-//                     "&:hover": { background: "rgba(255,255,255,0.90)" },
-//                   }}
-//                 >
-//                   Subscribe
-//                 </Button>
-//               </Stack>
-
-//               <Typography
-//                 sx={{
-//                   fontSize: "0.69rem",
-//                   color: "rgba(255,255,255,0.38)",
-//                   mt: 1.2,
-//                 }}
-//               >
-//                 No spam. Unsubscribe anytime.
-//               </Typography>
-//             </Box>
-//           </Grid>
-//         </Grid>
-//       </Container>
-//     </Box>
-//   );
-// }
-
-// // ─── Main footer ──────────────────────────────────────────────────────────────
-
-// export default function Footer() {
-//   return (
-//     <>
-//       <PreFooterCTA />
-
-//       <Box
-//         component="footer"
-//         sx={{
-//           background: "#0a0f1e",
-//           color: "#fff",
-//         }}
-//       >
-//         <Container maxWidth="xl" sx={{ pt: { xs: 7, md: 10 }, pb: 0 }}>
-//           <Grid container spacing={{ xs: 4, md: 5 }}>
-//             <Grid item xs={12} md={4}>
-//               <Stack spacing={2.5}>
-//                 <Stack direction="row" alignItems="center">
-//                   <Box
-//                     component="img"
-//                     src="/logo.png"
-//                     alt="Easydeal Logo"
-//                     sx={{
-//                       height: 65,
-//                       width: "auto",
-//                       objectFit: "contain",
-//                     }}
-//                   />
-//                 </Stack>
-
-//                 <Typography
-//                   sx={{
-//                     fontSize: "0.86rem",
-//                     color: "rgba(255,255,255,0.52)",
-//                     lineHeight: 1.78,
-//                     maxWidth: 320,
-//                   }}
-//                 >
-//                   India's subscription-based marketplace for verified property
-//                   and vehicle listings. Premium members unlock prices, contacts,
-//                   and posting access for just ₹299.
-//                 </Typography>
-
-//                 <Stack spacing={1.3}>
-//                   {CONTACT.map((c) => (
-//                     <Stack
-//                       key={c.text}
-//                       direction="row"
-//                       spacing={1.1}
-//                       alignItems="center"
-//                     >
-//                       <Box
-//                         sx={{
-//                           color: "#0f766e",
-//                           display: "flex",
-//                           flexShrink: 0,
-//                         }}
-//                       >
-//                         {c.icon}
-//                       </Box>
-//                       <Typography
-//                         sx={{
-//                           fontSize: "0.82rem",
-//                           color: "rgba(255,255,255,0.52)",
-//                           fontWeight: 500,
-//                         }}
-//                       >
-//                         {c.text}
-//                       </Typography>
-//                     </Stack>
-//                   ))}
-//                 </Stack>
-
-//                 <Stack direction="row" spacing={0.8}>
-//                   {SOCIALS.map((s) => (
-//                     <IconButton
-//                       key={s.label}
-//                       component="a"
-//                       href={s.href}
-//                       target="_blank"
-//                       rel="noopener noreferrer"
-//                       aria-label={s.label}
-//                       size="small"
-//                       sx={{
-//                         width: 36,
-//                         height: 36,
-//                         borderRadius: "11px",
-//                         color: "rgba(255,255,255,0.50)",
-//                         background: "rgba(255,255,255,0.06)",
-//                         border: "1px solid rgba(255,255,255,0.09)",
-//                         transition: "all .17s ease",
-//                         "&:hover": {
-//                           color: "#fff",
-//                           background: "#0f766e",
-//                           border: "1px solid #0f766e",
-//                           transform: "translateY(-2px)",
-//                         },
-//                       }}
-//                     >
-//                       {s.icon}
-//                     </IconButton>
-//                   ))}
-//                 </Stack>
-//               </Stack>
-//             </Grid>
-
-//             {Object.entries(LINKS).map(([heading, items]) => (
-//               <Grid item xs={6} sm={4} md={2} key={heading}>
-//                 <Typography
-//                   sx={{
-//                     fontWeight: 800,
-//                     fontSize: "0.80rem",
-//                     color: "#fff",
-//                     letterSpacing: "0.06em",
-//                     textTransform: "uppercase",
-//                     mb: 2,
-//                   }}
-//                 >
-//                   {heading}
-//                 </Typography>
-//                 <Stack spacing={1.5}>
-//                   {items.map((item) => (
-//                     <FooterLink
-//                       key={item.label}
-//                       label={item.label}
-//                       href={item.href}
-//                     />
-//                   ))}
-//                 </Stack>
-//               </Grid>
-//             ))}
-
-//             <Grid item xs={12} sm={4} md={2}>
-//               <Typography
-//                 sx={{
-//                   fontWeight: 800,
-//                   fontSize: "0.80rem",
-//                   color: "#fff",
-//                   letterSpacing: "0.06em",
-//                   textTransform: "uppercase",
-//                   mb: 2,
-//                 }}
-//               >
-//                 Discover
-//               </Typography>
-//               <Stack spacing={1.5}>
-//                 {[
-//                   { label: "Residential", href: "#" },
-//                   { label: "Commercial", href: "#" },
-//                   { label: "Agricultural", href: "#" },
-//                   { label: "Cars", href: "#" },
-//                   { label: "Bikes", href: "#" },
-//                 ].map((item) => (
-//                   <FooterLink
-//                     key={item.label}
-//                     label={item.label}
-//                     href={item.href}
-//                   />
-//                 ))}
-//               </Stack>
-//             </Grid>
-//           </Grid>
-
-//           <Divider
-//             sx={{
-//               borderColor: "rgba(255,255,255,0.07)",
-//               mt: { xs: 7, md: 10 },
-//             }}
-//           />
-
-//           <Stack
-//             direction={{ xs: "column", sm: "row" }}
-//             justifyContent="space-between"
-//             alignItems={{ xs: "flex-start", sm: "center" }}
-//             spacing={2}
-//             sx={{ py: 3 }}
-//           >
-//             <Typography
-//               sx={{
-//                 fontSize: "0.78rem",
-//                 color: "rgba(255,255,255,0.36)",
-//                 fontWeight: 500,
-//               }}
-//             >
-//               © 2026 TeamCA Solutions Pvt. Ltd. All rights reserved.
-//             </Typography>
-
-//             <Stack direction="row" spacing={2.5} flexWrap="wrap">
-//               {[
-//                 { label: "Privacy Policy", href: "/privacy-policy" },
-//                 { label: "Terms of Service", href: "/terms" },
-//                 { label: "Cookie Policy", href: "#" },
-//                 { label: "Sitemap", href: "#" },
-//               ].map((item) => (
-//                 <FooterLink
-//                   key={item.label}
-//                   label={item.label}
-//                   href={item.href}
-//                 />
-//               ))}
-//             </Stack>
-//           </Stack>
-//         </Container>
-//       </Box>
-//     </>
-//   );
-// }
-
-
-
-
-
-
 // src/components/Footer.jsx
 import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
-  Button,
-  Chip,
   Container,
   Divider,
   Grid,
   IconButton,
-  InputAdornment,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import FacebookRoundedIcon from "@mui/icons-material/FacebookRounded";
 import InstagramIcon from "@mui/icons-material/Instagram";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import TwitterIcon from "@mui/icons-material/Twitter";
-import YouTubeIcon from "@mui/icons-material/YouTube";
+import LanguageIcon from "@mui/icons-material/Language";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
-import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import { useAppState } from "../hooks/useAppState";
-
-
-// ─── Role resolver ────────────────────────────────────────────────────────────
-
-
-function resolveRole(user) {
-  if (!user?.loggedIn) return "guest";
-  if (user?.role === "admin") return "admin";
-  if (
-    user?.isPremium === true ||
-    user?.role === "premium" ||
-    user?.subscription === "active"
-  ) {
-    return "premium";
-  }
-  return "free";
-}
-
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 
 const LINKS = {
-  Platform: [
+  Marketplace: [
     { label: "Home", href: "/" },
-    { label: "Properties", href: "/dashboard/properties" },
-    { label: "Vehicles", href: "/dashboard/vehicles" },
-    { label: "Pricing", href: "/subscription" },
-    { label: "How it works", href: "/#how-it-works" },
+    { label: "Explore Listings", href: "/explore" },
+    { label: "Upgrade Premium", href: "/subscription" },
+    { label: "Become Seller", href: "/become-seller" },
+    { label: "How It Works", href: "/how-it-works" },
   ],
   Account: [
-    { label: "Login", href: "/login" },
-    { label: "Register", href: "/register" },
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Login / Register", href: "/login" },
+    { label: "My Dashboard", href: "/dashboard/home" },
     { label: "My Listings", href: "/dashboard/my-listings" },
-    { label: "Profile", href: "/dashboard/profile" },
+    { label: "Seller Dashboard", href: "/seller/overview" },
   ],
-  Support: [
-    { label: "Help Centre", href: "#" },
-    { label: "Report a listing", href: "#" },
-    { label: "Refund policy", href: "/refund-policy" },
-    { label: "Terms of service", href: "/terms" },
-    { label: "Privacy policy", href: "/privacy-policy" },
+  Company: [
+    { label: "About Us", href: "/about" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "FAQ", href: "/faq" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
   ],
 };
 
-
-const SOCIALS = [
-  {
-    icon: <FacebookRoundedIcon sx={{ fontSize: 18 }} />,
-    href: "#",
-    label: "Facebook",
-  },
-  {
-    icon: <InstagramIcon sx={{ fontSize: 18 }} />,
-    href: "#",
-    label: "Instagram",
-  },
-  {
-    icon: <TwitterIcon sx={{ fontSize: 18 }} />,
-    href: "#",
-    label: "Twitter / X",
-  },
-  {
-    icon: <LinkedInIcon sx={{ fontSize: 18 }} />,
-    href: "#",
-    label: "LinkedIn",
-  },
-  {
-    icon: <YouTubeIcon sx={{ fontSize: 18 }} />,
-    href: "#",
-    label: "YouTube",
-  },
-];
-
-
-const CONTACT = [
-  {
-    icon: <EmailRoundedIcon sx={{ fontSize: 14 }} />,
-    text: "support@easydeal.com",
-  },
-  {
-    icon: <PhoneRoundedIcon sx={{ fontSize: 14 }} />,
-    text: "+91 98765 43210",
-  },
-  {
-    icon: <PlaceRoundedIcon sx={{ fontSize: 14 }} />,
-    text: "Bengaluru, Karnataka, IN",
-  },
-];
-
-
-// ─── Reusable link component ──────────────────────────────────────────────────
-
-
-function FooterLink({ label, href }) {
-  const isExternal =
-    href.startsWith("http") ||
-    href.startsWith("mailto") ||
-    href.startsWith("tel");
-
-
-  const sx = {
-    fontSize: "0.855rem",
-    color: "rgba(255,255,255,0.56)",
-    fontWeight: 500,
-    textDecoration: "none",
-    lineHeight: 1,
-    transition: "color .15s ease",
-    "&:hover": { color: "#fff" },
-  };
-
-
-  if (isExternal) {
-    return (
-      <Box
-        component="a"
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        sx={sx}
-      >
-        {label}
-      </Box>
-    );
-  }
-
-
-  if (href.startsWith("#")) {
-    return (
-      <Box component="a" href={href} sx={sx}>
-        {label}
-      </Box>
-    );
-  }
-
-
-  return (
-    <Box component={RouterLink} to={href} sx={sx}>
-      {label}
-    </Box>
-  );
-}
-
-
-// ─── Pre-footer CTA strip ─────────────────────────────────────────────────────
-
-
-function PreFooterCTA() {
-  const { user } = useAppState();
-  const roleKey = resolveRole(user);
-
-
-  const isAdmin = roleKey === "admin";
-  const isPremium = roleKey === "premium";
-  const isFreeUser = roleKey === "free";
-  const isGuest = roleKey === "guest";
-
-
-  const chipLabel = isAdmin
-    ? "Administrator Access"
-    : isPremium
-    ? "Premium Active"
-    : "Premium Plan — ₹299";
-
-
-  const heading = isAdmin
-    ? "You already have full marketplace control"
-    : isPremium
-    ? "You already have full marketplace access"
-    : "Unlock the full marketplace experience today";
-
-
-  const description = isAdmin
-    ? "Manage users, listings, reports, and platform activity from your admin dashboard."
-    : isPremium
-    ? "Your premium membership is active. You can view prices, contact details, and post your own property and vehicle listings."
-    : "Free users see images only. Premium members view prices, contact details, and can post their own property and vehicle listings.";
-
-
-  const primaryButtonLabel = isAdmin
-    ? "Go to Admin Panel"
-    : isPremium
-    ? "Premium Active"
-    : "Get Premium — ₹299";
-
-
-  const primaryButtonTo = isAdmin
-    ? "/admin"
-    : isPremium
-    ? "/dashboard"
-    : "/subscription";
-
-
-  const secondaryButtonLabel = isAdmin
-    ? "Open Dashboard"
-    : isPremium
-    ? "Open Dashboard"
-    : isGuest
-    ? "Register free"
-    : isFreeUser
-    ? "Explore Dashboard"
-    : "Register free";
-
-
-  const secondaryButtonTo = isAdmin || isPremium
-    ? "/dashboard"
-    : isGuest
-    ? "/register"
-    : "/free-dashboard";
-
-
+export default function Footer() {
   return (
     <Box
+      component="footer"
       sx={{
-        background:
-          "linear-gradient(135deg,#0f766e 0%,#0e5a6a 50%,#1e1b4b 100%)",
-        py: { xs: 6, md: 8 },
-        position: "relative",
-        overflow: "hidden",
+        background: "#0F172A",
+        color: "#F8FAFC",
+        pt: { xs: 6, md: 8 },
+        pb: 4,
+        borderTop: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {[
-        { top: -60, right: 80, size: 220, opacity: 0.09 },
-        { bottom: -40, left: -40, size: 200, opacity: 0.07 },
-        { top: "20%", right: "22%", size: 120, opacity: 0.06 },
-      ].map((b, i) => (
-        <Box
-          key={i}
-          aria-hidden
-          sx={{
-            position: "absolute",
-            width: b.size,
-            height: b.size,
-            top: b.top ?? "auto",
-            bottom: b.bottom ?? "auto",
-            left: b.left ?? "auto",
-            right: b.right ?? "auto",
-            borderRadius: "50%",
-            background: `rgba(255,255,255,${b.opacity})`,
-            pointerEvents: "none",
-          }}
-        />
-      ))}
-
-
-      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
-        <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Stack spacing={1.5}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <WorkspacePremiumRoundedIcon
-                  sx={{ color: "rgba(255,255,255,0.80)", fontSize: 20 }}
-                />
-                <Chip
-                  label={chipLabel}
-                  size="small"
+      <Container maxWidth="lg">
+        <Grid container spacing={4}>
+          {/* Company Brand & Client Profile */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={2.5}>
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Box
                   sx={{
-                    height: 26,
-                    borderRadius: "999px",
-                    fontWeight: 800,
-                    fontSize: "0.70rem",
-                    background: "rgba(255,255,255,0.14)",
-                    color: "#fff",
-                    border: "1px solid rgba(255,255,255,0.22)",
-                  }}
-                />
-              </Stack>
-
-
-              <Typography
-                sx={{
-                  fontWeight: 900,
-                  fontSize: { xs: "1.65rem", md: "2rem" },
-                  color: "#fff",
-                  lineHeight: 1.1,
-                  letterSpacing: "-0.035em",
-                }}
-              >
-                {heading}
-              </Typography>
-
-
-              <Typography
-                sx={{
-                  color: "rgba(255,255,255,0.65)",
-                  fontSize: "0.89rem",
-                  lineHeight: 1.7,
-                  maxWidth: 420,
-                }}
-              >
-                {description}
-              </Typography>
-
-
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                sx={{ pt: 0.5 }}
-              >
-                <Button
-                  component={RouterLink}
-                  to={primaryButtonTo}
-                  endIcon={!isPremium ? <ArrowForwardRoundedIcon /> : null}
-                  disabled={isPremium}
-                  sx={{
-                    borderRadius: "999px",
-                    px: 2.8,
-                    py: 1.2,
-                    fontWeight: 800,
-                    fontSize: "0.88rem",
-                    background: "#fff",
-                    color: "#0f766e",
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.16)",
-                    "&:hover": {
-                      background: "rgba(255,255,255,0.92)",
-                      boxShadow: "0 14px 36px rgba(0,0,0,0.22)",
-                    },
-                    "&.Mui-disabled": {
-                      background: "rgba(255,255,255,0.78)",
-                      color: "#0f766e",
-                      boxShadow: "none",
-                    },
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 1,
+                    padding: "4px 8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {primaryButtonLabel}
-                </Button>
-
-
-                <Button
-                  component={RouterLink}
-                  to={secondaryButtonTo}
-                  variant="outlined"
-                  sx={{
-                    borderRadius: "999px",
-                    px: 2.5,
-                    py: 1.1,
-                    fontWeight: 700,
-                    fontSize: "0.88rem",
-                    borderColor: "rgba(255,255,255,0.32)",
-                    color: "#fff",
-                    "&:hover": {
-                      borderColor: "#fff",
-                      background: "rgba(255,255,255,0.08)",
-                    },
-                  }}
-                >
-                  {secondaryButtonLabel}
-                </Button>
-              </Stack>
-            </Stack>
-          </Grid>
-
-
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                p: { xs: 3, sm: "28px 32px" },
-                borderRadius: "24px",
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                backdropFilter: "blur(12px)",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: "1rem",
-                  color: "#fff",
-                  mb: 0.6,
-                }}
-              >
-                Get listing alerts by email
-              </Typography>
-
-
-              <Typography
-                sx={{
-                  fontSize: "0.82rem",
-                  color: "rgba(255,255,255,0.60)",
-                  mb: 2,
-                  lineHeight: 1.6,
-                }}
-              >
-                Subscribe to receive curated property and vehicle updates in
-                your city.
-              </Typography>
-
-
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-                <TextField
-                  fullWidth
-                  placeholder="your@email.com"
-                  size="small"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailRoundedIcon
-                          sx={{ fontSize: 16, color: "rgba(255,255,255,0.45)" }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "13px",
-                      background: "rgba(255,255,255,0.10)",
-                      color: "#fff",
-                      "& fieldset": { borderColor: "rgba(255,255,255,0.18)" },
-                      "&:hover fieldset": {
-                        borderColor: "rgba(255,255,255,0.36)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "rgba(255,255,255,0.55)",
-                      },
-                      "& input::placeholder": {
-                        color: "rgba(255,255,255,0.38)",
-                      },
-                    },
-                  }}
-                />
-                <Button
-                  endIcon={
-                    <SendRoundedIcon sx={{ fontSize: "15px !important" }} />
-                  }
-                  sx={{
-                    flexShrink: 0,
-                    borderRadius: "13px",
-                    px: 2.2,
-                    py: 1,
-                    fontWeight: 800,
-                    fontSize: "0.83rem",
-                    background: "#fff",
-                    color: "#0f766e",
-                    whiteSpace: "nowrap",
-                    "&:hover": { background: "rgba(255,255,255,0.90)" },
-                  }}
-                >
-                  Subscribe
-                </Button>
-              </Stack>
-
-
-              <Typography
-                sx={{
-                  fontSize: "0.69rem",
-                  color: "rgba(255,255,255,0.38)",
-                  mt: 1.2,
-                }}
-              >
-                No spam. Unsubscribe anytime.
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
-  );
-}
-
-
-// ─── Main footer ──────────────────────────────────────────────────────────────
-
-
-export default function Footer() {
-  const { user } = useAppState();
-  const roleKey = resolveRole(user);
-  const isFreeUser = roleKey === "free" || roleKey === "guest";
-
-
-  return (
-    <>
-      <PreFooterCTA />
-
-
-      <Box
-        component="footer"
-        sx={{
-          background: "#0a0f1e",
-          color: "#fff",
-        }}
-      >
-        <Container maxWidth="xl" sx={{ pt: { xs: 7, md: 10 }, pb: 0 }}>
-          <Grid container spacing={{ xs: 4, md: 5 }}>
-            <Grid item xs={12} md={4}>
-              <Stack spacing={2.5}>
-                <Stack direction="row" alignItems="center">
                   <Box
                     component="img"
-                    src="/logo.png"
-                    alt="Easydeal Logo"
+                    src="/icon.png"
+                    alt="EasyDeal"
                     sx={{
-                      height: 65,
+                      height: 44,
                       width: "auto",
                       objectFit: "contain",
                     }}
                   />
-                </Stack>
-
+                </Box>
 
                 <Typography
-                  sx={{
-                    fontSize: "0.86rem",
-                    color: "rgba(255,255,255,0.52)",
-                    lineHeight: 1.78,
-                    maxWidth: 320,
-                  }}
+                  variant="h6"
+                  fontWeight={900}
+                  letterSpacing="-0.02em"
+                  color="#FFFFFF"
                 >
-                  India's subscription-based marketplace for verified property
-                  and vehicle listings. Premium members unlock prices, contacts,
-                  and posting access for just ₹299.
+                  EasyDeal
                 </Typography>
+              </Stack>
 
+              <Typography
+                variant="body2"
+                sx={{ color: "#94A3B8", lineHeight: 1.7, fontSize: "0.875rem" }}
+              >
+                One unified marketplace for buying and selling property, land,
+                <br></br>
+                and vehicles with premium verification and direct on-ground
+                assistance.
+              </Typography>
 
-                <Stack spacing={1.3}>
-                  {CONTACT.map((c) => (
-                    <Stack
-                      key={c.text}
-                      direction="row"
-                      spacing={1.1}
-                      alignItems="center"
-                    >
-                      <Box
-                        sx={{
-                          color: "#0f766e",
-                          display: "flex",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {c.icon}
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: "0.82rem",
-                          color: "rgba(255,255,255,0.52)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {c.text}
-                      </Typography>
-                    </Stack>
-                  ))}
+              {/* Client Contact Profile */}
+              <Stack spacing={1.2} pt={1}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <PhoneRoundedIcon sx={{ fontSize: 18, color: "#0F766E" }} />
+                  <Box
+                    component="a"
+                    href="tel:8088185203"
+                    sx={{
+                      color: "#CBD5E1",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "#2DD4BF" },
+                    }}
+                  >
+                    Phone: 8088185203
+                  </Box>
                 </Stack>
-
-
-                <Stack direction="row" spacing={0.8}>
-                  {SOCIALS.map((s) => (
-                    <IconButton
-                      key={s.label}
-                      component="a"
-                      href={s.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={s.label}
-                      size="small"
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "11px",
-                        color: "rgba(255,255,255,0.50)",
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.09)",
-                        transition: "all .17s ease",
-                        "&:hover": {
-                          color: "#fff",
-                          background: "#0f766e",
-                          border: "1px solid #0f766e",
-                          transform: "translateY(-2px)",
-                        },
-                      }}
-                    >
-                      {s.icon}
-                    </IconButton>
-                  ))}
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <WhatsAppIcon sx={{ fontSize: 18, color: "#25D366" }} />
+                  <Box
+                    component="a"
+                    href="https://wa.me/918088185203?text=I%20would%20like%20to%20know%20more%20about%20EasyDeal%20Platform"
+                    target="_blank"
+                    rel="noreferrer"
+                    sx={{
+                      color: "#CBD5E1",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "#25D366" },
+                    }}
+                  >
+                    WhatsApp: 8088185203
+                  </Box>
+                </Stack>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <EmailRoundedIcon sx={{ fontSize: 18, color: "#0F766E" }} />
+                  <Box
+                    component="a"
+                    href="mailto:Easydealhelpdesk03@gmail.com"
+                    sx={{
+                      color: "#CBD5E1",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "#2DD4BF" },
+                    }}
+                  >
+                    Easydealhelpdesk03@gmail.com
+                  </Box>
+                </Stack>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <LanguageIcon sx={{ fontSize: 18, color: "#0F766E" }} />
+                  <Box
+                    component="a"
+                    href="https://easydealworld.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    sx={{
+                      color: "#CBD5E1",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "#2DD4BF" },
+                    }}
+                  >
+                    https://easydealworld.com/
+                  </Box>
+                </Stack>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <InstagramIcon sx={{ fontSize: 18, color: "#E4405F" }} />
+                  <Box
+                    component="a"
+                    href="https://www.instagram.com/easydeal_connect?igsi=ZDNlZDc0MzIxNw=="
+                    target="_blank"
+                    rel="noreferrer"
+                    sx={{
+                      color: "#CBD5E1",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      "&:hover": { color: "#E4405F" },
+                    }}
+                  >
+                    @easydeal_connect
+                  </Box>
                 </Stack>
               </Stack>
-            </Grid>
+            </Stack>
+          </Grid>
 
-
-            {Object.entries(LINKS).map(([heading, items]) => (
-              <Grid item xs={6} sm={4} md={2} key={heading}>
-                <Typography
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: "0.80rem",
-                    color: "#fff",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    mb: 2,
-                  }}
-                >
-                  {heading}
-                </Typography>
-                <Stack spacing={1.5}>
-                  {items.map((item) => (
-                    <FooterLink
-                      key={item.label}
-                      label={item.label}
-                      href={item.href}
-                    />
-                  ))}
-                </Stack>
-              </Grid>
-            ))}
-
-
-            <Grid item xs={6} sm={4} md={2}>
+          {/* Navigation Links Columns */}
+          {Object.entries(LINKS).map(([category, links]) => (
+            <Grid item xs={12} sm={4} md={2.6} key={category}>
               <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: "0.80rem",
-                  color: "#fff",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  mb: 2,
-                }}
+                variant="subtitle2"
+                fontWeight={800}
+                color="#FFFFFF"
+                letterSpacing="0.05em"
+                textTransform="uppercase"
+                mb={2}
               >
-                Discover
+                {category}
               </Typography>
-              <Stack spacing={1.5}>
-                {[
-                  { label: "Residential", href: "#" },
-                  { label: "Commercial", href: "#" },
-                  { label: "Agricultural", href: "#" },
-                  { label: "Cars", href: "#" },
-                  { label: "Bikes", href: "#" },
-                ].map((item) => (
-                  <FooterLink
-                    key={item.label}
-                    label={item.label}
-                    href={item.href}
-                  />
+              <Stack spacing={1.2}>
+                {links.map((link) => (
+                  <Box
+                    key={link.label}
+                    component={RouterLink}
+                    to={link.href}
+                    sx={{
+                      color: "#94A3B8",
+                      fontSize: "0.875rem",
+                      textDecoration: "none",
+                      transition: "color 0.2s ease",
+                      "&:hover": { color: "#38BDF8" },
+                    }}
+                  >
+                    {link.label}
+                  </Box>
                 ))}
               </Stack>
             </Grid>
+          ))}
+        </Grid>
 
-
-            <Grid item xs={12} sm={4} md={2}>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: "0.80rem",
-                  color: "#fff",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  mb: 2,
-                }}
-              >
-                Sell on EasyDeal
-              </Typography>
-              <Stack spacing={1.5}>
-                {isFreeUser ? (
-                  <>
-                    <FooterLink
-                      label="Become a Seller"
-                      href="/become-seller"
-                    />
-                    <FooterLink
-                      label="Seller Benefits"
-                      href="/#how-it-works"
-                    />
-                    <FooterLink
-                      label="Pricing Plans"
-                      href="/subscription"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <FooterLink
-                      label="Seller Dashboard"
-                      href="/seller"
-                    />
-                    <FooterLink
-                      label="My Listings"
-                      href="/dashboard/my-listings"
-                    />
-                    <FooterLink
-                      label="Seller Orders"
-                      href="/seller/orders"
-                    />
-                  </>
-                )}
-              </Stack>
-            </Grid>
-          </Grid>
-
-
-          <Divider
-            sx={{
-              borderColor: "rgba(255,255,255,0.07)",
-              mt: { xs: 7, md: 10 },
-            }}
-          />
-
-
+        {/* Direct Assistance Highlight Banner */}
+        <Box
+          sx={{
+            mt: 6,
+            p: 3,
+            borderRadius: "16px",
+            background:
+              "linear-gradient(135deg, rgba(15,118,110,0.15) 0%, rgba(30,41,59,0.8) 100%)",
+            border: "1px solid rgba(15,118,110,0.3)",
+          }}
+        >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
             alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
             spacing={2}
-            sx={{ py: 3 }}
           >
-            <Typography
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <SupportAgentRoundedIcon
+                sx={{ fontSize: 28, color: "#2DD4BF" }}
+              />
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={800}
+                  color="#FFFFFF"
+                >
+                  Need On-Ground Assistance?
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="#94A3B8"
+                  sx={{ fontSize: "0.825rem" }}
+                >
+                  Call/WhatsApp us at 8088185203 or email
+                  Easydealhelpdesk03@gmail.com for direct property & vehicle
+                  inspection support.
+                </Typography>
+              </Box>
+            </Stack>
+            <Box
+              component="a"
+              href="tel:8088185203"
               sx={{
-                fontSize: "0.78rem",
-                color: "rgba(255,255,255,0.36)",
-                fontWeight: 500,
+                px: 3,
+                py: 1,
+                borderRadius: "10px",
+                background: "#0F766E",
+                color: "#FFFFFF",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                "&:hover": { background: "#0D6B63" },
               }}
             >
-              © 2026 TeamCA Solutions Pvt. Ltd. All rights reserved.
-            </Typography>
-
-
-            <Stack direction="row" spacing={2.5} flexWrap="wrap">
-              {[
-                { label: "Privacy Policy", href: "/privacy-policy" },
-                { label: "Terms of Service", href: "/terms" },
-                { label: "Cookie Policy", href: "#" },
-                { label: "Sitemap", href: "#" },
-              ].map((item) => (
-                <FooterLink
-                  key={item.label}
-                  label={item.label}
-                  href={item.href}
-                />
-              ))}
-            </Stack>
+              Call 8088185203
+            </Box>
           </Stack>
-        </Container>
-      </Box>
-    </>
+        </Box>
+
+        <Divider sx={{ my: 4, borderColor: "rgba(255,255,255,0.08)" }} />
+
+        {/* Bottom Developer & Client Copyright Footer */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems="center"
+          spacing={2}
+        >
+          <Typography
+            variant="body2"
+            color="#94A3B8"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}
+          >
+            © 2026 EasyDeal World. All rights reserved.
+          </Typography>
+
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="caption" color="#64748B">
+              Developer Profile:
+            </Typography>
+            <Box
+              component="a"
+              href="https://teamca.in"
+              target="_blank"
+              rel="noreferrer"
+              sx={{
+                color: "#38BDF8",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              teamca.in
+            </Box>
+            <IconButton
+              component="a"
+              href="https://www.instagram.com/teamca_2002?igsi=ZDNlZDc0MzIxNw=="
+              target="_blank"
+              rel="noreferrer"
+              size="small"
+              sx={{ color: "#94A3B8", "&:hover": { color: "#E4405F" } }}
+            >
+              <InstagramIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Stack>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

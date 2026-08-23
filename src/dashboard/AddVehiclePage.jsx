@@ -1,15 +1,15 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
+  Chip,
   Divider,
   Grid,
   Stack,
@@ -18,12 +18,10 @@ import {
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
 import SaveRoundedIcon           from '@mui/icons-material/SaveRounded'
 import ArrowBackRoundedIcon      from '@mui/icons-material/ArrowBackRounded'
-// import { FormInput }             from '../components/FormInput'
-// import { ImageUploader }         from '../components/ImageUploader'
-// import { PremiumLockCard }       from '../components/PremiumLockCard'
 import { useAppState }           from '../hooks/useAppState'
 import { extractError }          from '../utils/mappers'
 import { filesToBase64, revokePreviewUrls } from '../utils/imageUtils'
+import { vehicleService }        from '../services/api'
 import FormInput from '../components/FormInput'
 import ImageUploader from '../components/ImageUploader'
 import PremiumLockCard from '../components/PremiumLockCard'
@@ -62,26 +60,26 @@ function SectionHeader({ icon, title, description }) {
 // Main page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AddVehiclePage() {
-  const { user, addVehicle } = useAppState()
+  const { user, addVehicle, notify } = useAppState()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const editId = searchParams.get('edit')
+  const isEditMode = Boolean(editId)
 
-  // files: array of { file: File, preview: string } — shape set by ImageUploader
   const [files, setFiles]           = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError]     = useState('')
   const [imageError, setImageError] = useState('')
+  const [loadingEdit, setLoadingEdit] = useState(isEditMode)
 
-  // Bug Fix 1 — use a ref so the unmount cleanup always sees the *latest* files,
-  // not the stale closure captured at mount time.
   const filesRef = useRef(files)
   useEffect(() => { filesRef.current = files }, [files])
 
-  // Revoke blob preview URLs only on unmount (empty deps = runs once on unmount)
   useEffect(() => {
     return () => revokePreviewUrls(filesRef.current.map(f => f.preview))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       title:          '',
       vehicleNumber:  '',
@@ -97,16 +95,48 @@ export default function AddVehiclePage() {
     },
   })
 
+  // Load existing vehicle data when in edit mode
+  const loadForEdit = useCallback(async () => {
+    if (!editId) return
+    setLoadingEdit(true)
+    try {
+      const res = await vehicleService.getOne(editId)
+      const v = res?.data ?? res
+      if (v) {
+        reset({
+          title:          v.title         || '',
+          vehicleNumber:  v.vehicle_number || '',
+          brand:          v.brand          || '',
+          model:          v.model          || '',
+          year:           String(v.year    || ''),
+          state:          v.state          || '',
+          rtoCode:        v.rto_code       || '',
+          kmDriven:       String(v.km_driven || ''),
+          location:       v.location       || '',
+          expectedPrice:  String(v.price   || ''),
+          contactNumber:  v.contact        || '',
+        })
+        if (Array.isArray(v.images) && v.images.length > 0) {
+          const existingImgItems = v.images
+            .filter(img => img && typeof img === 'string')
+            .map(img => ({ file: null, preview: img, existing: true }))
+          setFiles(existingImgItems)
+        }
+      }
+    } catch (err) {
+      setApiError('Failed to load vehicle for editing: ' + (err?.message || ''))
+    } finally {
+      setLoadingEdit(false)
+    }
+  }, [editId, reset])
+
+  useEffect(() => {
+    if (isEditMode) loadForEdit()
+  }, [isEditMode, loadForEdit])
+
   // ── Submit handler ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
-    // Bug Fix 6 — block non-premium submit even via keyboard (Enter key)
-    if (user.role != "admin") {
-      notify("Only admins are allowed to post listings", "warning");
-      return;
-    }
-
-    // Bug Fix 3 — require at least one image
-    if (files.length === 0) {
+    if (!isEditMode && files.length === 0) {
       setImageError('Please upload at least one photo of the vehicle.')
       return
     }
@@ -116,17 +146,40 @@ export default function AddVehiclePage() {
     setSubmitting(true)
 
     try {
-      // Bug Fix 2 — safely extract the raw File object.
-      // ImageUploader stores { file: File, preview: string }.
-      // Guard against plain File objects too (defensive).
-      const rawFiles = files
+      const newFiles = files.filter(f => f.file !== null && !f.existing)
+      const existingUrls = files.filter(f => f.existing).map(f => f.preview)
+      const rawFiles = newFiles
         .map(f => (typeof f === 'object' && f.file instanceof File ? f.file : f))
         .filter(Boolean)
-
       const base64Images = await filesToBase64(rawFiles)
+      const allImages = [...existingUrls, ...base64Images]
 
-      const ok = await addVehicle({ ...data, images: base64Images })
-      if (ok) navigate('/admin/listings')
+      const payload = {
+        title:          data.title,
+        brand:          data.brand,
+        model:          data.model,
+        year:           data.year,
+        price:          parseFloat(data.expectedPrice) || 0,
+        contact:        data.contactNumber,
+        location:       data.location,
+        vehicle_number: data.vehicleNumber,
+        rto_code:       data.rtoCode,
+        km_driven:      data.kmDriven,
+        state:          data.state,
+        images:         allImages,
+      }
+
+      if (isEditMode) {
+        await vehicleService.update(editId, payload)
+        notify('Vehicle updated successfully! ✏️', 'success')
+      } else {
+        await addVehicle({ ...data, images: base64Images })
+        notify('Vehicle listing posted!', 'success')
+      }
+
+      if (user?.role === 'admin') navigate('/admin/listings')
+      else if (user?.role === 'seller') navigate('/seller/listings')
+      else navigate('/dashboard/my-listings')
     } catch (err) {
       setApiError(extractError(err))
     } finally {
@@ -134,11 +187,19 @@ export default function AddVehiclePage() {
     }
   }
 
-  // Bug Fix 4 — clear errors when user cancels / navigates away
   const handleCancel = () => {
     setApiError('')
     setImageError('')
     navigate(-1)
+  }
+
+  // Show loading spinner while fetching edit data
+  if (loadingEdit) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        <CircularProgress sx={{ color: '#7C3AED' }} />
+      </Box>
+    )
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -149,22 +210,12 @@ export default function AddVehiclePage() {
       <Stack direction="row" alignItems="center" spacing={2}>
         <Box>
           <Typography variant="h5" fontWeight={900} sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}>
-            Add Vehicle
+            {isEditMode ? '✏️ Edit Vehicle' : 'Add Vehicle'}
           </Typography>
           <Typography sx={{ fontSize: '0.8rem', color: '#94A3B8' }}>
-            List your second-hand vehicle for sale
+            {isEditMode ? 'Update the details for your vehicle listing' : 'List your second-hand vehicle for sale'}
           </Typography>
         </Box>
-
-        {/* <Chip
-          label={user.isPremium ? 'Posting Enabled' : 'Premium Required'}
-          size="small"
-          sx={{
-            ml: 'auto', fontWeight: 700, border: 'none',
-            background: user.isPremium ? '#ECFDF5' : '#FEF3C7',
-            color:      user.isPremium ? '#059669' : '#D97706',
-          }}
-        /> */}
       </Stack>
 
       {/* Premium gate card */}
@@ -408,7 +459,9 @@ export default function AddVehiclePage() {
                 '&.Mui-disabled': { opacity: 0.55, background: '#CBD5E1' },
               }}
             >
-              {submitting ? 'Posting…' : 'Post Vehicle Listing'}
+              {submitting
+                ? isEditMode ? 'Updating…' : 'Posting…'
+                : isEditMode ? '✏️ Update Vehicle' : 'Post Vehicle Listing'}
             </Button>
           </Box>
 

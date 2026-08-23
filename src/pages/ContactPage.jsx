@@ -1,5 +1,6 @@
 // src/pages/ContactPage.jsx
 import { useMemo, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Alert,
   Box,
@@ -49,6 +50,7 @@ const C = {
 
 const SUBJECTS = [
   { value: "general", label: "General Inquiry" },
+  { value: "assistance", label: "Direct On-Ground Buying/Selling Assistance" },
   { value: "premium", label: "Premium Billing" },
   { value: "listing", label: "Listing Issue" },
   { value: "report", label: "Report a User / Listing" },
@@ -60,7 +62,7 @@ const CONTACT_CARDS = [
   {
     icon: <EmailRoundedIcon />,
     label: "Email Us",
-    value: "support@easydeal.com",
+    value: "easydealhelpdesk03@gmail.com",
     sub: "We usually reply within 24 hours.",
     color: "#0369a1",
     iconBg: "rgba(3,105,161,0.10)",
@@ -68,12 +70,14 @@ const CONTACT_CARDS = [
   },
   {
     icon: <PhoneRoundedIcon />,
-    label: "Call Us",
-    value: "+91 98765 43210",
+    label: "Call / WhatsApp",
+    value: "+91 80881 85203",
     sub: "Mon–Sat, 9 AM to 6 PM IST",
     color: "#166534",
     iconBg: "rgba(22,101,52,0.10)",
     bg: "linear-gradient(135deg, rgba(187,247,208,0.55), rgba(254,240,138,0.28))",
+    href: "tel:8088185203",
+    whatsapp: "https://wa.me/918088185203",
   },
   {
     icon: <LocationOnRoundedIcon />,
@@ -493,29 +497,6 @@ export default function ContactPage() {
     return e;
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   const errs = validate();
-  //   if (Object.keys(errs).length) {
-  //     setErrors(errs);
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     setSuccess(true);
-  //     setForm({
-  //       name: "",
-  //       email: "",
-  //       phone: "",
-  //       subject: "general",
-  //       message: "",
-  //     });
-  //   }, 1800);
-  // };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -561,6 +542,15 @@ Looking forward to discussing further. Thank you.`;
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Contact Us | EasyDeal Support</title>
+        <meta name="description" content="Contact EasyDeal support team. Call or WhatsApp +91 8088185203, email Easydealhelpdesk03@gmail.com. We assist with property and vehicle listings, billing, and technical support." />
+        <meta name="keywords" content="EasyDeal contact, EasyDeal support, real estate helpdesk India, property marketplace contact" />
+        <meta property="og:title" content="Contact EasyDeal Support" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://easydealworld.com/contact" />
+      </Helmet>
     <Box sx={{ bgcolor: C.surface, overflowX: "hidden" }}>
       <Box
         sx={{
@@ -1597,5 +1587,6 @@ Looking forward to discussing further. Thank you.`;
         </Alert>
       </Snackbar>
     </Box>
+    </>
   );
 }

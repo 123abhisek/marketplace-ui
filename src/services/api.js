@@ -1,10 +1,5 @@
 // src/services/api.js
 
-// const BASE_URL = (
-//   import.meta.env?.VITE_API_URL ?? "http://localhost:8000"
-// ).replace(/\/$/, "");
-// const API = `${BASE_URL}/v1/api/`;
-
 const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
 
 const BASE_URL =

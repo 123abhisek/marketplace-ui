@@ -14,8 +14,10 @@ import { initiateBooking } from "../services/bookingService";
 export default function BookNowButton({
   propertyId,
   vehicleId,
-  amount ,
-  label = "Book & Pay",
+  property,
+  vehicle,
+  amount,
+  label = "Book a Site Visit",
   disabled = false,
   initialAlreadyBooked = false,
   bookingStatusLoading = false,
@@ -36,11 +38,14 @@ export default function BookNowButton({
     severity: "success",
   });
 
+  const finalPropertyId = propertyId || property?.id || null;
+  const finalVehicleId = vehicleId || vehicle?.id || null;
+
   const isInvalidProps = useMemo(() => {
-    if (!propertyId && !vehicleId) return true;
-    if (propertyId && vehicleId) return true;
+    if (!finalPropertyId && !finalVehicleId) return true;
+    if (finalPropertyId && finalVehicleId) return true;
     return false;
-  }, [propertyId, vehicleId]);
+  }, [finalPropertyId, finalVehicleId]);
 
   const showToast = (message, severity = "success") => {
     setToast({
@@ -64,10 +69,12 @@ export default function BookNowButton({
     try {
       setLoading(true);
 
+      const validAmount = Number(amount || property?.price || vehicle?.price || 1) || 1;
+
       const result = await initiateBooking({
-        property_id: propertyId || null,
-        vehicle_id: vehicleId || null,
-        amount,
+        property_id: finalPropertyId,
+        vehicle_id: finalVehicleId,
+        amount: validAmount,
       });
 
       // First successful booking

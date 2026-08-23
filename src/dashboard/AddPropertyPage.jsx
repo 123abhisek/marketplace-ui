@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -32,6 +32,12 @@ const PROPERTY_TYPES = [
   { label: "Apartment", value: "Apartment" },
   { label: "Villa", value: "Villa" },
   { label: "Land", value: "Land" },
+];
+
+const RENT_LEASE_OPTIONS = [
+  { label: "Rent", value: "Rent" },
+  { label: "Lease", value: "Lease" },
+  { label: "Sale", value: "Sale" },
 ];
 
 // ── Converts to float for fields the backend expects as number ────────────────
@@ -97,16 +103,20 @@ function SectionHeader({ icon, title, description }) {
 export default function AddPropertyPage() {
   const { user, notify } = useAppState();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit"); // present when editing existing listing
+  const isEditMode = Boolean(editId);
 
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [loadingEdit, setLoadingEdit] = useState(isEditMode);
 
   useEffect(() => {
     return () => revokePreviewUrls(files.map((f) => f.preview));
   }, [files]);
 
-  const { control, handleSubmit, watch } = useForm({
+  const { control, handleSubmit, watch, reset } = useForm({
     mode: "onTouched",
     defaultValues: {
       title: "",
@@ -125,6 +135,48 @@ export default function AddPropertyPage() {
     },
   });
 
+  // Load existing property data when in edit mode
+  const loadForEdit = useCallback(async () => {
+    if (!editId) return;
+    setLoadingEdit(true);
+    try {
+      const res = await propertyService.getOne(editId);
+      const p = res?.data ?? res;
+      if (p) {
+        reset({
+          title: p.title || "",
+          propertyType: p.property_type || PROPERTY_TYPES[0].value,
+          location: p.location || "",
+          apartmentName: p.apartment_name || "",
+          floor: String(p.floor || ""),
+          rooms: String(p.rooms || ""),
+          bedrooms: String(p.bedrooms || ""),
+          area: String(p.area || ""),
+          landArea: String(p.land_area || ""),
+          cropsGrown: p.crops_grown || "",
+          expectedPrice: String(p.price || ""),
+          rentLease: p.rent_lease || "",
+          contactNumber: p.contact || "",
+        });
+        // Pre-fill existing images as preview items
+        if (Array.isArray(p.images) && p.images.length > 0) {
+          const existingImgItems = p.images
+            .filter((img) => img && typeof img === "string")
+            .map((img) => ({ file: null, preview: img, existing: true }));
+          setFiles(existingImgItems);
+        }
+      }
+    } catch (err) {
+      setApiError("Failed to load property for editing: " + (err?.message || ""));
+    } finally {
+      setLoadingEdit(false);
+    }
+  }, [editId, reset]);
+
+  useEffect(() => {
+    if (isEditMode) loadForEdit();
+  }, [isEditMode, loadForEdit]);
+
   const propType = watch("propertyType");
   const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(
     propType,
@@ -132,51 +184,47 @@ export default function AddPropertyPage() {
   const isAgri = propType === "Agricultural";
 
   const onSubmit = async (data) => {
-    console.log("Role :-", user.role);
-    if (user.role !== "admin" && user.role !== "seller") {
-      notify("Only admins are allowed to post listings", "warning");
-      return;
-    }
-
-    // if (user.role !== "seller") {
-    //   notify("Only Seller are allowed to post listings", "warning");
-    //   return;
-    // }
-
     setSubmitting(true);
     setApiError("");
 
     try {
-      const base64Images = await filesToBase64(files.map((f) => f.file ?? f));
+      // Separate new file uploads from existing image URLs
+      const newFiles = files.filter((f) => f.file !== null && !f.existing);
+      const existingUrls = files.filter((f) => f.existing).map((f) => f.preview);
+      const base64Images = await filesToBase64(newFiles.map((f) => f.file ?? f));
 
       const payload = {
-        // ── strings ───────────────────────────────────────────────────────────
         title: toStr(data.title),
         property_type: toStr(data.propertyType),
         location: toStr(data.location),
         apartment_name: toStr(data.apartmentName),
         contact: toStr(data.contactNumber),
-        floor: toStr(data.floor), // backend expects string
-        rooms: toStr(data.rooms), // backend expects string
-        bedrooms: toStr(data.bedrooms), // backend expects string
+        floor: toStr(data.floor),
+        rooms: toStr(data.rooms),
+        bedrooms: toStr(data.bedrooms),
         crops_grown: toStr(data.cropsGrown),
         rent_lease: toStr(data.rentLease),
-
-        // ── numbers ───────────────────────────────────────────────────────────
         area: toFloatOrNull(data.area),
         land_area: toFloatOrNull(data.landArea),
         price: toFloatOrNull(data.expectedPrice),
-
-        // ── images ───────────────────────────────────────────────────────────
-        images: base64Images,
+        images: [...existingUrls, ...base64Images],
       };
 
-      await propertyService.add(payload);
-      notify("Property listing posted!");
+      if (isEditMode) {
+        await propertyService.update(editId, payload);
+        notify("Property updated successfully! ✏️", "success");
+      } else {
+        await propertyService.add(payload);
+        notify("Property listing posted!", "success");
+      }
+
+      // Navigate back based on role
       if (user.role === "admin") {
         navigate("/admin/listings");
-      } else {
+      } else if (user.role === "seller") {
         navigate("/seller/listings");
+      } else {
+        navigate("/dashboard/my-listings");
       }
     } catch (err) {
       setApiError(extractError(err));
@@ -184,6 +232,15 @@ export default function AddPropertyPage() {
       setSubmitting(false);
     }
   };
+
+  // Show loading spinner while fetching edit data
+  if (loadingEdit) {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300 }}>
+        <CircularProgress sx={{ color: "#0F766E" }} />
+      </Box>
+    );
+  }
 
   return (
     <Stack spacing={3}>
@@ -195,10 +252,10 @@ export default function AddPropertyPage() {
             fontWeight={900}
             sx={{ color: "#1E293B", letterSpacing: "-0.03em" }}
           >
-            Add Property
+            {isEditMode ? "✏️ Edit Property" : "Add Property"}
           </Typography>
           <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8" }}>
-            Fill in the details to create a new listing
+            {isEditMode ? "Update the details for your listing" : "Fill in the details to create a new listing"}
           </Typography>
         </Box>
       </Stack>
@@ -381,10 +438,12 @@ export default function AddPropertyPage() {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <FormInput
+                  <SelectInput
                     name="rentLease"
-                    label="Rent / Lease Details (optional)"
+                    label="Rent / Lease / Sale"
                     control={control}
+                    options={RENT_LEASE_OPTIONS}
+                    placeholder="Select Rent, Lease or Sale"
                   />
                 </Grid>
               </Grid>
@@ -447,7 +506,9 @@ export default function AddPropertyPage() {
                 "&.Mui-disabled": { opacity: 0.55, background: "#CBD5E1" },
               }}
             >
-              {submitting ? "Posting…" : "Post Property Listing"}
+              {submitting
+                ? isEditMode ? "Updating…" : "Posting…"
+                : isEditMode ? "✏️ Update Property" : "Post Property Listing"}
             </Button>
           </Box>
         </Stack>

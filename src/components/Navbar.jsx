@@ -41,6 +41,7 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
 
 import { useAppState } from "../hooks/useAppState";
 
@@ -159,6 +160,7 @@ function getNavConfig() {
         { label: "FAQ", to: "/faq" },
         //  { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact" },
+        { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       mobile: [
         {
@@ -196,22 +198,33 @@ function getNavConfig() {
           to: "/contact",
           icon: <ContactSupportRoundedIcon fontSize="small" />,
         },
+        { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       dropdown: [
         {
-          label: "Profile",
-          to: "/free-dashboard",
+          label: "Dashboard",
+          to: "/dashboard/home",
           icon: <DashboardRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "My Listings",
+          to: "/dashboard/my-listings",
+          icon: <ListAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Add Property",
+          to: "/dashboard/add-property",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Add Vehicle",
+          to: "/dashboard/add-vehicle",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
         },
         {
           label: "Upgrade Premium",
           to: "/subscription",
           icon: <WorkspacePremiumRoundedIcon fontSize="small" />,
-        },
-        {
-          label: "My Bookings",
-          to: "/free-dashboard/my-bookings",
-          icon: <ArticleOutlinedIcon fontSize="small" />,
         },
       ],
     },
@@ -225,6 +238,7 @@ function getNavConfig() {
         { label: "FAQ", to: "/faq" },
         // { label: "Blog", to: "/blog" },
         { label: "Contact Us", to: "/contact" },
+        { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       mobile: [
         {
@@ -264,6 +278,7 @@ function getNavConfig() {
           to: "/contact",
           icon: <ContactSupportRoundedIcon fontSize="small" />,
         },
+        { label: "Become Seller", to: "/become-seller" },
       ],
       dropdown: [
         {
@@ -346,58 +361,64 @@ function getNavConfig() {
 
     seller: {
       desktop: [
-        { label: "Overview", to: "/seller" },
-        // { label: "Users", to: "/seller/users" },
+        { label: "Overview", to: "/seller/overview" },
+        { label: "Add Property", to: "/seller/properties/add" },
+        { label: "Add Vehicle", to: "/seller/vehicles/add" },
         { label: "Listings", to: "/seller/listings" },
-        { label: "Reports", to: "/seller/reports" },
+        { label: "Orders", to: "/seller/orders" },
       ],
       mobile: [
         {
           label: "Overview",
-          to: "/seller",
+          to: "/seller/overview",
           icon: <SpaceDashboardRoundedIcon fontSize="small" />,
         },
-        // {
-        //   label: "Users",
-        //   to: "/seller/users",
-        //   icon: <PeopleAltRoundedIcon fontSize="small" />,
-        // },
+        {
+          label: "Add Property",
+          to: "/seller/properties/add",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Add Vehicle",
+          to: "/seller/vehicles/add",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
+        },
         {
           label: "Listings",
           to: "/seller/listings",
           icon: <ListAltRoundedIcon fontSize="small" />,
         },
         {
-          label: "Reports",
-          to: "/seller/reports",
-          icon: <BarChartRoundedIcon fontSize="small" />,
-        },
-        {
-          label: "Settings",
-          to: "/seller/settings",
-          icon: <SettingsRoundedIcon fontSize="small" />,
+          label: "Orders",
+          to: "/seller/orders",
+          icon: <ShoppingBagRoundedIcon fontSize="small" />,
         },
       ],
       dropdown: [
         {
-          label: "seller Panel",
-          to: "/seller",
-          icon: <AdminPanelSettingsRoundedIcon fontSize="small" />,
-        },
-        // {
-        //   label: "Manage Users",
-        //   to: "/seller/users",
-        //   icon: <PeopleAltRoundedIcon fontSize="small" />,
-        // },
-        {
-          label: "Reports",
-          to: "/seller/reports",
-          icon: <BarChartRoundedIcon fontSize="small" />,
+          label: "Seller Dashboard",
+          to: "/seller/overview",
+          icon: <SpaceDashboardRoundedIcon fontSize="small" />,
         },
         {
-          label: "Settings",
-          to: "/seller/settings",
-          icon: <SettingsRoundedIcon fontSize="small" />,
+          label: "Add Property",
+          to: "/seller/properties/add",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Add Vehicle",
+          to: "/seller/vehicles/add",
+          icon: <AddCircleOutlineRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "My Listings",
+          to: "/seller/listings",
+          icon: <ListAltRoundedIcon fontSize="small" />,
+        },
+        {
+          label: "Seller Orders",
+          to: "/seller/orders",
+          icon: <ShoppingBagRoundedIcon fontSize="small" />,
         },
       ],
     },
@@ -667,6 +688,30 @@ export default function Navbar() {
           >
             <Logo />
 
+            {/* <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.25}
+              sx={{
+                display: { xs: "none", lg: "flex" },
+                flex: 1,
+                px: 2,
+                overflowX: "auto",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {navCfg.desktop.map((item) => (
+                <NavLink
+                  key={item.to + item.label}
+                  to={item.to}
+                  label={item.label}
+                  active={isActive(item.to)}
+                  sx={{fontWeight:"200"}}
+                />
+              ))}
+            </Stack> */}
+
             <Stack
               direction="row"
               alignItems="center"
@@ -686,6 +731,7 @@ export default function Navbar() {
                   to={item.to}
                   label={item.label}
                   active={isActive(item.to)}
+                  sx={{ fontWeight: 900 }}
                 />
               ))}
             </Stack>
@@ -895,7 +941,7 @@ export default function Navbar() {
                   </Button>
                   <Button
                     component={RouterLink}
-                    to="/admin"
+                    to="/seller"
                     variant="outlined"
                     startIcon={
                       <AdminPanelSettingsRoundedIcon
@@ -910,16 +956,16 @@ export default function Navbar() {
                       fontWeight: 700,
                       fontSize: "0.875rem",
                       borderColor: "rgba(36, 207, 82, 0.25)",
-                      color: C.adminRed,
+                      color: C.primary,
                       "&:hover": {
-                        borderColor: C.adminRed,
-                        bgcolor: C.adminSoft,
+                        borderColor: C.primary,
+                        bgcolor: C.primarySoft,
                       },
                     }}
                   >
                     Seller
                   </Button>
-                  <Tooltip title="Admin account" arrow placement="bottom">
+                  <Tooltip title="Seller account" arrow placement="bottom">
                     <IconButton
                       onClick={(e) => setAnchorEl(e.currentTarget)}
                       size="small"

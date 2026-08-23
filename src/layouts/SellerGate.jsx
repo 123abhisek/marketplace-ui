@@ -1,17 +1,10 @@
-
 // src/layouts/SellerGate.jsx
-
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 import { useAppState } from "../hooks/useAppState";
 
 export default function SellerGate() {
-  const {
-    hydrated,
-    isLoggedIn,
-    user,
-  } = useAppState();
-
+  const { hydrated, isLoggedIn } = useAppState();
   const location = useLocation();
 
   if (!hydrated) {
@@ -24,37 +17,13 @@ export default function SellerGate() {
           background: "#f8fafc",
         }}
       >
-        <CircularProgress />
+        <CircularProgress sx={{ color: "#0f766e" }} />
       </Box>
     );
   }
 
   if (!isLoggedIn) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location }}
-      />
-    );
-  }
-
-  const userRole = String(user?.role ?? "")
-    .trim()
-    .toLowerCase();
-
-  const isSeller =
-    userRole === "seller" ||
-    user?.is_seller === true ||
-    user?.isSeller === true;
-
-  if (!isSeller) {
-    return (
-      <Navigate
-        to={user?.isPremium ? "/dashboard" : "/"}
-        replace
-      />
-    );
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

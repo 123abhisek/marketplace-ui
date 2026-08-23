@@ -1,18 +1,11 @@
 // src/pages/PropertyDetailPage.jsx
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  IconButton,
-  Paper,
-  Stack,
-  Typography,
+  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
+  Container, Grid, IconButton, Paper, Stack, Table, TableBody,
+  TableCell, TableContainer, TableRow, Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
@@ -27,1540 +20,270 @@ import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRou
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import AgricultureRoundedIcon from "@mui/icons-material/AgricultureRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import CelebrationRoundedIcon from "@mui/icons-material/CelebrationRounded";
-import { propertyService, bookingService } from "../services/api";
+import ShareRoundedIcon from "@mui/icons-material/ShareRounded";
+import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
+import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import { propertyService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
 import BookNowButton from "../components/BookNowButton";
 
-const SpecRow = ({ label, value }) =>
+const TEAL = "#0F766E";
+const TEAL_LIGHT = "#F0FDFA";
+const TEAL_DARK = "#0D6B63";
+const PLACEHOLDER = "https://placehold.co/800x500/e2e8f0/94a3b8?text=No+Image";
+
+const SpecChip = ({ icon, label, value }) =>
   value ? (
-    <Stack
-      direction="row"
-      justifyContent="space-between"
-      alignItems="flex-start"
-      sx={{
-        py: 1.3,
-        borderBottom: "1px solid rgba(226,232,240,0.6)",
-        "&:last-child": { borderBottom: "none" },
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: "0.82rem",
-          color: "#64748b",
-          fontWeight: 500,
-          minWidth: 130,
-        }}
-      >
-        {label}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: "0.82rem",
-          color: "#0f172a",
-          fontWeight: 700,
-          textAlign: "right",
-        }}
-      >
-        {value}
-      </Typography>
-    </Stack>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, background: TEAL_LIGHT, borderRadius: "12px", px: 2, py: 1, border: "1px solid rgba(15,118,110,0.12)" }}>
+      <Box sx={{ color: TEAL, fontSize: 20, display: "flex" }}>{icon}</Box>
+      <Box>
+        <Typography sx={{ fontSize: "0.68rem", color: "#64748B", lineHeight: 1 }}>{label}</Typography>
+        <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B", lineHeight: 1.3 }}>{value}</Typography>
+      </Box>
+    </Box>
   ) : null;
 
-function Lightbox({ images, active, onClose, onPrev, onNext }) {
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") onPrev();
-      if (e.key === "ArrowRight") onNext();
-    };
-
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose, onPrev, onNext]);
-
-  return (
-    <Box
-      onClick={onClose}
-      sx={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1400,
-        background: "rgba(10,14,26,0.94)",
-        backdropFilter: "blur(12px)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: "absolute",
-          top: 16,
-          right: 16,
-          color: "#fff",
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(255,255,255,0.06)",
-          "&:hover": { background: "rgba(255,255,255,0.14)" },
-        }}
-      >
-        <CloseRoundedIcon />
-      </IconButton>
-
-      <Typography
-        sx={{
-          position: "absolute",
-          top: 22,
-          left: "50%",
-          transform: "translateX(-50%)",
-          color: "rgba(255,255,255,0.6)",
-          fontSize: "0.8rem",
-          fontWeight: 600,
-        }}
-      >
-        {active + 1} / {images.length}
-      </Typography>
-
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          onPrev();
-        }}
-        sx={{
-          position: "absolute",
-          left: 16,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "#fff",
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(255,255,255,0.06)",
-          "&:hover": { background: "rgba(255,255,255,0.14)" },
-        }}
-      >
-        <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
-      </IconButton>
-
-      <Box
-        component="img"
-        src={images[active]}
-        alt={`Photo ${active + 1}`}
-        onClick={(e) => e.stopPropagation()}
-        sx={{
-          maxWidth: "90vw",
-          maxHeight: "80vh",
-          objectFit: "contain",
-          borderRadius: "12px",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
-        }}
-      />
-
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          onNext();
-        }}
-        sx={{
-          position: "absolute",
-          right: 16,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "#fff",
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(255,255,255,0.06)",
-          "&:hover": { background: "rgba(255,255,255,0.14)" },
-        }}
-      >
-        <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
-      </IconButton>
-
-      <Stack
-        direction="row"
-        spacing={1}
-        onClick={(e) => e.stopPropagation()}
-        sx={{
-          position: "absolute",
-          bottom: 20,
-          maxWidth: "90vw",
-          overflowX: "auto",
-          pb: 0.5,
-          "&::-webkit-scrollbar": { height: 4 },
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgba(255,255,255,0.3)",
-            borderRadius: 2,
-          },
-        }}
-      >
-        {images.map((img, i) => (
-          <Box
-            key={i}
-            component="img"
-            src={img}
-            alt=""
-            sx={{
-              width: 60,
-              height: 44,
-              objectFit: "cover",
-              borderRadius: "7px",
-              flexShrink: 0,
-              border:
-                active === i
-                  ? "2px solid #0d9488"
-                  : "2px solid rgba(255,255,255,0.15)",
-              opacity: active === i ? 1 : 0.55,
-            }}
-          />
-        ))}
-      </Stack>
-    </Box>
-  );
-}
+const FeatureCard = ({ icon, title, desc }) => (
+  <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid #E2E8F0", background: "#FAFBFF", height: "100%" }}>
+    <CardContent sx={{ p: 3 }}>
+      <Box sx={{ width: 44, height: 44, borderRadius: "12px", background: TEAL_LIGHT, color: TEAL, display: "flex", alignItems: "center", justifyContent: "center", mb: 1.5, fontSize: 24 }}>{icon}</Box>
+      <Typography fontWeight={800} sx={{ color: "#1E293B", mb: 0.5 }}>{title}</Typography>
+      <Typography sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.6 }}>{desc}</Typography>
+    </CardContent>
+  </Card>
+);
 
 export default function PropertyDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAppState();
-
+  const { user } = useAppState();
   const [property, setProperty] = useState(null);
-  const [activeImg, setActiveImg] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [alreadyBooked, setAlreadyBooked] = useState(false);
-  const [bookingStatusLoading, setBookingStatusLoading] = useState(true);
-  const [bookingSuccessOpen, setBookingSuccessOpen] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
-  useEffect(() => {
-    if (!bookingSuccessOpen) return;
+  const isPremium = Boolean(
+    user?.isPremium || user?.is_premium || user?.role === "premium" ||
+    user?.role === "admin" || user?.role === "seller"
+  );
 
-    const timer = setTimeout(() => {
-      navigate("/dashboard/my-bookings");
-    }, 3500);
-
-    return () => clearTimeout(timer);
-  }, [bookingSuccessOpen, navigate]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadBookingStatus() {
-      setBookingStatusLoading(true);
-
-      try {
-        const response = await bookingService.myBookings();
-
-        const bookings = Array.isArray(response)
-          ? response
-          : response?.data || response?.bookings || [];
-
-        const hasBooked = bookings.some((booking) => {
-          const listingId = booking?.listing?.id;
-
-          const isSameProperty =
-            booking?.listing?.type === "property" &&
-            String(listingId) === String(id);
-
-          const isActiveBooking = ["PENDING", "CONFIRMED"].includes(
-            String(booking?.status).toUpperCase(),
-          );
-
-          return isSameProperty && isActiveBooking;
-        });
-
-        if (!cancelled) {
-          setAlreadyBooked(hasBooked);
-        }
-      } catch (error) {
-        console.error("Could not load booking status:", error);
-
-        if (!cancelled) {
-          setAlreadyBooked(false);
-        }
-      } finally {
-        if (!cancelled) {
-          setBookingStatusLoading(false);
-        }
-      }
-    }
-
-    if (id) {
-      loadBookingStatus();
-    }
-
-    return () => {
-      cancelled = true;
-    };
+  const fetchProperty = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const res = await propertyService.getOne(id);
+      setProperty(res?.data ?? res);
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Failed to load property.");
+    } finally { setLoading(false); }
   }, [id]);
 
-  // useEffect(() => {
-  //   if (!id) return;
+  useEffect(() => { fetchProperty(); }, [fetchProperty]);
 
-  //   bookingService
-  //     .myBookings()
-  //     .then((bookings) => {
-  //       const bookingList = Array.isArray(bookings)
-  //         ? bookings
-  //         : bookings?.data || bookings?.bookings || [];
+  const images = (() => {
+    const imgs = property?.images || [];
+    const src = Array.isArray(imgs) && imgs.length > 0 ? imgs : [PLACEHOLDER];
+    return src.map(img => (!img || typeof img !== "string") ? PLACEHOLDER : (img.startsWith("data:") || img.startsWith("http")) ? img : PLACEHOLDER);
+  })();
 
-  //       const hasBooked = bookingList.some((booking) => {
-  //         const listingId = booking?.listing?.id;
+  const handleShare = async () => {
+    try { await navigator.share({ title: property?.title, url: window.location.href }); }
+    catch { navigator.clipboard?.writeText(window.location.href); }
+  };
 
-  //         return (
-  //           booking?.listing?.type === "property" &&
-  //           String(listingId) === String(id) &&
-  //           ["PENDING", "CONFIRMED"].includes(
-  //             String(booking?.status).toUpperCase(),
-  //           )
-  //         );
-  //       });
+  if (loading) return <Box sx={{ minHeight: "60vh", display: "grid", placeItems: "center" }}><CircularProgress sx={{ color: TEAL }} size={48} /></Box>;
 
-  //       setAlreadyBooked(hasBooked);
-  //     })
-  //     .catch((err) => {
-  //       console.error("Could not load booking status:", err);
-  //     });
-  // }, [id]);
+  if (error || !property) return (
+    <Container maxWidth="md" sx={{ py: 6 }}>
+      <Alert severity="error" sx={{ borderRadius: "16px", mb: 2 }} action={<Button size="small" onClick={fetchProperty}>Retry</Button>}>{error || "Property not found"}</Alert>
+      <Button startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate(-1)} sx={{ borderRadius: "12px", color: TEAL, fontWeight: 700 }}>Go Back</Button>
+    </Container>
+  );
 
-  useEffect(() => {
-    setLoading(true);
+  const priceStr = property.price ? formatCurrency(property.price) : "Price on Request";
+  const contactNumber = property.contact || property.owner?.phone || "8088185203";
+  const whatsappLink = `https://wa.me/91${contactNumber.replace(/\D/g, "")}?text=${encodeURIComponent("Hi! I am interested in: " + property.title + " on EasyDeal.")}`;
 
-    propertyService
-      .getOne(id)
-      .then((data) => {
-        setProperty(data);
-        setActiveImg(0);
-      })
-      .catch((err) => {
-        if (err?.status === 401) {
-          logout();
-          navigate("/login", { replace: true });
-        } else {
-          setError("Could not load property. Please try again.");
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [id, logout, navigate]);
-
-  const images = property?.images?.filter(Boolean) ?? [];
-  const price = property?.price ?? property?.expected_price;
-
-  const prevImg = useCallback(() => {
-    setActiveImg((i) => (i - 1 + images.length) % images.length);
-  }, [images.length]);
-
-  const nextImg = useCallback(() => {
-    setActiveImg((i) => (i + 1) % images.length);
-  }, [images.length]);
-
-  const isPremium = user?.is_premium || user?.isPremium;
-  const ownerName = property?.owner?.name ?? property?.owner_name ?? "Owner";
-  const ownerPhone = property?.owner?.phone ?? property?.contact ?? null;
-  const premiumMsg = property?.message ?? null;
-  const contactVisible = isPremium || !premiumMsg;
-
-  const ownerId =
-    property?.owner_id ?? property?.owner?.id ?? property?.user_id;
-  const isOwner = Boolean(user?.id && ownerId && user.id === ownerId);
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "60vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress sx={{ color: "#0f766e" }} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ maxWidth: 600, mx: "auto", mt: 8, px: 3 }}>
-        <Alert severity="error" sx={{ borderRadius: "14px" }}>
-          {error}
-        </Alert>
-        <Button
-          onClick={() => navigate(-1)}
-          startIcon={<ArrowBackRoundedIcon />}
-          sx={{ mt: 2, color: "#0f766e" }}
-        >
-          Go back
-        </Button>
-      </Box>
-    );
-  }
-
-  if (!property) return null;
-
-  const listingLabel =
-    property.rent_lease === "Rent" ? "Monthly Rent" : "Expected Price";
+  const detailRows = [
+    { label: "Property Type", value: property.property_type },
+    { label: "Apartment / Project", value: property.apartment_name },
+    { label: "Location", value: property.location },
+    { label: "Floor", value: property.floor },
+    { label: "Total Rooms", value: property.rooms },
+    { label: "Bedrooms", value: property.bedrooms },
+    { label: "Built-up Area", value: property.area ? property.area + " sq.ft" : null },
+    { label: "Land Area", value: property.land_area ? property.land_area + " sq.ft" : null },
+    { label: "Crops Grown", value: property.crops_grown },
+    { label: "Rent / Lease", value: property.rent_lease },
+    { label: "Contact", value: isPremium ? contactNumber : "Premium Only" },
+    { label: "Status", value: property.status || "Active" },
+  ].filter(r => r.value);
 
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc", pb: 10 }}>
-      <Box
-        sx={{
-          background: "#fff",
-          borderBottom: "1px solid rgba(226,232,240,0.9)",
-          px: { xs: 2, sm: 4 },
-          py: 1.5,
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <IconButton
-              onClick={() => navigate("/explore")}
-              size="small"
-              sx={{
-                border: "1px solid rgba(226,232,240,0.9)",
-                borderRadius: "10px",
-              }}
-            >
-              <ArrowBackRoundedIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-
-            <Stack direction="row" spacing={1} alignItems="center">
-              <HomeWorkRoundedIcon sx={{ fontSize: 18, color: "#0f766e" }} />
-              <Typography
-                sx={{ fontWeight: 800, fontSize: "0.95rem", color: "#0f172a" }}
-              >
-                Property Details
-              </Typography>
+    <>
+      <Helmet>
+        <title>{property.title || "Property"} | EasyDeal</title>
+        <meta name="description" content={property.title + " in " + property.location + ". " + priceStr + ". Verified listing on EasyDeal."} />
+        <meta name="keywords" content={property.title + ", " + property.location + ", property for sale, EasyDeal"} />
+        <meta property="og:title" content={property.title + " | EasyDeal"} />
+        <meta name="robots" content="index, follow" />
+      </Helmet>
+      <Box sx={{ background: "#F8FAFC", minHeight: "100vh", pb: 8 }}>
+        {/* Back bar */}
+        <Box sx={{ background: "#fff", borderBottom: "1px solid #E2E8F0", px: { xs: 2, md: 4 }, py: 1.5, position: "sticky", top: 0, zIndex: 10 }}>
+          <Container maxWidth="xl" disableGutters>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Button startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate(-1)} sx={{ borderRadius: "10px", color: "#475569", fontWeight: 700, fontSize: "0.82rem" }}>Back to Listings</Button>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip label="VERIFIED" size="small" sx={{ fontWeight: 700, fontSize: "0.68rem", background: "#ECFDF5", color: "#059669" }} />
+                <Tooltip title="Share">
+                  <IconButton onClick={handleShare} size="small" sx={{ border: "1px solid #E2E8F0", borderRadius: "10px" }}>
+                    <ShareRoundedIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
             </Stack>
-          </Stack>
+          </Container>
+        </Box>
 
-          {property.property_type && (
-            <Chip
-              label={property.property_type}
-              size="small"
-              sx={{
-                height: 24,
-                borderRadius: "7px",
-                fontWeight: 700,
-                fontSize: "0.72rem",
-                background: "rgba(15,118,110,0.08)",
-                color: "#0f766e",
-                border: "1px solid rgba(15,118,110,0.18)",
-              }}
-            />
-          )}
-        </Stack>
-      </Box>
-
-      <Box sx={{ maxWidth: 1160, mx: "auto", px: { xs: 2, sm: 4 }, pt: 4 }}>
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={7}>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: images.length > 1 ? "1.35fr 1fr" : "1fr",
-                gridTemplateRows: "260px 130px",
-                gap: "6px",
-                borderRadius: "18px",
-                overflow: "hidden",
-                mb: 2,
-              }}
-            >
-              <Box
-                onClick={() => images.length > 0 && setLightboxOpen(true)}
-                sx={{
-                  gridRow: "1 / 3",
-                  background: "linear-gradient(145deg,#ede9ff,#f4f3ff)",
-                  cursor: images.length > 0 ? "zoom-in" : "default",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                {images.length > 0 ? (
-                  <Box
-                    component="img"
-                    src={images[activeImg]}
-                    alt={property.title}
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <HomeWorkRoundedIcon
-                      sx={{ fontSize: 80, color: "#a78bfa", opacity: 0.35 }}
-                    />
-                  </Box>
-                )}
-
+        <Container maxWidth="xl" sx={{ pt: { xs: 2, md: 4 }, px: { xs: 2, md: 4 } }}>
+          <Grid container spacing={{ xs: 3, md: 4 }}>
+            {/* LEFT: Gallery */}
+            <Grid item xs={12} md={7}>
+              <Box sx={{ borderRadius: "20px", overflow: "hidden", position: "relative", background: "#1E293B", boxShadow: "0 8px 32px rgba(15,23,42,0.12)", aspectRatio: "16/9" }}>
+                <Box component="img" src={images[activeImg]} alt={property.title} onError={e => { e.target.src = PLACEHOLDER; }} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 {images.length > 1 && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 10,
-                      right: 12,
-                      background: "rgba(15,23,42,0.62)",
-                      backdropFilter: "blur(6px)",
-                      borderRadius: "999px",
-                      px: 1.5,
-                      py: 0.35,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: "#fff",
-                      }}
-                    >
-                      {activeImg + 1} / {images.length}
-                    </Typography>
-                  </Box>
+                  <>
+                    <IconButton onClick={() => setActiveImg(p => (p - 1 + images.length) % images.length)} sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronLeftRoundedIcon /></IconButton>
+                    <IconButton onClick={() => setActiveImg(p => (p + 1) % images.length)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronRightRoundedIcon /></IconButton>
+                  </>
                 )}
+                <Box sx={{ position: "absolute", bottom: 12, left: 12, background: "rgba(15,23,42,0.65)", color: "#fff", borderRadius: "8px", px: 1.5, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}>{activeImg + 1} / {images.length}</Box>
               </Box>
-
-              {images.length > 1 &&
-                [1, 2, 3].map((idx) => {
-                  if (!images[idx] && idx !== 3) return null;
-                  const isLast = idx === 3;
-                  const remaining = images.length - 3;
-
-                  return (
-                    <Box
-                      key={idx}
-                      onClick={() => {
-                        if (images[idx]) {
-                          setActiveImg(idx);
-                          setLightboxOpen(true);
-                        }
-                      }}
-                      sx={{
-                        background: "#e2e8f0",
-                        cursor: "pointer",
-                        position: "relative",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {images[idx] && (
-                        <Box
-                          component="img"
-                          src={images[idx]}
-                          alt=""
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
-                      )}
-
-                      {isLast && remaining > 0 && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            inset: 0,
-                            background: "rgba(15,23,42,0.55)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              color: "#fff",
-                              fontWeight: 800,
-                              fontSize: "1.1rem",
-                            }}
-                          >
-                            +{remaining} more
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  );
-                })}
-            </Box>
-
-            {images.length > 1 && (
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  overflowX: "auto",
-                  pb: 1,
-                  mb: 2,
-                  "&::-webkit-scrollbar": { height: 4 },
-                  "&::-webkit-scrollbar-thumb": {
-                    background: "#cbd5e1",
-                    borderRadius: 2,
-                  },
-                }}
-              >
-                {images.map((img, i) => (
-                  <Box
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    component="img"
-                    src={img}
-                    alt={`Image ${i + 1}`}
-                    sx={{
-                      width: 76,
-                      height: 56,
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                      flexShrink: 0,
-                      cursor: "pointer",
-                      border:
-                        activeImg === i
-                          ? "2.5px solid #0f766e"
-                          : "2.5px solid transparent",
-                      opacity: activeImg === i ? 1 : 0.6,
-                      transition: "all .15s ease",
-                    }}
-                  />
+              {images.length > 1 && (
+                <Stack direction="row" spacing={1.5} sx={{ mt: 2, overflowX: "auto", pb: 0.5 }}>
+                  {images.map((img, idx) => (
+                    <Box key={idx} component="img" src={img} alt={"thumb-" + (idx + 1)} onError={e => { e.target.src = PLACEHOLDER; }} onClick={() => setActiveImg(idx)}
+                      sx={{ width: 80, height: 60, minWidth: 80, borderRadius: "10px", objectFit: "cover", cursor: "pointer", border: activeImg === idx ? "3px solid " + TEAL : "3px solid transparent", opacity: activeImg === idx ? 1 : 0.65, transition: "all 0.15s ease" }} />
+                  ))}
+                </Stack>
+              )}
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 3 }}>
+                {[
+                  { icon: <VerifiedUserRoundedIcon sx={{ fontSize: 18 }} />, text: "EasyDeal Verified" },
+                  { icon: <ShieldRoundedIcon sx={{ fontSize: 18 }} />, text: "Secure Platform" },
+                  { icon: <SupportAgentRoundedIcon sx={{ fontSize: 18 }} />, text: "On-Ground Support" },
+                ].map(b => (
+                  <Box key={b.text} sx={{ display: "flex", alignItems: "center", gap: 0.75, background: TEAL_LIGHT, borderRadius: "10px", px: 2, py: 1, border: "1px solid rgba(15,118,110,0.15)", flex: 1 }}>
+                    <Box sx={{ color: TEAL, display: "flex" }}>{b.icon}</Box>
+                    <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#0F4D48" }}>{b.text}</Typography>
+                  </Box>
                 ))}
               </Stack>
-            )}
+            </Grid>
 
-            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-              <Chip
-                label={property.property_type || "Property"}
-                size="small"
-                icon={<HomeWorkRoundedIcon sx={{ fontSize: 12 }} />}
-                sx={{
-                  height: 24,
-                  borderRadius: "999px",
-                  fontWeight: 800,
-                  fontSize: "0.7rem",
-                  background: "rgba(15,118,110,0.08)",
-                  color: "#0f766e",
-                  border: "1px solid rgba(15,118,110,0.18)",
-                  "& .MuiChip-icon": { color: "#0f766e" },
-                }}
-              />
-              {property.rent_lease && (
-                <Chip
-                  label={property.rent_lease}
-                  size="small"
-                  sx={{
-                    height: 24,
-                    borderRadius: "999px",
-                    fontWeight: 800,
-                    fontSize: "0.7rem",
-                    background: "rgba(14,77,106,0.08)",
-                    color: "#0e4d6a",
-                    border: "1px solid rgba(14,77,106,0.18)",
-                  }}
-                />
-              )}
-            </Stack>
-
-            <Typography
-              sx={{
-                fontWeight: 900,
-                fontSize: "1.5rem",
-                color: "#0f172a",
-                lineHeight: 1.2,
-                letterSpacing: "-0.03em",
-                mb: 0.8,
-                mt: 1,
-              }}
-            >
-              {property.title}
-            </Typography>
-
-            {property.apartment_name && (
-              <Typography
-                sx={{
-                  fontSize: "0.88rem",
-                  color: "#475569",
-                  fontWeight: 600,
-                  mb: 0.5,
-                }}
-              >
-                {property.apartment_name}
-              </Typography>
-            )}
-
-            {property.location && (
-              <Stack
-                direction="row"
-                spacing={0.5}
-                alignItems="center"
-                sx={{ mb: 2.5 }}
-              >
-                <PlaceRoundedIcon sx={{ fontSize: 15, color: "#94a3b8" }} />
-                <Typography
-                  sx={{
-                    fontSize: "0.85rem",
-                    color: "#64748b",
-                    fontWeight: 600,
-                  }}
-                >
-                  {property.location}
-                </Typography>
-              </Stack>
-            )}
-
-            <Divider sx={{ borderColor: "rgba(226,232,240,0.7)", mb: 3 }} />
-
-            <Box
-              sx={{
-                background: "#fff",
-                borderRadius: "18px",
-                border: "1.5px solid rgba(226,232,240,0.9)",
-                overflow: "hidden",
-                mb: 3,
-              }}
-            >
-              <Box
-                sx={{
-                  px: 2.5,
-                  py: 1.8,
-                  background: "#f8fafc",
-                  borderBottom: "1px solid rgba(226,232,240,0.7)",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: "0.92rem",
-                    color: "#0f172a",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  Property Details
-                </Typography>
-              </Box>
-
-              <Box sx={{ px: 2.5, py: 0.5 }}>
-                <SpecRow label="Property Type" value={property.property_type} />
-                <SpecRow label="Listing Type" value={property.rent_lease} />
-                <SpecRow label="Bedrooms" value={property.bedrooms} />
-                <SpecRow label="Rooms" value={property.rooms} />
-                <SpecRow
-                  label="Area"
-                  value={property.area ? `${property.area}` : null}
-                />
-                <SpecRow label="Floor" value={property.floor} />
-                <SpecRow label="Apartment" value={property.apartment_name} />
-                <SpecRow label="Location" value={property.location} />
-                <SpecRow label="City" value={property.city} />
-                <SpecRow label="State" value={property.state} />
-                <SpecRow label="Pincode" value={property.pincode} />
-                <SpecRow
-                  label="Listed On"
-                  value={
-                    property.created_at
-                      ? new Date(property.created_at).toLocaleDateString(
-                          "en-IN",
-                          {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          },
-                        )
-                      : null
-                  }
-                />
-              </Box>
-            </Box>
-
-            {(property.land_area || property.crops_grown) && (
-              <Box
-                sx={{
-                  background: "#fff",
-                  borderRadius: "18px",
-                  border: "1.5px solid rgba(226,232,240,0.9)",
-                  overflow: "hidden",
-                  mb: 3,
-                }}
-              >
-                <Box
-                  sx={{
-                    px: 2.5,
-                    py: 1.8,
-                    background: "#f8fafc",
-                    borderBottom: "1px solid rgba(226,232,240,0.7)",
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <AgricultureRoundedIcon
-                      sx={{ fontSize: 17, color: "#0f766e" }}
-                    />
-                    <Typography
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: "0.92rem",
-                        color: "#0f172a",
-                      }}
-                    >
-                      Agricultural Info
-                    </Typography>
-                  </Stack>
+            {/* RIGHT: Info */}
+            <Grid item xs={12} md={5}>
+              <Box sx={{ position: { md: "sticky" }, top: { md: 80 } }}>
+                <Typography variant="h4" fontWeight={900} sx={{ color: "#0F172A", letterSpacing: "-0.03em", lineHeight: 1.2, mb: 1.5, fontSize: { xs: "1.5rem", md: "2rem" } }}>{property.title}</Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 2.5 }}>
+                  <PlaceRoundedIcon sx={{ fontSize: 20, color: "#EF4444" }} />
+                  <Typography sx={{ fontSize: "0.9rem", color: "#475569", fontWeight: 600 }}>{property.location || "Location not specified"}</Typography>
+                </Stack>
+                <Paper elevation={0} sx={{ borderRadius: "20px", border: "2px solid " + TEAL, p: 3, mb: 3, background: "linear-gradient(135deg, " + TEAL_LIGHT + " 0%, #ECFEFF 100%)" }}>
+                  <Typography sx={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600, mb: 0.5, textTransform: "uppercase", letterSpacing: "0.06em" }}>Listing Price</Typography>
+                  <Typography variant="h3" fontWeight={900} sx={{ color: TEAL, letterSpacing: "-0.04em", lineHeight: 1, mb: 0.75, fontSize: { xs: "2rem", md: "2.5rem" } }}>{isPremium ? priceStr : "Unlock to View"}</Typography>
+                  <Typography sx={{ fontSize: "0.76rem", color: "#64748B" }}>{isPremium ? "Inclusive of all applicable charges" : "Upgrade to Premium to see price and contact"}</Typography>
+                </Paper>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
+                  <SpecChip icon={<BedRoundedIcon />} label="Bedrooms" value={property.bedrooms} />
+                  <SpecChip icon={<SquareFootRoundedIcon />} label="Area" value={property.area ? property.area + " sq.ft" : null} />
+                  <SpecChip icon={<LayersRoundedIcon />} label="Floor" value={property.floor} />
+                  <SpecChip icon={<MeetingRoomRoundedIcon />} label="Rooms" value={property.rooms} />
+                  <SpecChip icon={<AgricultureRoundedIcon />} label="Land" value={property.land_area ? property.land_area + " sq.ft" : null} />
+                  <SpecChip icon={<HomeWorkRoundedIcon />} label="Type" value={property.property_type} />
                 </Box>
-
-                <Box sx={{ px: 2.5, py: 0.5 }}>
-                  <SpecRow label="Land Area" value={property.land_area} />
-                  <SpecRow label="Crops Grown" value={property.crops_grown} />
-                </Box>
-              </Box>
-            )}
-
-            <Box
-              sx={{
-                borderRadius: "14px",
-                px: 2.5,
-                py: 1.8,
-                background: "rgba(15,118,110,0.05)",
-                border: "1.5px solid rgba(15,118,110,0.14)",
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-              }}
-            >
-              <TrendingUpRoundedIcon
-                sx={{ fontSize: 22, color: "#0f766e", flexShrink: 0 }}
-              />
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: "0.87rem",
-                    fontWeight: 800,
-                    color: "#0f766e",
-                  }}
-                >
-                  This property is popular
-                </Typography>
-                <Typography
-                  sx={{ fontSize: "0.8rem", color: "#0f766e", opacity: 0.75 }}
-                >
-                  Added to 12 wishlists this week. Explore virtually!
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={5}>
-            <Box sx={{ position: { md: "sticky" }, top: { md: 70 } }}>
-              <Stack
-                direction="row"
-                spacing={1.2}
-                sx={{ mb: 2.5 }}
-                flexWrap="wrap"
-              >
-                {[
-                  {
-                    icon: <BedRoundedIcon sx={{ fontSize: 16 }} />,
-                    value: property.bedrooms,
-                    label: "Beds",
-                  },
-                  {
-                    icon: <MeetingRoomRoundedIcon sx={{ fontSize: 16 }} />,
-                    value: property.rooms,
-                    label: "Rooms",
-                  },
-                  {
-                    icon: <SquareFootRoundedIcon sx={{ fontSize: 16 }} />,
-                    value: property.area,
-                    label: "Area",
-                  },
-                  {
-                    icon: <LayersRoundedIcon sx={{ fontSize: 16 }} />,
-                    value: property.floor,
-                    label: "Floor",
-                  },
-                ]
-                  .filter((d) => d.value)
-                  .map((d, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        flex: 1,
-                        minWidth: 64,
-                        px: 1.2,
-                        py: 1.4,
-                        borderRadius: "14px",
-                        background: "#fff",
-                        border: "1.5px solid rgba(226,232,240,0.9)",
-                        textAlign: "center",
-                        boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          color: "#0f766e",
-                          display: "flex",
-                          justifyContent: "center",
-                          mb: 0.4,
-                        }}
-                      >
-                        {d.icon}
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: "0.95rem",
-                          fontWeight: 900,
-                          color: "#0f172a",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {d.value}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.62rem",
-                          color: "#94a3b8",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          mt: 0.3,
-                        }}
-                      >
-                        {d.label}
-                      </Typography>
-                    </Box>
-                  ))}
-              </Stack>
-
-              <Paper
-                variant="outlined"
-                sx={{
-                  borderRadius: "22px",
-                  overflow: "hidden",
-                  boxShadow: "0 8px 40px rgba(15,23,42,0.09)",
-                  border: "1.5px solid rgba(226,232,240,0.9)",
-                }}
-              >
-                <Box
-                  sx={{
-                    px: 3,
-                    pt: 3,
-                    pb: 2.5,
-                    borderBottom: "1px solid rgba(226,232,240,0.7)",
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: "0.66rem",
-                          color: "#94a3b8",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
-                          mb: 0.5,
-                        }}
-                      >
-                        {listingLabel}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontWeight: 900,
-                          fontSize: "2.1rem",
-                          color: "#0f172a",
-                          letterSpacing: "-0.05em",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {price ? formatCurrency(price) : "—"}
-                      </Typography>
-                    </Box>
-
-                    <Chip
-                      label={property.rent_lease || "For Sale"}
-                      size="small"
-                      sx={{
-                        height: 24,
-                        borderRadius: "7px",
-                        fontWeight: 800,
-                        fontSize: "0.66rem",
-                        background: "rgba(34,197,94,0.09)",
-                        color: "#16a34a",
-                        border: "1px solid rgba(34,197,94,0.22)",
-                      }}
-                    />
-                  </Stack>
-                </Box>
-
-                <Box
-                  sx={{
-                    px: 3,
-                    py: 2,
-                    borderBottom: "1px solid rgba(226,232,240,0.7)",
-                  }}
-                >
-                  <Grid container rowSpacing={1.5} columnSpacing={2}>
-                    {[
-                      {
-                        icon: <HomeWorkRoundedIcon sx={{ fontSize: 14 }} />,
-                        label: property.property_type || "—",
-                      },
-                      {
-                        icon: <LayersRoundedIcon sx={{ fontSize: 14 }} />,
-                        label: property.floor || "—",
-                      },
-                      {
-                        icon: <SquareFootRoundedIcon sx={{ fontSize: 14 }} />,
-                        label: property.area || "—",
-                      },
-                      {
-                        icon: <PlaceRoundedIcon sx={{ fontSize: 14 }} />,
-                        label: property.location || "—",
-                      },
-                    ].map((d, i) => (
-                      <Grid item xs={6} key={i}>
-                        <Stack
-                          direction="row"
-                          spacing={0.8}
-                          alignItems="center"
-                        >
-                          <Box sx={{ color: "#0f766e", flexShrink: 0 }}>
-                            {d.icon}
-                          </Box>
-                          <Typography
-                            sx={{
-                              fontSize: "0.78rem",
-                              fontWeight: 600,
-                              color: "#475569",
-                            }}
-                          >
-                            {d.label}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-
-                <Box
-                  sx={{
-                    px: 3,
-                    py: 2,
-                    borderBottom: "1px solid rgba(226,232,240,0.7)",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: "0.66rem",
-                      color: "#94a3b8",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.07em",
-                      mb: 1.2,
-                    }}
-                  >
-                    Listed By
-                  </Typography>
-
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
-                    <Box
-                      sx={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: "50%",
-                        flexShrink: 0,
-                        background: "linear-gradient(135deg,#0f766e,#0d9488)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#fff",
-                          fontWeight: 900,
-                          fontSize: "1rem",
-                        }}
-                      >
-                        {ownerName.charAt(0).toUpperCase()}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ flex: 1 }}>
-                      <Stack direction="row" spacing={0.6} alignItems="center">
-                        <Typography
-                          sx={{
-                            fontWeight: 800,
-                            fontSize: "0.9rem",
-                            color: "#0f172a",
-                          }}
-                        >
-                          {ownerName}
-                        </Typography>
-                        <CheckCircleRoundedIcon
-                          sx={{ fontSize: 14, color: "#0f766e" }}
-                        />
-                      </Stack>
-                      <Typography
-                        sx={{
-                          fontSize: "0.73rem",
-                          color: "#64748b",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Verified Owner
-                      </Typography>
-                    </Box>
-
-                    {contactVisible && ownerPhone ? (
-                      <Button
-                        component="a"
-                        href={`tel:${ownerPhone}`}
-                        size="small"
-                        startIcon={<PhoneRoundedIcon sx={{ fontSize: 14 }} />}
-                        variant="outlined"
-                        sx={{
-                          borderRadius: "10px",
-                          px: 1.5,
-                          py: 0.7,
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          textTransform: "none",
-                          borderColor: "rgba(15,118,110,0.35)",
-                          color: "#0f766e",
-                          "&:hover": {
-                            borderColor: "#0f766e",
-                            background: "rgba(15,118,110,0.04)",
-                          },
-                        }}
-                      >
-                        Call
-                      </Button>
-                    ) : (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          px: 1.5,
-                          py: 0.7,
-                          borderRadius: "10px",
-                          background: "rgba(124,58,237,0.07)",
-                          border: "1px solid rgba(124,58,237,0.2)",
-                        }}
-                      >
-                        <LockRoundedIcon
-                          sx={{ fontSize: 13, color: "#7c3aed" }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: "0.72rem",
-                            color: "#7c3aed",
-                            fontWeight: 700,
-                          }}
-                        >
-                          Premium
-                        </Typography>
-                      </Box>
-                    )}
-                  </Stack>
-
-                  {premiumMsg && !isPremium && (
-                    <Box
-                      sx={{
-                        mt: 1.5,
-                        px: 1.8,
-                        py: 1.2,
-                        borderRadius: "10px",
-                        background: "rgba(124,58,237,0.05)",
-                        border: "1px solid rgba(124,58,237,0.18)",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: "0.78rem",
-                          color: "#7c3aed",
-                          fontWeight: 600,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {premiumMsg}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-
-                <Box
-                  sx={{
-                    px: 3,
-                    py: 2,
-                    borderBottom: "1px solid rgba(226,232,240,0.7)",
-                    background: "#fafbfc",
-                  }}
-                >
-                  <Stack spacing={1}>
-                    <Stack direction="row" justifyContent="space-between">
-                      <Typography
-                        sx={{
-                          fontSize: "0.81rem",
-                          color: "#64748b",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Property Price
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.81rem",
-                          color: "#0f172a",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {price ? formatCurrency(price) : "—"}
-                      </Typography>
-                    </Stack>
-
-                    {/* <Stack direction="row" justifyContent="space-between">
-                      <Typography
-                        sx={{
-                          fontSize: "0.81rem",
-                          color: "#64748b",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Booking Fee
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.81rem",
-                          color: "#0f172a",
-                          fontWeight: 700,
-                        }}
-                      >
-                        ₹1
-                      </Typography>
-                    </Stack> */}
-
-                    <Divider
-                      sx={{ my: 0.4, borderColor: "rgba(226,232,240,0.8)" }}
-                    />
-
-                    <Stack direction="row" justifyContent="space-between">
-                      <Typography
-                        sx={{
-                          fontSize: "0.87rem",
-                          color: "#0f172a",
-                          fontWeight: 800,
-                        }}
-                      >
-                        Total Now
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.87rem",
-                          color: "#0f766e",
-                          fontWeight: 900,
-                        }}
-                      >
-                        ₹1
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Box>
-
-                {/* <Box sx={{ px: 3, py: 2.5 }}>
-                  <Stack spacing={1.2}>
+                {isPremium ? (
+                  <Stack spacing={1.5} sx={{ mb: 3 }}>
                     <BookNowButton
-                      propertyId={property.id || id}
-                      amount={100}
-                      label="Book & Pay Now"
-                      disabled={isOwner}
+                      propertyId={id}
+                      property={property}
+                      amount={Number(property.price) || 1}
+                      label="Book a Site Visit"
                       onSuccess={() => navigate("/dashboard/my-bookings")}
                     />
-
-                    {isOwner && (
-                      <Typography
-                        sx={{
-                          textAlign: "center",
-                          fontSize: "0.76rem",
-                          color: "#94a3b8",
-                          fontWeight: 700,
-                        }}
-                      >
-                        You cannot book your own property
-                      </Typography>
-                    )} */}
-
-                <Box sx={{ px: 3, py: 2.5 }}>
-                  <Stack spacing={1.2}>
-                    {isPremium ? (
-                      <BookNowButton
-                        propertyId={property.id || id}
-                        amount={property.price}
-                        label="Book & Pay Now"
-                        disabled={isOwner}
-                        initialAlreadyBooked={alreadyBooked}
-                        bookingStatusLoading={bookingStatusLoading}
-                        // onSuccess={() => navigate("/dashboard/my-bookings")}
-                        onSuccess={() => setBookingSuccessOpen(true)}
-                      />
-                    ) : (
-                      <Button
-                        fullWidth
-                        component={RouterLink}
-                        to="/subscription"
-                        variant="contained"
-                        startIcon={
-                          <WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />
-                        }
-                        sx={{
-                          borderRadius: "12px",
-                          py: 1.35,
-                          fontWeight: 800,
-                          fontSize: "0.9rem",
-                          textTransform: "none",
-                          background: "linear-gradient(135deg,#7c3aed,#6d28d9)",
-                          "&:hover": {
-                            background:
-                              "linear-gradient(135deg,#6d28d9,#5b21b6)",
-                          },
-                        }}
-                      >
-                        Upgrade to Premium to Book
-                      </Button>
-                    )}
-
-                    {isOwner && (
-                      <Typography
-                        sx={{
-                          textAlign: "center",
-                          fontSize: "0.76rem",
-                          color: "#94a3b8",
-                          fontWeight: 700,
-                        }}
-                      >
-                        You cannot book your own property
-                      </Typography>
-                    )}
-
-                    {contactVisible && ownerPhone && (
-                      <Button
-                        fullWidth
-                        component="a"
-                        href={`tel:${ownerPhone}`}
-                        startIcon={<PhoneRoundedIcon sx={{ fontSize: 16 }} />}
-                        variant="outlined"
-                        sx={{
-                          borderRadius: "12px",
-                          py: 1.35,
-                          fontWeight: 700,
-                          fontSize: "0.9rem",
-                          textTransform: "none",
-                          borderColor: "rgba(15,118,110,0.30)",
-                          color: "#0f766e",
-                          "&:hover": {
-                            borderColor: "#0f766e",
-                            background: "rgba(15,118,110,0.04)",
-                          },
-                        }}
-                      >
-                        Call Owner
-                      </Button>
-                    )}
-
-                    {!isPremium && (
-                      <Stack
-                        direction="row"
-                        spacing={0.8}
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{ pt: 0.5 }}
-                      >
-                        <WorkspacePremiumRoundedIcon
-                          sx={{ fontSize: 13, color: "#7c3aed" }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: "0.73rem",
-                            color: "#7c3aed",
-                            fontWeight: 700,
-                          }}
-                        >
-                          <Box
-                            component={RouterLink}
-                            to="/subscription"
-                            sx={{
-                              color: "inherit",
-                              textDecoration: "underline",
-                            }}
-                          >
-                            Upgrade to Premium
-                          </Box>{" "}
-                          to unlock full details
-                        </Typography>
-                      </Stack>
-                    )}
+                    <Button fullWidth variant="outlined" component="a" href={whatsappLink} target="_blank" rel="noopener noreferrer" startIcon={<WhatsAppIcon />} sx={{ borderRadius: "14px", py: 1.5, fontWeight: 800, borderColor: "#22C55E", color: "#16A34A" }}>WhatsApp Seller</Button>
+                    <Button fullWidth variant="text" component="a" href={"tel:" + contactNumber} startIcon={<PhoneRoundedIcon />} sx={{ borderRadius: "14px", py: 1.2, fontWeight: 700, color: "#475569" }}>Call: {contactNumber}</Button>
+                  </Stack>
+                ) : (
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Button fullWidth variant="contained" component={RouterLink} to="/subscription" startIcon={<LockRoundedIcon />} sx={{ borderRadius: "14px", py: 1.8, fontWeight: 900, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 8px 24px rgba(15,118,110,0.32)" }}>Unlock Full Details - Rs.299</Button>
+                    <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", textAlign: "center" }}>Premium includes price, contact and full listing details</Typography>
+                  </Stack>
+                )}
+                <Box sx={{ borderRadius: "16px", background: TEAL_LIGHT, border: "1px solid rgba(15,118,110,0.2)", p: 2.5 }}>
+                  <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                    <CheckCircleRoundedIcon sx={{ color: TEAL, mt: 0.25, flexShrink: 0 }} />
+                    <Box>
+                      <Typography fontWeight={800} sx={{ color: "#0F4D48", fontSize: "0.88rem", mb: 0.5 }}>EasyDeal On-Ground Support Guarantee</Typography>
+                      <Typography sx={{ fontSize: "0.75rem", color: "#0D6B63", lineHeight: 1.6 }}>Our team arranges site visits, document support, and direct buyer-seller coordination.</Typography>
+                    </Box>
                   </Stack>
                 </Box>
-              </Paper>
-            </Box>
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
 
-      {lightboxOpen && images.length > 0 && (
-        <Lightbox
-          images={images}
-          active={activeImg}
-          onClose={() => setLightboxOpen(false)}
-          onPrev={prevImg}
-          onNext={nextImg}
-        />
-      )}
-
-      {bookingSuccessOpen && (
-        <Box
-          sx={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1500,
-            background: "rgba(15, 23, 42, 0.62)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            px: 2,
-          }}
-        >
-          <Box
-            role="dialog"
-            aria-modal="true"
-            sx={{
-              width: "100%",
-              maxWidth: 430,
-              background: "#fff",
-              borderRadius: "24px",
-              px: { xs: 3, sm: 4 },
-              pt: 4,
-              pb: 3.5,
-              textAlign: "center",
-              boxShadow: "0 24px 80px rgba(15, 23, 42, 0.28)",
-              animation: "bookingSuccessIn .28s ease-out",
-              "@keyframes bookingSuccessIn": {
-                from: {
-                  opacity: 0,
-                  transform: "scale(.9) translateY(14px)",
-                },
-                to: {
-                  opacity: 1,
-                  transform: "scale(1) translateY(0)",
-                },
-              },
-            }}
-          >
-            <Box
-              sx={{
-                width: 94,
-                height: 94,
-                mx: "auto",
-                mb: 2.5,
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "linear-gradient(135deg, #34d399, #10b981)",
-                boxShadow: "0 12px 30px rgba(16, 185, 129, .35)",
-              }}
-            >
-              <CheckCircleRoundedIcon
-                sx={{
-                  color: "#fff",
-                  fontSize: 62,
-                }}
-              />
-            </Box>
-
-            <CelebrationRoundedIcon
-              sx={{
-                color: "#0f766e",
-                fontSize: 26,
-                mb: 0.5,
-              }}
-            />
-
-            <Typography
-              sx={{
-                color: "#64748b",
-                fontSize: "1rem",
-                fontWeight: 600,
-                mb: 0.6,
-              }}
-            >
-              Booking
-            </Typography>
-
-            <Typography
-              sx={{
-                color: "#0f172a",
-                fontSize: "1.65rem",
-                fontWeight: 900,
-                letterSpacing: "-0.03em",
-                mb: 1.5,
-              }}
-            >
-              Successfully Booked
-            </Typography>
-
-            <Typography
-              sx={{
-                color: "#64748b",
-                fontSize: "0.88rem",
-                lineHeight: 1.6,
-                mb: 2.5,
-              }}
-            >
-              Your booking has been confirmed successfully.
-              <br />
-              Redirecting to your bookings...
-            </Typography>
-
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => navigate("/dashboard/my-bookings")}
-              sx={{
-                borderRadius: "12px",
-                py: 1.35,
-                fontWeight: 800,
-                textTransform: "none",
-                background: "linear-gradient(135deg, #0f766e, #0d9488)",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #0a5c55, #0f766e)",
-                },
-              }}
-            >
-              View My Bookings
-            </Button>
+          {/* Details Table + Sidebar */}
+          <Box sx={{ mt: 5 }}>
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={8}>
+                <Card elevation={0} sx={{ borderRadius: "20px", border: "1px solid #E2E8F0", overflow: "hidden", position: "relative" }}>
+                  <Box sx={{ p: 3, borderBottom: "1px solid #F1F5F9" }}>
+                    <Typography variant="h6" fontWeight={900} sx={{ color: "#1E293B" }}>Property Details</Typography>
+                    <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8" }}>Full specifications and listing information</Typography>
+                  </Box>
+                  {!isPremium && (
+                    <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.97) 45%, #fff 100%)", zIndex: 2, display: "flex", alignItems: "flex-end", justifyContent: "center", pb: 4 }}>
+                      <Stack alignItems="center" spacing={1.5}>
+                        <Box sx={{ width: 52, height: 52, borderRadius: "16px", background: TEAL_LIGHT, color: TEAL, display: "flex", alignItems: "center", justifyContent: "center" }}><LockRoundedIcon sx={{ fontSize: 26 }} /></Box>
+                        <Typography fontWeight={800} sx={{ color: "#1E293B" }}>Premium Members Only</Typography>
+                        <Typography sx={{ fontSize: "0.8rem", color: "#64748B", textAlign: "center", maxWidth: 300 }}>Unlock complete property details, contact information, and direct seller communication.</Typography>
+                        <Button variant="contained" component={RouterLink} to="/subscription" startIcon={<WorkspacePremiumRoundedIcon />} sx={{ borderRadius: "12px", px: 4, py: 1.25, fontWeight: 800, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 6px 20px rgba(15,118,110,0.3)" }}>Unlock for Rs.299</Button>
+                      </Stack>
+                    </Box>
+                  )}
+                  <TableContainer sx={{ filter: !isPremium ? "blur(3px)" : "none", userSelect: !isPremium ? "none" : "auto" }}>
+                    <Table>
+                      <TableBody>
+                        {detailRows.map((row, i) => (
+                          <TableRow key={row.label} sx={{ background: i % 2 === 0 ? "#FAFBFF" : "#fff", "&:last-child td": { border: 0 } }}>
+                            <TableCell sx={{ fontWeight: 700, color: "#475569", fontSize: "0.82rem", width: "38%", py: 2, borderColor: "#F1F5F9" }}>{row.label}</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: "#1E293B", fontSize: "0.88rem", py: 2, borderColor: "#F1F5F9" }}>{row.value}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Stack spacing={2.5}>
+                  <Typography variant="h6" fontWeight={900} sx={{ color: "#1E293B" }}>Why EasyDeal?</Typography>
+                  <FeatureCard icon={<CheckCircleRoundedIcon />} title="Verified Listings" desc="Every property is reviewed for accuracy and authenticity before going live on EasyDeal." />
+                  <FeatureCard icon={<SupportAgentRoundedIcon />} title="On-Ground Assistance" desc="We arrange physical site visits and documentation support, not just digital connections." />
+                  <FeatureCard icon={<ShieldRoundedIcon />} title="Secure and Private" desc="Seller contacts are revealed only to premium verified members. Your data stays private." />
+                  <FeatureCard icon={<TrendingUpRoundedIcon />} title="Best Prices" desc="Direct owner listings mean no broker fees or hidden charges. Real market pricing always." />
+                </Stack>
+              </Grid>
+            </Grid>
           </Box>
-        </Box>
-      )}
-    </Box>
+        </Container>
+      </Box>
+    </>
   );
 }

@@ -16,6 +16,7 @@ import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 import { useNavigate } from "react-router-dom";
 
 const easyDealBrand = {
@@ -36,70 +37,55 @@ const slides = [
       "Search flats, houses, plots, and rentals across India with a premium marketplace built for smarter discovery and better decisions.",
     primaryLabel: "Explore Properties",
     secondaryLabel: "How It Works",
-    primaryPath: "/properties",
+    primaryPath: "/explore?category=property",
     secondaryId: "how-it-works",
     icon: "property",
   },
   {
     id: 2,
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
-    badge: "EasyDeal Premium",
-    eyebrow: "Post • Promote • Sell",
-    title: "Sell smarter with EasyDeal Premium",
+      "https://i.pinimg.com/1200x/27/e8/54/27e85448f171d24855dbfc841f88c8d4.jpg",
+    badge: "Become a Seller",
+    eyebrow: "Post • Sell • Earn",
+    title: "Start selling property & vehicles today",
     description:
-      "Unlock premium access to publish listings faster, increase visibility, and connect with more buyers and sellers.",
-    primaryLabel: "Get Premium",
-    secondaryLabel: "View Pricing",
-    primaryPath: "/subscription",
-    secondaryId: "pricing",
-    icon: "premium",
+      "List your property, land, or vehicle with ease using one unified account. Connect directly with buyers and manage all your listings from your dashboard.",
+    primaryLabel: "Become a Seller",
+    secondaryLabel: "Post a Listing",
+    primaryPath: "/dashboard/become-seller",
+    secondaryId: "how-it-works",
+    icon: "seller",
   },
   {
     id: 3,
     image:
       "https://i.pinimg.com/1200x/08/31/aa/0831aa47a2daf7104fc4a40e18b299cf.jpg",
-    badge: "EasyDeal Homes",
-    eyebrow: "Buy • Rent • Explore",
-    title: "Find verified properties faster",
+    badge: "EasyDeal Vehicles",
+    eyebrow: "Cars • Bikes • More",
+    title: "Discover trusted vehicles near you",
     description:
-      "Search flats, houses, plots, and rentals across India with a premium marketplace built for smarter discovery and better decisions.",
-    primaryLabel: "Explore Properties",
+      "Browse cars, bikes, and commercial vehicles in one clean marketplace designed for easy comparison and fast discovery.",
+    primaryLabel: "Explore Vehicles",
     secondaryLabel: "How It Works",
-    primaryPath: "/properties",
+    primaryPath: "/explore?category=vehicle",
     secondaryId: "how-it-works",
-    icon: "property",
+    icon: "vehicle",
   },
   {
     id: 4,
     image:
-      "https://i.pinimg.com/1200x/27/e8/54/27e85448f171d24855dbfc841f88c8d4.jpg",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
     badge: "EasyDeal Premium",
-    eyebrow: "Post • Promote • Sell",
+    eyebrow: "Unlock • Connect • Growth",
     title: "Sell smarter with EasyDeal Premium",
     description:
-      "Unlock premium access to publish listings faster, increase visibility, and connect with more buyers and sellers.",
+      "Unlock premium access to view full photos, contact details, and publish listings faster to reach more buyers and sellers.",
     primaryLabel: "Get Premium",
     secondaryLabel: "View Pricing",
     primaryPath: "/subscription",
     secondaryId: "pricing",
     icon: "premium",
   },
-    // {
-  //   id: 2,
-  //   image:
-  //     "https://i.pinimg.com/1200x/4d/6e/31/4d6e313f8d82aa69846ef03f4eb56947.jpg",
-  //   badge: "EasyDeal Vehicles",
-  //   eyebrow: "Cars • Bikes • More",
-  //   title: "Discover trusted vehicles near you",
-  //   description:
-  //     "Browse cars, bikes, and commercial vehicles in one clean marketplace designed for easy comparison and fast discovery.",
-  //   primaryLabel: "Explore Vehicles",
-  //   secondaryLabel: "Featured Listings",
-  //   primaryPath: "/vehicles",
-  //   secondaryId: "featured-listings",
-  //   icon: "vehicle",
-  // },
 ];
 
 export default function CarouselHero() {
@@ -142,6 +128,10 @@ export default function CarouselHero() {
 
     if (type === "vehicle") {
       return <DirectionsCarRoundedIcon />;
+    }
+
+    if (type === "seller") {
+      return <StorefrontRoundedIcon />;
     }
 
     return <WorkspacePremiumRoundedIcon />;
@@ -379,6 +369,7 @@ export default function CarouselHero() {
                 xs: "100%",
                 sm: "auto",
               },
+              flexWrap: "wrap",
             }}
           >
             <Button
@@ -415,6 +406,27 @@ export default function CarouselHero() {
               }}
             >
               {currentSlide.primaryLabel}
+            </Button>
+
+            <Button
+              onClick={() => navigate("/dashboard/become-seller")}
+              startIcon={<StorefrontRoundedIcon />}
+              sx={{
+                minHeight: 56,
+                px: 4,
+                borderRadius: "18px",
+                textTransform: "none",
+                fontWeight: 800,
+                fontSize: "1rem",
+                color: "#ffffff",
+                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                boxShadow: "0 12px 30px rgba(245,158,11,0.35)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                },
+              }}
+            >
+              Become a Seller
             </Button>
 
             <Button

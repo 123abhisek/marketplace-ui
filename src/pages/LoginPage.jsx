@@ -225,9 +225,10 @@ const btnSx = {
 
 function getRedirectPath(normalizedUser) {
   if (!normalizedUser?.loggedIn) return "/login";
-  if (normalizedUser?.role === "admin") return "/admin";
-  if (normalizedUser?.isPremium) return "/";
-  return "/";
+  const role = String(normalizedUser?.role || "free").toLowerCase();
+  if (role === "admin") return "/admin/overview";
+  if (role === "seller") return "/seller/overview";
+  return "/dashboard/home";
 }
 
 export default function LoginPage() {
@@ -261,15 +262,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const normalizedUser = await login({
+      await login({
         email: data.email,
         password: data.password,
       });
-
-      const redirectTo =
-        location.state?.from?.pathname || getRedirectPath(normalizedUser);
-
-      navigate(redirectTo, { replace: true });
+      // navigation is handled inside useAppState.login() based on user role
     } catch (err) {
       setApiErr(extractError(err));
     } finally {

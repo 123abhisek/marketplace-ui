@@ -260,147 +260,6 @@ function StatusChip({ status }) {
   );
 }
 
-// function OrderCard({ order }) {
-//   return (
-//     <Card sx={cardSx}>
-//       <CardContent sx={{ p: 2.1 }}>
-//         <Stack spacing={1.5}>
-//           <Stack
-//             direction={{ xs: "column", sm: "row" }}
-//             spacing={1.5}
-//             justifyContent="space-between"
-//             alignItems={{ xs: "flex-start", sm: "center" }}
-//           >
-//             <Stack direction="row" spacing={1.4} alignItems="center" sx={{ minWidth: 0 }}>
-//               <Box
-//                 sx={{
-//                   width: 64,
-//                   height: 64,
-//                   borderRadius: "16px",
-//                   background: UI.surfaceSoft,
-//                   border: `1px solid ${UI.border}`,
-//                   display: "grid",
-//                   placeItems: "center",
-//                   color: UI.primary,
-//                   flexShrink: 0,
-//                 }}
-//               >
-//                 {order.category === "Property" ? (
-//                   <HomeWorkRoundedIcon sx={{ fontSize: 28 }} />
-//                 ) : (
-//                   <DirectionsCarRoundedIcon sx={{ fontSize: 28 }} />
-//                 )}
-//               </Box>
-
-//               <Box sx={{ minWidth: 0 }}>
-//                 <Typography
-//                   sx={{
-//                     fontSize: "0.95rem",
-//                     color: UI.text,
-//                     fontWeight: 800,
-//                     lineHeight: 1.35,
-//                   }}
-//                 >
-//                   {order.name}
-//                 </Typography>
-//                 <Typography sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}>
-//                   Order ID: {order.id} · {order.category}
-//                 </Typography>
-//                 <Typography sx={{ mt: 0.35, fontSize: "0.78rem", color: UI.muted }}>
-//                   Delivery: {order.deliveryDate}
-//                 </Typography>
-//               </Box>
-//             </Stack>
-
-//             <Stack alignItems={{ xs: "flex-start", sm: "flex-end" }} spacing={0.8}>
-//               <StatusChip status={order.status} />
-//               <Typography sx={{ fontSize: "0.95rem", fontWeight: 900, color: UI.text }}>
-//                 ₹{order.price}
-//               </Typography>
-//             </Stack>
-//           </Stack>
-
-//           <Stack
-//             direction={{ xs: "column", sm: "row" }}
-//             spacing={1}
-//             justifyContent="space-between"
-//             alignItems={{ xs: "stretch", sm: "center" }}
-//           >
-//             <LinearProgress
-//               variant="determinate"
-//               value={order.progress}
-//               sx={{
-//                 flex: 1,
-//                 height: 8,
-//                 borderRadius: 999,
-//                 backgroundColor: UI.surfaceSoft,
-//                 "& .MuiLinearProgress-bar": {
-//                   borderRadius: 999,
-//                   backgroundColor:
-//                     order.status === "Delivered"
-//                       ? UI.success
-//                       : order.status === "Shipped"
-//                       ? UI.blue
-//                       : order.status === "Pending"
-//                       ? UI.warning
-//                       : UI.purple,
-//                 },
-//               }}
-//             />
-
-//             <Stack direction="row" spacing={1} flexWrap="wrap">
-//               <Button
-//                 size="small"
-//                 sx={{
-//                   minHeight: 36,
-//                   px: 1.6,
-//                   borderRadius: "12px",
-//                   textTransform: "none",
-//                   fontWeight: 800,
-//                   color: UI.text,
-//                   background: UI.surfaceSoft,
-//                   border: `1px solid ${UI.border}`,
-//                 }}
-//               >
-//                 Track
-//               </Button>
-//               <Button
-//                 size="small"
-//                 sx={{
-//                   minHeight: 36,
-//                   px: 1.6,
-//                   borderRadius: "12px",
-//                   textTransform: "none",
-//                   fontWeight: 800,
-//                   color: UI.text,
-//                   background: "#fff",
-//                   border: `1px solid ${UI.border}`,
-//                 }}
-//               >
-//                 Invoice
-//               </Button>
-//               <Button
-//                 size="small"
-//                 sx={{
-//                   minHeight: 36,
-//                   px: 1.6,
-//                   borderRadius: "12px",
-//                   textTransform: "none",
-//                   fontWeight: 800,
-//                   color: UI.primary,
-//                   background: UI.primarySoft,
-//                 }}
-//               >
-//                 Buy Again
-//               </Button>
-//             </Stack>
-//           </Stack>
-//         </Stack>
-//       </CardContent>
-//     </Card>
-//   );
-// }
-
 function OrderCard({ order }) {
   return (
     <Card sx={cardSx}>
@@ -1003,36 +862,6 @@ export default function PremiumDashboard() {
     return parts[0]?.[0]?.toUpperCase() || "U";
   }, [user?.name]);
 
-  // const orders = [
-  //   {
-  //     id: "ED-20481",
-  //     name: "2BHK Apartment Booking Lead",
-  //     category: "Property",
-  //     price: "12,500",
-  //     deliveryDate: "18 May 2026",
-  //     status: "Shipped",
-  //     progress: 72,
-  //   },
-  //   {
-  //     id: "ED-20479",
-  //     name: "Used Hyundai i20 Seller Package",
-  //     category: "Vehicle",
-  //     price: "8,999",
-  //     deliveryDate: "Delivered on 13 May 2026",
-  //     status: "Delivered",
-  //     progress: 100,
-  //   },
-  //   {
-  //     id: "ED-20465",
-  //     name: "Premium Seller Visibility Upgrade",
-  //     category: "Property",
-  //     price: "299",
-  //     deliveryDate: "Awaiting activation",
-  //     status: "Pending",
-  //     progress: 36,
-  //   },
-  // ];
-
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
@@ -1210,57 +1039,7 @@ export default function PremiumDashboard() {
                       boxShadow: "none",
                     }}
                   >
-                    {/* <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Stack direction="row" spacing={1.1} alignItems="center">
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <MenuRoundedIcon sx={{ fontSize: 20, color: UI.text }} />
-                        </IconButton>
-                        <Typography
-                          sx={{
-                            fontSize: "1rem",
-                            fontWeight: 900,
-                            color: UI.text,
-                            letterSpacing: "-0.03em",
-                          }}
-                        >
-                          My Account
-                        </Typography>
-                      </Stack> 
-
-                       <Stack direction="row" spacing={1}>
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <SearchRoundedIcon sx={{ fontSize: 18, color: UI.muted }} />
-                        </IconButton>
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <NotificationsRoundedIcon sx={{ fontSize: 18, color: UI.muted }} />
-                        </IconButton>
-                      </Stack>
-                    </Stack> */}
-                  </Box>
+                   </Box>
                 ) : (
                   <Box
                     sx={{
@@ -1697,13 +1476,6 @@ export default function PremiumDashboard() {
                               View all orders
                             </Button>
                           </Stack>
-
-                          {/* <Stack spacing={1.4}>
-                            {orders.map((order) => (
-                              <OrderCard key={order.id} order={order} />
-                            ))}
-                          </Stack> */}
-
                           <Stack spacing={1.4}>
                             {ordersLoading ? (
                               <Card sx={cardSx}>

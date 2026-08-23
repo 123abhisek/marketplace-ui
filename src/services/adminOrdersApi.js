@@ -5,7 +5,16 @@ const adminOrdersService = {
   /**
    * Get all bookings/orders
    */
-  getAll: async (skip = 0, limit = 50) => {
+  getAll: async (skip = 0, limit = 100) => {
+    return api.get("admin/all-bookings", {
+      params: {
+        skip,
+        limit,
+      },
+    });
+  },
+
+  getAllBookings: async (skip = 0, limit = 100) => {
     return api.get("admin/all-bookings", {
       params: {
         skip,

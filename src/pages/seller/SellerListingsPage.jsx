@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -34,6 +34,8 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { useLocation } from "react-router-dom";
+import { propertyService, vehicleService } from "../../services/api";
+import api from "../../services/api";
 import { useAppState } from "../../hooks/useAppState";
 
 const PROPERTY_TYPES = [
@@ -319,19 +321,45 @@ function ListingCard({ item, onEdit, onDelete }) {
               backdropFilter: "blur(10px)",
             }}
           />
-          <Chip
-            icon={<CheckCircleRoundedIcon sx={{ fontSize: 14 }} />}
-            label="Active"
-            size="small"
-            sx={{
-              height: 28,
-              borderRadius: "999px",
-              fontWeight: 800,
-              color: UI.success,
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(10px)",
-            }}
-          />
+          {String(item.status || "").toLowerCase() === "pending" ? (
+            <Chip
+              label="Pending Approval"
+              size="small"
+              sx={{
+                height: 28,
+                borderRadius: "999px",
+                fontWeight: 800,
+                color: "#B45309",
+                background: "#FEF3C7",
+              }}
+            />
+          ) : String(item.status || "").toLowerCase() === "rejected" ? (
+            <Chip
+              label="Rejected"
+              size="small"
+              sx={{
+                height: 28,
+                borderRadius: "999px",
+                fontWeight: 800,
+                color: "#DC2626",
+                background: "#FEE2E2",
+              }}
+            />
+          ) : (
+            <Chip
+              icon={<CheckCircleRoundedIcon sx={{ fontSize: 14 }} />}
+              label="Approved"
+              size="small"
+              sx={{
+                height: 28,
+                borderRadius: "999px",
+                fontWeight: 800,
+                color: UI.success,
+                background: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(10px)",
+              }}
+            />
+          )}
         </Box>
 
         <Box
@@ -857,15 +885,15 @@ function EditDialogContent({
 export default function SellerListingsPage() {
   const location = useLocation();
   const {
-    properties = [],
-    vehicles = [],
-    refreshListings,
     updateVehicle,
     updateProperty,
     deleteVehicle,
     deleteProperty,
   } = useAppState();
 
+  const [sellerProps, setSellerProps] = useState([]);
+  const [sellerVehs, setSellerVehs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [localItems, setLocalItems] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -879,18 +907,53 @@ export default function SellerListingsPage() {
   const [message, setMessage] = useState("");
   const [deleteSaving, setDeleteSaving] = useState(false);
 
+  const fetchSellerListings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [pRes, vRes] = await Promise.allSettled([
+        propertyService.myListings(),
+        vehicleService.myListings(),
+      ]);
+
+      let pList = pRes.status === "fulfilled" && Array.isArray(pRes.value) ? pRes.value : [];
+      let vList = vRes.status === "fulfilled" && Array.isArray(vRes.value) ? vRes.value : [];
+
+      if (pList.length === 0) {
+        try {
+          const sProps = await api.get("seller/properties");
+          if (Array.isArray(sProps) && sProps.length > 0) pList = sProps;
+        } catch {}
+      }
+      if (vList.length === 0) {
+        try {
+          const sVehs = await api.get("seller/vehicles");
+          if (Array.isArray(sVehs) && sVehs.length > 0) vList = sVehs;
+        } catch {}
+      }
+
+      setSellerProps(pList);
+      setSellerVehs(vList);
+    } catch (err) {
+      console.error("Failed to load seller listings:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    refreshListings?.();
-  }, [location.pathname, refreshListings]);
+    fetchSellerListings();
+  }, [location.pathname, fetchSellerListings]);
 
   useEffect(() => {
     const next = [
-      ...properties.map((item, i) => ({
+      ...sellerProps.map((item, i) => ({
         id: item.id || item._id || `p-${i}`,
         type: "Property",
         title: item.title || "Untitled property",
         location: item.location || "Unknown location",
         price: String(item.price ?? ""),
+        status: item.status || "pending",
+        rejectionReason: item.rejection_reason || item.rejectionReason || "",
         contact: item.contact || "",
         propertyType: item.property_type || "",
         apartmentName: item.apartment_name || "",
@@ -907,12 +970,14 @@ export default function SellerListingsPage() {
         owner: item.owner || null,
         raw: item,
       })),
-      ...vehicles.map((item, i) => ({
+      ...sellerVehs.map((item, i) => ({
         id: item.id || item._id || `v-${i}`,
         type: "Vehicle",
         title: item.title || "Untitled vehicle",
         location: item.location || "Unknown location",
         price: String(item.price ?? ""),
+        status: item.status || "pending",
+        rejectionReason: item.rejection_reason || item.rejectionReason || "",
         contact: item.contact || "",
         vehicleNumber: item.vehicle_number || "",
         brand: item.brand || "",
@@ -929,7 +994,7 @@ export default function SellerListingsPage() {
       })),
     ];
     setLocalItems(next);
-  }, [properties, vehicles]);
+  }, [sellerProps, sellerVehs]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

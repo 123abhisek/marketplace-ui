@@ -272,12 +272,24 @@ export function AppProvider({ children }) {
 
         notify(`Welcome back, ${normalizedUser.name || email}!`);
         await refreshListings();
+
+        // Role-based dashboard redirect
+        const role = String(normalizedUser.role || "free").toLowerCase();
+        if (role === "admin") {
+          navigate("/admin/overview", { replace: true });
+        } else if (role === "seller") {
+          navigate("/seller/overview", { replace: true });
+        } else {
+          // free and premium both go to dashboard/home
+          navigate("/dashboard/home", { replace: true });
+        }
+
         return normalizedUser;
       } finally {
         setLoading(false);
       }
     },
-    [notify, refreshListings],
+    [notify, refreshListings, navigate],
   );
 
   const register = useCallback(
@@ -352,78 +364,50 @@ export function AppProvider({ children }) {
 
   const addVehicle = useCallback(
     async (payload) => {
-      if (user.role !== "admin" && user.role !== "seller") {
-        notify(
-          "Only admins or sellers can update property listings",
-          "warning",
-        );
-        return false;
-      }
-
       const newVehicle = await vehicleService.add(payload);
       const normalized = normalizeVehicle(newVehicle?.data ?? newVehicle, 0);
       setVehicles((prev) => [normalized, ...prev]);
-      notify("Vehicle listing posted!");
+      notify("Vehicle listing submitted for approval!");
       return true;
     },
-    [user.role, notify],
+    [notify],
   );
 
   const updateVehicle = useCallback(
     async (id, payload) => {
-      if (user.role !== "admin" && user.role !== "seller") {
-        notify(
-          "Only admins or sellers can update property listings",
-          "warning",
-        );
-        return false;
-      }
-
       const newVehicle = await vehicleService.update(id, payload);
       const normalized = normalizeVehicle(newVehicle?.data ?? newVehicle, 0);
-      setVehicles((prev) => [normalized, ...prev]);
-      notify("Vehicle listing posted!");
+      setVehicles((prev) =>
+        prev.map((v) => (v.id === id ? normalized : v)),
+      );
+      notify("Vehicle listing updated!");
       return true;
     },
-    [user.role, notify],
+    [notify],
   );
 
   const addProperty = useCallback(
     async (payload) => {
-      if (user.role !== "admin" && user.role !== "seller") {
-        notify(
-          "Only admins or sellers can update property listings",
-          "warning",
-        );
-        return false;
-      }
-
       const newProperty = await propertyService.add(payload);
       const normalized = normalizeProperty(newProperty?.data ?? newProperty, 0);
       setProperties((prev) => [normalized, ...prev]);
-      notify("Property listing posted!");
+      notify("Property listing submitted for approval!");
       return true;
     },
-    [user.role, notify],
+    [notify],
   );
 
   const updateProperty = useCallback(
     async (id, payload) => {
-      if (user.role !== "admin" && user.role !== "seller") {
-        notify(
-          "Only admins or sellers can update property listings",
-          "warning",
-        );
-        return false;
-      }
-
       const newProperty = await propertyService.update(id, payload);
       const normalized = normalizeProperty(newProperty?.data ?? newProperty, 0);
-      setProperties((prev) => [normalized, ...prev]);
-      notify("Property listing posted!");
+      setProperties((prev) =>
+        prev.map((p) => (p.id === id ? normalized : p)),
+      );
+      notify("Property listing updated!");
       return true;
     },
-    [user.role, notify],
+    [notify],
   );
 
   const deleteVehicle = useCallback(
@@ -443,6 +427,19 @@ export function AppProvider({ children }) {
     },
     [notify],
   );
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const meRes = await authService.me();
+      const meData = meRes?.data ?? meRes ?? {};
+      const updated = normalizeUser(meData, true);
+      setUser(updated);
+      saveUserToStorage(updated);
+      return updated;
+    } catch {
+      return null;
+    }
+  }, []);
 
   const upgradePremium = useCallback(() => {
     navigate("/subscription");
@@ -478,6 +475,7 @@ export function AppProvider({ children }) {
       register,
       upgradePremium,
       updateProfile,
+      refreshUser,
       addVehicle,
       updateVehicle,
       addProperty,
@@ -501,8 +499,11 @@ export function AppProvider({ children }) {
       register,
       upgradePremium,
       updateProfile,
+      refreshUser,
       addVehicle,
+      updateVehicle,
       addProperty,
+      updateProperty,
       deleteVehicle,
       deleteProperty,
       refreshListings,

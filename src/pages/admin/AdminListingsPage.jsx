@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Alert,
   Avatar,
@@ -28,6 +29,7 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import adminOrdersService from "../../services/adminOrdersApi";
 
 const UI = {
@@ -253,6 +255,30 @@ function ListingCard({ item }) {
           </Box>
 
           <DetailItem icon={<CalendarMonthRoundedIcon sx={{ fontSize: 16 }} />} label="Created" value={formatDate(item.created_at)} />
+
+          <Button
+            size="small"
+            component={RouterLink}
+            to={
+              String(item.type).toLowerCase() === "vehicle"
+                ? `/admin/vehicles/add?edit=${item.id}`
+                : `/admin/properties/add?edit=${item.id}`
+            }
+            startIcon={<EditRoundedIcon sx={{ fontSize: "16px !important" }} />}
+            sx={{
+              mt: 1,
+              width: "100%",
+              borderRadius: "12px",
+              fontWeight: 800,
+              fontSize: "0.78rem",
+              background: type.bg,
+              color: type.color,
+              border: `1px solid ${type.bg}`,
+              "&:hover": { opacity: 0.9, background: type.bg },
+            }}
+          >
+            Edit {type.label} Listing
+          </Button>
         </Stack>
       </CardContent>
     </Card>

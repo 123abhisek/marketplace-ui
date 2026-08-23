@@ -1,4 +1,4 @@
-﻿// src/pages/admin/AdminReportsPage.jsx
+﻿// src/pages/seller/SellerReportsPage.jsx
 import React, { useState } from "react";
 import {
   Box,
@@ -12,17 +12,15 @@ import ConfirmationNumberRoundedIcon from "@mui/icons-material/ConfirmationNumbe
 import CurrencyRupeeRoundedIcon from "@mui/icons-material/CurrencyRupeeRounded";
 import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
-import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import ReportFilters from "../../components/analytics/ReportFilters";
 import ExecutiveSummaryBar from "../../components/analytics/ExecutiveSummaryBar";
 import BookingReportView from "../../components/analytics/BookingReportView";
 import RevenueReportView from "../../components/analytics/RevenueReportView";
 import GSTReportView from "../../components/analytics/GSTReportView";
 import ConversionReportView from "../../components/analytics/ConversionReportView";
-import UserSellerReportView from "../../components/analytics/UserSellerReportView";
 import { BI_COLORS } from "../../components/analytics/analyticsData";
 
-export default function AdminReportsPage() {
+export default function SellerReportsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [dateRange, setDateRange] = useState("This Month");
   const [category, setCategory] = useState("all");
@@ -31,23 +29,21 @@ export default function AdminReportsPage() {
 
   const handleExport = () => {
     const reportNames = [
-      "Booking_Enquiry_Report",
-      "Revenue_Audit_Report",
-      "GST_Tax_Report",
-      "Conversion_Funnel_Report",
-      "User_Seller_Report",
+      "Seller_Inquiries_Bookings_Report",
+      "Seller_Revenue_Earnings_Report",
+      "Seller_GST_Tax_Statement",
+      "Seller_Listing_Conversion_Report",
     ];
-    const name = reportNames[activeTab] || "EasyDeal_Report";
+    const name = reportNames[activeTab] || "Seller_Report";
     const rows = [
-      ["EasyDeal Business Intelligence Report"],
-      ["Report Type", name],
+      ["EasyDeal Seller Performance Report"],
+      ["Report Name", name],
       ["Date Range", dateRange],
       ["Category", category],
-      ["Aggregation", aggregation],
-      ["Export Date", new Date().toLocaleString("en-IN")],
+      ["Generated At", new Date().toLocaleString("en-IN")],
       [],
-      ["Section", "Status", "Note"],
-      ["Summary", "Verified", "Generated via Power BI Enterprise Analytics Engine"],
+      ["Section", "Status"],
+      ["Summary", "Verified Seller Statement"],
     ];
     const csvContent = rows.map((e) => e.map((val) => `"${val}"`).join(",")).join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -65,9 +61,10 @@ export default function AdminReportsPage() {
     <Box sx={{ minHeight: "100vh", background: BI_COLORS.pageBg, p: { xs: 2, md: 3.5 } }}>
       <Box sx={{ maxWidth: 1600, mx: "auto" }}>
         <Stack spacing={3}>
+          {/* ── Top Header & Global Date/Category Filters ── */}
           <ReportFilters
-            title="Executive Reports & Intelligence Center"
-            subtitle="Power BI Enterprise Reporting Suite • Financials, Tax, Conversion & Growth"
+            title="Seller Performance & Financial Reports"
+            subtitle="Power BI Seller Intelligence • Sales, Leads, Tax & Conversion Audit"
             dateRange={dateRange}
             setDateRange={setDateRange}
             category={category}
@@ -82,6 +79,7 @@ export default function AdminReportsPage() {
 
           <ExecutiveSummaryBar />
 
+          {/* ── Tabs for Seller Reports ── */}
           <Card
             sx={{
               borderRadius: "20px",
@@ -110,11 +108,10 @@ export default function AdminReportsPage() {
                   "& .MuiTabs-indicator": { bgcolor: BI_COLORS.navy, height: 3, borderRadius: "3px 3px 0 0" },
                 }}
               >
-                <Tab icon={<ConfirmationNumberRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Booking / Enquiry Report" />
-                <Tab icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Revenue Report" />
-                <Tab icon={<AccountBalanceRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="GST Statutory Report" />
-                <Tab icon={<FilterAltRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Conversion Report" />
-                <Tab icon={<PeopleAltRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="User & Seller Report" />
+                <Tab icon={<ConfirmationNumberRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Inquiries & Bookings Report" />
+                <Tab icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Revenue & Earnings Report" />
+                <Tab icon={<AccountBalanceRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="GST & Tax Statement" />
+                <Tab icon={<FilterAltRoundedIcon sx={{ fontSize: 18, mr: 0.8 }} />} iconPosition="start" label="Listing Conversion Report" />
               </Tabs>
             </CardContent>
           </Card>
@@ -123,7 +120,6 @@ export default function AdminReportsPage() {
           {activeTab === 1 && <RevenueReportView category={category} searchQuery={searchQuery} />}
           {activeTab === 2 && <GSTReportView searchQuery={searchQuery} onExportGST={handleExport} />}
           {activeTab === 3 && <ConversionReportView searchQuery={searchQuery} />}
-          {activeTab === 4 && <UserSellerReportView searchQuery={searchQuery} />}
         </Stack>
       </Box>
     </Box>

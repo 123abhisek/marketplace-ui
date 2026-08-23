@@ -1065,56 +1065,6 @@ export default function FreeDashboard() {
                       boxShadow: "none",
                     }}
                   >
-                    {/* <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Stack direction="row" spacing={1.1} alignItems="center">
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <MenuRoundedIcon sx={{ fontSize: 20, color: UI.text }} />
-                        </IconButton>
-                        <Typography
-                          sx={{
-                            fontSize: "1rem",
-                            fontWeight: 900,
-                            color: UI.text,
-                            letterSpacing: "-0.03em",
-                          }}
-                        >
-                          My Account
-                        </Typography>
-                      </Stack> 
-
-                       <Stack direction="row" spacing={1}>
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <SearchRoundedIcon sx={{ fontSize: 18, color: UI.muted }} />
-                        </IconButton>
-                        <IconButton
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "12px",
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                          }}
-                        >
-                          <NotificationsRoundedIcon sx={{ fontSize: 18, color: UI.muted }} />
-                        </IconButton>
-                      </Stack>
-                    </Stack> */}
                   </Box>
                 ) : (
                   <Box
@@ -1552,12 +1502,6 @@ export default function FreeDashboard() {
                               View all orders
                             </Button>
                           </Stack>
-
-                          {/* <Stack spacing={1.4}>
-                            {orders.map((order) => (
-                              <OrderCard key={order.id} order={order} />
-                            ))}
-                          </Stack> */}
 
                           <Stack spacing={1.4}>
                             {ordersLoading ? (

@@ -34,7 +34,7 @@ export default function Loader({ count = 6 }) {
   return (
     <Grid container spacing={2.5}>
       {Array.from({ length: count }).map((_, i) => (
-        <Grid item xs={12} sm={6} lg={4} key={i}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={i}>
           <CardSkeleton />
         </Grid>
       ))}

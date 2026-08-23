@@ -9,7 +9,7 @@ import {
 import { useAppState } from "../hooks/useAppState";
 import { routes } from "../router";
 
-import { Stack, Box } from "@mui/material";
+import { Stack, Box, Chip } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
@@ -25,6 +25,9 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import CreditCardRoundedIcon from "@mui/icons-material/CreditCardRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
+import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
+import ExploreRoundedIcon from "@mui/icons-material/ExploreRounded";
 
 const navBaseClass =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all";
@@ -34,7 +37,7 @@ const navActiveClass = "bg-primary text-white shadow-sm";
 const sectionTitleClass =
   "px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400";
 
-function SidebarLink({ to, icon: Icon, label, end = false, onClick }) {
+function SidebarLink({ to, icon: Icon, label, end = false, onClick, badge }) {
   return (
     <NavLink
       to={to}
@@ -45,129 +48,175 @@ function SidebarLink({ to, icon: Icon, label, end = false, onClick }) {
       }
     >
       <Icon sx={{ fontSize: 18 }} />
-      <span>{label}</span>
+      <span className="flex-1">{label}</span>
+      {badge && (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+          {badge}
+        </span>
+      )}
     </NavLink>
   );
 }
 
-function SidebarContent({ pathname, onNavigate, isAdmin }) {
-  const isFreeDashboard = pathname.startsWith("/free-dashboard");
-  const isPremiumDashboard = pathname.startsWith("/dashboard");
+function SidebarContent({ onNavigate, user }) {
+  const isPremium = user?.isPremium || user?.role === "premium";
 
   return (
     <div className="flex h-full flex-col bg-white">
+      {/* Logo */}
       <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
-          {/* <GridViewRoundedIcon sx={{ fontSize: 20 }} /> */}
-          <Stack
-            component={RouterLink}
-            to="/"
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            sx={{ textDecoration: "none", flexShrink: 0 }}
-          >
-            <Box
-              component="img"
-              src="/icon.png"
-              alt="EasyDeal"
-              sx={{ height: 50, width: "auto", objectFit: "contain" }}
-            />
-          </Stack>
-        </div>
-        <div width="100%"></div>
+        <Stack
+          component={RouterLink}
+          to="/"
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{ textDecoration: "none", flexShrink: 0 }}
+        >
+          <Box
+            component="img"
+            src="/icon.png"
+            alt="EasyDeal"
+            sx={{ height: 40, width: "auto", objectFit: "contain" }}
+          />
+        </Stack>
         <div>
           <p className="text-sm font-semibold text-slate-900">EasyDeal</p>
-          <p className="text-xs text-slate-500">User Dashboard</p>
+          <p className="text-xs text-slate-500">
+            {isPremium ? "Premium Account" : "My Dashboard"}
+          </p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-5">
-        {isFreeDashboard && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className={sectionTitleClass}>Overview</p>
-              <div className="space-y-1.5">
-                <SidebarLink
-                  to="/free-dashboard"
-                  end
-                  icon={HomeRoundedIcon}
-                  label="Dashboard"
-                  onClick={onNavigate}
-                />
-                <SidebarLink
-                  to="/free-dashboard/my-bookings"
-                  icon={CalendarMonthRoundedIcon}
-                  label="My Bookings"
-                  onClick={onNavigate}
-                />
-              </div>
+        <div className="space-y-6">
+          {/* Overview */}
+          <div className="space-y-2">
+            <p className={sectionTitleClass}>Overview</p>
+            <div className="space-y-1.5">
+              <SidebarLink
+                to="/dashboard/home"
+                end
+                icon={HomeRoundedIcon}
+                label="Dashboard"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/my-listings"
+                icon={GridViewRoundedIcon}
+                label="My Listings"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/my-bookings"
+                icon={CalendarMonthRoundedIcon}
+                label="My Bookings"
+                onClick={onNavigate}
+              />
             </div>
           </div>
-        )}
 
-        {isPremiumDashboard && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className={sectionTitleClass}>Overview</p>
-              <div className="space-y-1.5">
-                <SidebarLink
-                  to="/dashboard/home"
-                  icon={HomeRoundedIcon}
-                  label="Dashboard"
-                  onClick={onNavigate}
-                />
-                <SidebarLink
-                  to="/dashboard/my-listings"
-                  icon={GridViewRoundedIcon}
-                  label="My Listings"
-                  onClick={onNavigate}
-                />
-                <SidebarLink
-                  to="/dashboard/my-bookings"
-                  icon={CalendarMonthRoundedIcon}
-                  label="My Bookings"
-                  onClick={onNavigate}
-                />
-              </div>
-            </div>
-
-
-            <div className="space-y-2">
-              <p className={sectionTitleClass}>Account</p>
-              <div className="space-y-1.5">
-                <SidebarLink
-                  to="/dashboard/profile"
-                  icon={PersonRoundedIcon}
-                  label="Profile"
-                  onClick={onNavigate}
-                />
-                <SidebarLink
-                  to="/dashboard/subscription"
-                  icon={CreditCardRoundedIcon}
-                  label="Subscription"
-                  onClick={onNavigate}
-                />
-                <SidebarLink
-                  to="/dashboard/logout"
-                  icon={LogoutRoundedIcon}
-                  label="Logout"
-                  onClick={onNavigate}
-                />
-              </div>
+          {/* Add Listing */}
+          <div className="space-y-2">
+            <p className={sectionTitleClass}>Add Listing</p>
+            <div className="space-y-1.5">
+              <SidebarLink
+                to="/dashboard/add-property"
+                icon={ApartmentRoundedIcon}
+                label="Add Property"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/add-vehicle"
+                icon={DirectionsCarRoundedIcon}
+                label="Add Vehicle"
+                onClick={onNavigate}
+              />
             </div>
           </div>
-        )}
-      </div>
 
-      <div className="border-t border-slate-200 p-4">
-        <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-900">Need help?</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            Manage your account, bookings, and listings from one place.
-          </p>
+          {/* Browse */}
+          <div className="space-y-2">
+            <p className={sectionTitleClass}>Browse</p>
+            <div className="space-y-1.5">
+              <SidebarLink
+                to="/dashboard/properties"
+                icon={ApartmentRoundedIcon}
+                label="Properties"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/vehicles"
+                icon={DirectionsCarRoundedIcon}
+                label="Vehicles"
+                onClick={onNavigate}
+              />
+            </div>
+          </div>
+
+          {/* Account */}
+          <div className="space-y-2">
+            <p className={sectionTitleClass}>Account</p>
+            <div className="space-y-1.5">
+              <SidebarLink
+                to="/dashboard/profile"
+                icon={PersonRoundedIcon}
+                label="Profile"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/subscription"
+                icon={CreditCardRoundedIcon}
+                label="Subscription"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/become-seller"
+                icon={VerifiedUserRoundedIcon}
+                label="Become Seller"
+                onClick={onNavigate}
+              />
+              <SidebarLink
+                to="/dashboard/logout"
+                icon={LogoutRoundedIcon}
+                label="Logout"
+                onClick={onNavigate}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Premium CTA for free users */}
+      {!isPremium && (
+        <div className="border-t border-slate-200 p-4">
+          <RouterLink to="/subscription" className="block no-underline">
+            <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4 hover:from-amber-100 hover:to-orange-100 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <WorkspacePremiumRoundedIcon sx={{ fontSize: 16, color: "#b45309" }} />
+                <p className="text-sm font-bold text-amber-800">Upgrade to Premium</p>
+              </div>
+              <p className="text-xs leading-5 text-amber-700">
+                View full listing details, images & seller contacts.
+              </p>
+            </div>
+          </RouterLink>
+        </div>
+      )}
+
+      {isPremium && (
+        <div className="border-t border-slate-200 p-4">
+          <div className="rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 p-4">
+            <div className="flex items-center gap-2">
+              <WorkspacePremiumRoundedIcon sx={{ fontSize: 16, color: "#0f766e" }} />
+              <p className="text-sm font-bold text-teal-800">Premium Active</p>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-teal-600">
+              Full access to all listings and seller contacts.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -187,8 +236,6 @@ export default function DashboardLayout() {
   }, [location.pathname]);
 
   const { title, sub } = pageDetails;
-  const isFreeDashboard = location.pathname.startsWith("/free-dashboard");
-  const isAdmin = user?.role === "admin" || user?.isAdmin === true;
 
   const closeSidebar = () => setSidebarOpen(false);
 
@@ -196,11 +243,7 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <div className="flex min-h-screen">
         <aside className="hidden w-[280px] shrink-0 border-r border-slate-200 bg-white lg:block">
-          <SidebarContent
-            pathname={location.pathname}
-            onNavigate={closeSidebar}
-            isAdmin={isAdmin}
-          />
+          <SidebarContent onNavigate={closeSidebar} user={user} />
         </aside>
 
         {sidebarOpen && (
@@ -220,12 +263,7 @@ export default function DashboardLayout() {
                   <CloseRoundedIcon sx={{ fontSize: 18 }} />
                 </button>
               </div>
-
-              <SidebarContent
-                pathname={location.pathname}
-                onNavigate={closeSidebar}
-                isAdmin={isAdmin}
-              />
+              <SidebarContent onNavigate={closeSidebar} user={user} />
             </aside>
           </div>
         )}
@@ -261,13 +299,10 @@ export default function DashboardLayout() {
                     aria-label="Notifications"
                   >
                     <NotificationsNoneRoundedIcon sx={{ fontSize: 18 }} />
-                    <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-rose-500" />
                   </button>
 
                   <Link
-                    to={
-                      isFreeDashboard ? "/free-dashboard" : "/dashboard/profile"
-                    }
+                    to="/dashboard/profile"
                     className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-700">
@@ -278,13 +313,16 @@ export default function DashboardLayout() {
                         My Account
                       </p>
                       <p className="text-xs text-slate-500">
-                        {isFreeDashboard ? "Free Plan" : "Premium Plan"}
+                        {user?.isPremium || user?.role === "premium"
+                          ? "Premium Plan"
+                          : "Free Plan"}
                       </p>
                     </div>
                   </Link>
                 </div>
               </div>
 
+              {/* Quick actions in header */}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full max-w-xl">
                   <SearchRoundedIcon
@@ -298,23 +336,21 @@ export default function DashboardLayout() {
                   />
                 </div>
 
-                {isAdmin && !isFreeDashboard && (
-                  <div className="flex items-center gap-3">
-                    <Link
-                      to="/admin/properties/add"
-                      className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                    >
-                      Add Property
-                    </Link>
-
-                    <Link
-                      to="/admin/vehicles/add"
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                    >
-                      Add Vehicle
-                    </Link>
-                  </div>
-                )}
+                {/* Add listing quick buttons — visible to ALL users */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    to="/dashboard/add-property"
+                    className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  >
+                    + Property
+                  </Link>
+                  <Link
+                    to="/dashboard/add-vehicle"
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    + Vehicle
+                  </Link>
+                </div>
               </div>
             </div>
           </header>

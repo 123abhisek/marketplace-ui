@@ -585,15 +585,17 @@ export default function RegisterPage() {
   const { register: registerUser } = useAppState();
   const navigate = useNavigate();
 
-  const { control, handleSubmit, trigger, watch, getValues } = useForm({
+  const { control, handleSubmit, trigger, watch, getValues, clearErrors } = useForm({
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     defaultValues: {
       name: "",
       gender: "",
       dob: "",
       occupation: "",
       location: "",
-      state: "",
-      city: "",
+      state: "Karnataka",
+      city: "Bangalore",
       pincode: "",
       email: "",
       mobile: "",
@@ -611,11 +613,26 @@ export default function RegisterPage() {
     2: ["email", "mobile", "password", "confirmPassword"],
   };
 
-  const nextStep = async () => {
+  const nextStep = async (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     const valid = await trigger(STEP_FIELDS[step]);
-    if (valid) setStep((s) => s + 1);
+    if (valid) {
+      if (step + 1 <= 2) {
+        clearErrors(STEP_FIELDS[step + 1]);
+      }
+      setStep((s) => s + 1);
+    }
   };
-  const prevStep = () => setStep((s) => s - 1);
+
+  const prevStep = (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (step - 1 >= 0) {
+      clearErrors(STEP_FIELDS[step]);
+    }
+    setStep((s) => s - 1);
+  };
 
   const onSubmit = async (data) => {
     setApiErr("");
@@ -743,8 +760,11 @@ export default function RegisterPage() {
         type="email"
         disabled={loading}
         rules={{
-          required: "Email is required",
-          pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" },
+          required: "Email address is required",
+          pattern: {
+            value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            message: "Enter a valid email address (e.g. name@domain.com)",
+          },
         }}
         icon={<EmailRoundedIcon sx={{ fontSize: 18 }} />}
       />
@@ -1011,6 +1031,7 @@ export default function RegisterPage() {
             <Stack direction="row" spacing={1.5}>
               {step > 0 && (
                 <Button
+                  type="button"
                   onClick={prevStep}
                   variant="outlined"
                   disabled={loading}
@@ -1036,6 +1057,7 @@ export default function RegisterPage() {
 
               {step < STEPS.length - 1 ? (
                 <Button
+                  type="button"
                   onClick={nextStep}
                   fullWidth
                   disabled={loading}

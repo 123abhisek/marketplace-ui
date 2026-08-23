@@ -1,5 +1,5 @@
-// src/pages/ExplorePage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Box,
   Button,
@@ -31,7 +31,9 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import VillaRoundedIcon from "@mui/icons-material/VillaRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import { useNavigate } from "react-router-dom";
+import { propertyService, vehicleService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 
 const COLORS = {
@@ -165,7 +167,7 @@ function getPrice(item) {
   return Number(item.price || item.amount || item.rent || item.salePrice || 0);
 }
 
-function ListingCard({ item, navigate, index }) {
+function ListingCard({ item, navigate, index, isPremium }) {
   const tone = item.itemType === "property" ? COLORS.primary : COLORS.blue;
   const soft =
     item.itemType === "property" ? COLORS.primarySoft : COLORS.blueSoft;
@@ -174,13 +176,10 @@ function ListingCard({ item, navigate, index }) {
     <Card
       sx={{
         ...cardSx,
-        // ── uniform height ──────────────────────────────────────────────────
-        minWidth: 460,
-        flexShrink: 0,
+        width: "100%",
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        // ────────────────────────────────────────────────────────────────────
         overflow: "hidden",
         transition:
           "transform .35s ease, box-shadow .35s ease, border-color .35s ease, opacity .45s ease",
@@ -192,20 +191,14 @@ function ListingCard({ item, navigate, index }) {
         },
       }}
     >
-      {/* Image – fixed height, never grows */}
+      {/* Image Container */}
       <Box
         sx={{
           position: "relative",
-          height: 220,
-          flex: "0 0 220px",
+          height: 230,
+          flexShrink: 0,
           overflow: "hidden",
           background: COLORS.surfaceSoft,
-          width: "30vw",
-          flexShrink: 0, // ← prevents image from shrinking
-          overflow: "hidden",
-          background: COLORS.surfaceSoft,
-          ".MuiCard-root:hover &": { transform: "scale(1.04)" },
-          ".MuiCard-root:hover & img": { transform: "scale(1.04)" },
         }}
       >
         <Box
@@ -216,18 +209,62 @@ function ListingCard({ item, navigate, index }) {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            transition: "transform .6s ease",
-            ".MuiCard-root:hover &": { transform: "scale(1.04)" },
+            filter: !isPremium ? "blur(7px)" : "none",
+            transform: !isPremium ? "scale(1.08)" : "scale(1)",
+            transition: "transform .6s ease, filter .6s ease",
           }}
         />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(15,23,42,0.00) 25%, rgba(15,23,42,0.52) 100%)",
-          }}
-        />
+
+        {!isPremium ? (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(15,23,42,0.48)",
+              backdropFilter: "blur(4px)",
+              color: "#ffffff",
+              p: 2,
+              textAlign: "center",
+              zIndex: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 46,
+                height: 46,
+                borderRadius: "14px",
+                background: "rgba(255,255,255,0.22)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                display: "grid",
+                placeItems: "center",
+                mb: 1,
+              }}
+            >
+              <LockRoundedIcon sx={{ fontSize: 24, color: "#ffffff" }} />
+            </Box>
+            <Typography sx={{ fontWeight: 900, fontSize: "0.98rem", color: "#ffffff" }}>
+              Premium only
+            </Typography>
+            <Typography sx={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>
+              Unlock full details and pricing
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(15,23,42,0.00) 25%, rgba(15,23,42,0.52) 100%)",
+            }}
+          />
+        )}
+
         <Chip
           label={item.itemType === "property" ? "Property" : "Vehicle"}
           icon={
@@ -246,27 +283,24 @@ function ListingCard({ item, navigate, index }) {
             fontWeight: 800,
             fontSize: "0.72rem",
             color: "#fff",
-            background: "rgba(255,255,255,0.16)",
+            background: "rgba(255,255,255,0.22)",
             backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.18)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            zIndex: 3,
           }}
         />
       </Box>
 
-      {/* Content – grows to fill remaining height */}
+      {/* Content */}
       <CardContent
         sx={{
-          p: 2.2,
-          // ── make content area flex so footer sticks to bottom ────────────
+          p: 2.4,
           flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          // ────────────────────────────────────────────────────────────────
         }}
       >
-        {/* Body content – grows to push footer down */}
-        <Stack spacing={1.15} sx={{ flexGrow: 1 }}>
-          {/* Title row */}
+        <Stack spacing={1.2} sx={{ flexGrow: 1 }}>
           <Stack
             direction="row"
             alignItems="center"
@@ -275,7 +309,7 @@ function ListingCard({ item, navigate, index }) {
           >
             <Typography
               sx={{
-                fontSize: "1rem",
+                fontSize: "1.05rem",
                 fontWeight: 900,
                 color: COLORS.text,
                 lineHeight: 1.3,
@@ -301,7 +335,6 @@ function ListingCard({ item, navigate, index }) {
             />
           </Stack>
 
-          {/* Location */}
           <Stack direction="row" spacing={0.8} alignItems="center">
             <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
             <Typography
@@ -311,7 +344,6 @@ function ListingCard({ item, navigate, index }) {
             </Typography>
           </Stack>
 
-          {/* Company */}
           <Stack direction="row" spacing={0.8} alignItems="center">
             <BusinessRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
             <Typography
@@ -322,67 +354,120 @@ function ListingCard({ item, navigate, index }) {
           </Stack>
         </Stack>
 
-        {/* Footer – always at the bottom */}
-        <Box sx={{ mt: "auto" }}>
-          <Divider sx={{ borderColor: COLORS.border, my: 1.2 }} />
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            spacing={1.2}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: "0.72rem",
-                  color: COLORS.faint,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Price
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.3,
-                  fontSize: "1rem",
-                  fontWeight: 900,
-                  color: COLORS.text,
-                }}
-              >
-                {formatPrice(getPrice(item.raw))}
-              </Typography>
-            </Box>
+        {/* Footer */}
+        <Box sx={{ mt: "auto", pt: 1.5 }}>
+          <Divider sx={{ borderColor: COLORS.border, mb: 1.5 }} />
 
-            <Button
-              onClick={() =>
-                navigate(
-                  item.itemType === "property"
-                    ? "/properties/" + item.id
-                    : "/vehicles/" + item.id,
-                  { replace: true },
-                )
-              }
-              endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
-              sx={{
-                minHeight: 42,
-                px: 1.8,
-                borderRadius: "14px",
-                textTransform: "none",
-                fontWeight: 800,
-                fontSize: "0.84rem",
-                color: COLORS.text,
-                background: COLORS.surfaceSoft,
-                border: `1px solid ${COLORS.border}`,
-                "&:hover": {
-                  background: "#f1f5f9",
-                },
-              }}
+          {!isPremium ? (
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              spacing={1}
             >
-              View
-            </Button>
-          </Stack>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: "0.68rem",
+                    color: COLORS.faint,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  ACCESS
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.88rem",
+                    fontWeight: 900,
+                    color: COLORS.text,
+                  }}
+                >
+                  Premium required
+                </Typography>
+              </Box>
+
+              <Button
+                onClick={() => navigate("/subscription")}
+                startIcon={<LockRoundedIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  minHeight: 40,
+                  px: 2.2,
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  color: "#ffffff",
+                  background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                  boxShadow: "0 6px 18px rgba(99,102,241,0.35)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                  },
+                }}
+              >
+                Unlock ₹299
+              </Button>
+            </Stack>
+          ) : (
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              spacing={1.2}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    color: COLORS.faint,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Price
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.3,
+                    fontSize: "1.05rem",
+                    fontWeight: 900,
+                    color: COLORS.text,
+                  }}
+                >
+                  {formatPrice(getPrice(item.raw))}
+                </Typography>
+              </Box>
+
+              <Button
+                onClick={() =>
+                  navigate(
+                    item.itemType === "property"
+                      ? "/properties/" + item.id
+                      : "/vehicles/" + item.id
+                  )
+                }
+                endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
+                sx={{
+                  minHeight: 42,
+                  px: 2.2,
+                  borderRadius: "14px",
+                  textTransform: "none",
+                  fontWeight: 800,
+                  fontSize: "0.84rem",
+                  color: "#ffffff",
+                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0b5d56 100%)`,
+                  boxShadow: "0 6px 18px rgba(15,118,110,0.25)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #0b5d56 0%, #084842 100%)",
+                  },
+                }}
+              >
+                View Details
+              </Button>
+            </Stack>
+          )}
         </Box>
       </CardContent>
     </Card>
@@ -391,8 +476,11 @@ function ListingCard({ item, navigate, index }) {
 
 export default function ExplorePage() {
   const navigate = useNavigate();
-  const { properties = [], vehicles = [] } = useAppState();
+  const { user, properties: contextProps = [], vehicles: contextVehs = [], refreshListings } = useAppState();
+  const isPremium = Boolean(user?.isPremium || user?.is_premium || user?.role === "admin" || user?.role === "premium");
 
+  const [apiProps, setApiProps] = useState([]);
+  const [apiVehs, setApiVehs] = useState([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -402,6 +490,28 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState("latest");
   const [slideIndex, setSlideIndex] = useState(0);
 
+  const fetchExploreListings = useCallback(async () => {
+    try {
+      const [pRes, vRes] = await Promise.allSettled([
+        propertyService.getAll(),
+        vehicleService.getAll(),
+      ]);
+
+      const pList = pRes.status === "fulfilled" && Array.isArray(pRes.value) ? pRes.value : [];
+      const vList = vRes.status === "fulfilled" && Array.isArray(vRes.value) ? vRes.value : [];
+
+      setApiProps(pList);
+      setApiVehs(vList);
+    } catch (err) {
+      console.error("Failed to load explore listings:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchExploreListings();
+    refreshListings?.();
+  }, [fetchExploreListings, refreshListings]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % carouselSlides.length);
@@ -409,19 +519,37 @@ export default function ExplorePage() {
     return () => clearInterval(timer);
   }, []);
 
+  const properties = useMemo(() => {
+    const combined = [...apiProps, ...contextProps];
+    const map = new Map();
+    combined.forEach((p) => {
+      if (p?.id && !map.has(p.id)) map.set(p.id, p);
+    });
+    return Array.from(map.values());
+  }, [apiProps, contextProps]);
+
+  const vehicles = useMemo(() => {
+    const combined = [...apiVehs, ...contextVehs];
+    const map = new Map();
+    combined.forEach((v) => {
+      if (v?.id && !map.has(v.id)) map.set(v.id, v);
+    });
+    return Array.from(map.values());
+  }, [apiVehs, contextVehs]);
+
   const allItems = useMemo(() => {
     const mappedProperties = (properties || []).map((item, index) => ({
       id: item.id || item._id || `property-${index}`,
       itemType: "property",
       raw: item,
-      createdAt: item.createdAt || item.date || item.postedAt || 0,
+      createdAt: item.createdAt || item.created_at || item.date || item.postedAt || 0,
     }));
 
     const mappedVehicles = (vehicles || []).map((item, index) => ({
       id: item.id || item._id || `vehicle-${index}`,
       itemType: "vehicle",
       raw: item,
-      createdAt: item.createdAt || item.date || item.postedAt || 0,
+      createdAt: item.createdAt || item.created_at || item.date || item.postedAt || 0,
     }));
 
     return [...mappedProperties, ...mappedVehicles];
@@ -512,6 +640,8 @@ export default function ExplorePage() {
     sortBy,
   ]);
 
+  console.log("filteredItems",filteredItems)
+
   const resetFilters = () => {
     setSearch("");
     setTypeFilter("all");
@@ -525,6 +655,15 @@ export default function ExplorePage() {
   const activeSlide = carouselSlides[slideIndex];
 
   return (
+    <>
+      <Helmet>
+        <title>Explore Listings — Properties & Vehicles | EasyDeal</title>
+        <meta name="description" content="Browse verified property and vehicle listings across Karnataka. Find apartments, plots, farm land, cars, and bikes. Filter by location and price on EasyDeal." />
+        <meta name="keywords" content="explore properties Karnataka, buy vehicles India, apartments for sale, plots for sale, cars for sale, EasyDeal listings" />
+        <meta property="og:title" content="Explore Properties & Vehicles | EasyDeal" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://easydealworld.com/explore" />
+      </Helmet>
     <Box
       sx={{
         minHeight: "100vh",
@@ -1077,7 +1216,9 @@ export default function ExplorePage() {
           {/* Grid */}
           {filteredItems.length > 0 ? (
             <Grid container spacing={2} alignItems="stretch">
-              {filteredItems.map((item, index) => (
+              {
+                
+                filteredItems.map((item, index) => (
                 <Grid
                   item
                   xs={12}
@@ -1086,7 +1227,7 @@ export default function ExplorePage() {
                   key={item.id}
                   sx={{ display: "flex" }}
                 >
-                  <ListingCard item={item} navigate={navigate} index={index} />
+                  <ListingCard item={item} navigate={navigate} index={index} isPremium={isPremium} />
                 </Grid>
               ))}
             </Grid>
@@ -1139,5 +1280,6 @@ export default function ExplorePage() {
         </Stack>
       </Box>
     </Box>
+    </>
   );
 }
