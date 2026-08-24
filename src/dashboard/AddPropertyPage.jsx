@@ -426,7 +426,7 @@ export default function AddPropertyPage() {
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={6}>
                   <FormInput
                     name="expectedPrice"
                     label="Expected Price (₹) *"
@@ -437,7 +437,7 @@ export default function AddPropertyPage() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={6}>
                   <SelectInput
                     name="rentLease"
                     label="Rent / Lease / Sale"
@@ -447,6 +447,7 @@ export default function AddPropertyPage() {
                   />
                 </Grid>
               </Grid>
+
             </CardContent>
           </Card>
 
