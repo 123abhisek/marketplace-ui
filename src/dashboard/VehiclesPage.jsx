@@ -18,7 +18,7 @@ import { useAppState }          from '../hooks/useAppState'
 const BRANDS = ['All', 'Maruti', 'Hyundai', 'Honda', 'Toyota', 'Royal Enfield', 'Bajaj', 'Hero']
 
 export default function VehiclesPage() {
-  const { vehicles = [], vehiclesLoading, refreshVehicles } = useAppState()
+  const { user, vehicles = [], vehiclesLoading, refreshVehicles } = useAppState()
   const [search,  setSearch]  = useState('')
   const [brand,   setBrand]   = useState('All')
   const [sortBy,  setSortBy]  = useState('latest')
@@ -46,6 +46,16 @@ export default function VehiclesPage() {
       return b.id - a.id
     })
 
+  const hasFullAccess = Boolean(
+    user?.isPremium ||
+    user?.is_premium ||
+    user?.role === 'premium' ||
+    user?.role === 'admin' ||
+    user?.role === 'seller' ||
+    user?.is_admin ||
+    user?.isAdmin
+  )
+
   return (
     <Stack spacing={3}>
       {/* ── Header ── */}
@@ -65,6 +75,17 @@ export default function VehiclesPage() {
         </Box>
 
         <Stack direction="row" spacing={1.5} alignItems="center">
+          <Chip
+            label={hasFullAccess ? "👑 Premium Access Active" : "Free Plan — View Limited"}
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.78rem",
+              background: hasFullAccess ? "#ECFDF5" : "#FEF3C7",
+              color: hasFullAccess ? "#059669" : "#D97706",
+              border: hasFullAccess ? "1px solid #A7F3D0" : "1px solid #FDE68A",
+              borderRadius: "10px",
+            }}
+          />
           <Button
             onClick={handleRefresh}
             disabled={refreshing || vehiclesLoading}
@@ -166,9 +187,9 @@ export default function VehiclesPage() {
           iconBg="#F5F3FF"
         />
       ) : (
-        <Grid container spacing={2.5}>
+        <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }} alignItems="stretch">
           {filtered.map((item) => (
-            <Grid item xs={12} sm={6} xl={4} key={item.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 6, lg: 4 }} key={item.id} sx={{ display: 'flex' }}>
               <VehicleCard item={item} />
             </Grid>
           ))}

@@ -10,8 +10,10 @@ import BedRoundedIcon            from '@mui/icons-material/BedRounded'
 import SquareFootRoundedIcon     from '@mui/icons-material/SquareFootRounded'
 import PhoneRoundedIcon          from '@mui/icons-material/PhoneRounded'
 import LockRoundedIcon           from '@mui/icons-material/LockRounded'
-import ArrowForwardRoundedIcon   from '@mui/icons-material/ArrowForwardRounded'
-import { Link as RouterLink }    from 'react-router-dom'
+import VisibilityRoundedIcon     from '@mui/icons-material/VisibilityRounded'
+import EditRoundedIcon           from '@mui/icons-material/EditRounded'
+import DeleteOutlineRoundedIcon  from '@mui/icons-material/DeleteOutlineRounded'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useAppState }           from '../hooks/useAppState'
 import { formatCurrency }        from '../utils/formatters'
 
@@ -23,36 +25,68 @@ const TYPE_COLORS = {
   Flat:        { bg: '#EFF6FF', color: '#2563EB' },
 }
 
-export default function PropertyCard({ item }) {
+export default function PropertyCard({ item, editUrl, onDelete }) {
   const { user } = useAppState()
-  const locked = !user.isPremium
+  const navigate = useNavigate()
+
+  // Full access for premium, admin, and seller roles
+  const hasFullAccess = Boolean(
+    user?.isPremium ||
+    user?.is_premium ||
+    user?.role === 'premium' ||
+    user?.role === 'admin' ||
+    user?.role === 'seller' ||
+    user?.is_admin ||
+    user?.isAdmin
+  )
+  const locked = !hasFullAccess && !editUrl
   const typeStyle = TYPE_COLORS[item.propertyType] || { bg: '#F1F5F9', color: '#64748B' }
+  const detailUrl = `/properties/${item.id}`
+
+  const itemPrice = item.price ?? item.expectedPrice ?? item.expected_price
+
+  // Format status badge if this is an owner/management view
+  const statusStr = String(item.status || 'approved').toLowerCase()
+  const isPending = statusStr === 'pending'
+  const isRejected = statusStr === 'rejected'
+  const isSuspended = statusStr === 'suspended'
+  const isApproved = statusStr === 'approved' || (!isPending && !isRejected && !isSuspended)
 
   return (
     <Card
       sx={{
         borderRadius: '20px',
-        boxShadow: '0 2px 20px rgba(15,23,42,0.07)',
+        boxShadow: '0 2px 16px rgba(15,23,42,0.06)',
+        border: '1px solid #E2E8F0',
         overflow: 'hidden',
         height: '100%',
+        minHeight: locked ? 475 : 430,
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        bgcolor: '#FFFFFF',
+        transition: 'transform 0.22s ease, box-shadow 0.22s ease',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: '0 16px 48px rgba(15,23,42,0.14)',
+          boxShadow: '0 12px 32px rgba(15,23,42,0.12)',
         },
       }}
     >
-      {/* ── Image / Placeholder ── */}
+      {/* ── Image / Placeholder (Strict Fixed Height) ── */}
       <Box
+        component={RouterLink}
+        to={detailUrl}
         sx={{
           position: 'relative',
-          aspectRatio: '16 / 9',
+          height: 200,
+          minHeight: 200,
+          maxHeight: 200,
+          width: '100%',
           background: `linear-gradient(135deg, ${typeStyle.bg} 0%, #F8FAFC 100%)`,
           overflow: 'hidden',
           flexShrink: 0,
+          display: 'block',
+          cursor: 'pointer',
         }}
       >
         {item.images?.[0] ? (
@@ -60,7 +94,7 @@ export default function PropertyCard({ item }) {
             component="img"
             src={item.images[0]}
             alt={item.title}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease', '&:hover': { transform: 'scale(1.04)' } }}
           />
         ) : (
           <Box
@@ -76,8 +110,8 @@ export default function PropertyCard({ item }) {
           >
             <Box
               sx={{
-                width: 56,
-                height: 56,
+                width: 52,
+                height: 52,
                 borderRadius: '16px',
                 background: typeStyle.color + '22',
                 display: 'flex',
@@ -85,7 +119,7 @@ export default function PropertyCard({ item }) {
                 justifyContent: 'center',
               }}
             >
-              <ApartmentRoundedIcon sx={{ fontSize: 28, color: typeStyle.color }} />
+              <ApartmentRoundedIcon sx={{ fontSize: 26, color: typeStyle.color }} />
             </Box>
             <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>
               No Image
@@ -109,11 +143,38 @@ export default function PropertyCard({ item }) {
             border: 'none',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            zIndex: 2,
           }}
         />
 
-        {/* Lock icon for free users */}
-        {locked && (
+        {/* Status / Access Badge on Top-Right */}
+        {editUrl || onDelete ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              px: 1.2,
+              py: 0.35,
+              borderRadius: '8px',
+              background: isApproved
+                ? 'rgba(16,185,129,0.92)'
+                : isPending
+                ? 'rgba(245,158,11,0.92)'
+                : isRejected
+                ? 'rgba(239,68,68,0.92)'
+                : 'rgba(100,116,139,0.92)',
+              color: '#FFFFFF',
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              zIndex: 2,
+            }}
+          >
+            {isApproved ? 'Approved & Live' : isPending ? 'Under Review' : isRejected ? 'Rejected' : 'Suspended'}
+          </Box>
+        ) : locked ? (
           <Box
             sx={{
               position: 'absolute',
@@ -122,163 +183,282 @@ export default function PropertyCard({ item }) {
               width: 28,
               height: 28,
               borderRadius: '8px',
-              background: 'rgba(255,255,255,0.9)',
+              background: 'rgba(255,255,255,0.92)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 2,
             }}
           >
             <LockRoundedIcon sx={{ fontSize: 14, color: '#F59E0B' }} />
           </Box>
+        ) : (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              px: 1.2,
+              py: 0.35,
+              borderRadius: '8px',
+              background: 'rgba(16,185,129,0.92)',
+              color: '#FFFFFF',
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              zIndex: 2,
+            }}
+          >
+            Full Access
+          </Box>
         )}
       </Box>
 
-      {/* ── Card Content ── */}
-      <CardContent sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* Title */}
-        <Typography
-          fontWeight={800}
-          sx={{
-            fontSize: '0.95rem',
-            color: '#1E293B',
-            letterSpacing: '-0.01em',
-            lineHeight: 1.3,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {item.title}
-        </Typography>
-
-        {/* Location */}
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          <LocationOnRoundedIcon sx={{ fontSize: 14, color: '#94A3B8', flexShrink: 0 }} />
+      {/* ── Card Content (Strict Sizing & Alignment) ── */}
+      <CardContent
+        sx={{
+          p: 2.2,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          '&:last-child': { pb: 2.2 },
+        }}
+      >
+        {/* Top details group */}
+        <Stack spacing={1.2}>
+          {/* Title (Fixed 2 lines, Clickable) */}
           <Typography
+            component={RouterLink}
+            to={detailUrl}
+            fontWeight={800}
             sx={{
-              fontSize: '0.78rem',
-              color: '#94A3B8',
-              whiteSpace: 'nowrap',
+              fontSize: '0.96rem',
+              color: '#1E293B',
+              textDecoration: 'none',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.35,
+              height: 42,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              '&:hover': { color: '#0F766E' },
             }}
           >
-            {item.location || item.apartmentName || '—'}
+            {item.title}
           </Typography>
-        </Stack>
 
-        {/* Quick specs */}
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-          {item.bedrooms && (
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <BedRoundedIcon sx={{ fontSize: 14, color: '#4361EE' }} />
-              <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                {item.bedrooms} Bed
-              </Typography>
-            </Stack>
-          )}
-          {(item.area || item.landArea) && (
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <SquareFootRoundedIcon sx={{ fontSize: 14, color: '#7C3AED' }} />
-              <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                {item.area ? `${item.area} sq.ft` : item.landArea}
-              </Typography>
-            </Stack>
-          )}
-        </Stack>
-
-        <Divider sx={{ opacity: 0.6 }} />
-
-        {/* Price + Contact row */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600, mb: 0.25 }}>
-              Expected Price
-            </Typography>
+          {/* Location (Fixed 1 line) */}
+          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ height: 20, overflow: 'hidden' }}>
+            <LocationOnRoundedIcon sx={{ fontSize: 15, color: '#94A3B8', flexShrink: 0 }} />
             <Typography
-              fontWeight={900}
               sx={{
-                fontSize: '1rem',
-                color: '#4361EE',
-                letterSpacing: '-0.02em',
-                filter: locked ? 'blur(6px)' : 'none',
-                userSelect: locked ? 'none' : 'auto',
-                transition: 'filter 0.2s',
+                fontSize: '0.78rem',
+                color: '#94A3B8',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
-              {formatCurrency(item.expectedPrice)}
+              {item.location || item.apartmentName || 'Karnataka'}
             </Typography>
-          </Box>
+          </Stack>
 
-          {locked ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 1.5,
-                py: 0.75,
-                borderRadius: '10px',
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
-              }}
-            >
-              <LockRoundedIcon sx={{ fontSize: 13, color: '#F59E0B' }} />
-              <Typography sx={{ fontSize: '0.7rem', color: '#D97706', fontWeight: 700 }}>
-                Locked
+          {/* Quick specs (Fixed height) */}
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ height: 24, overflow: 'hidden' }}>
+            {item.bedrooms ? (
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <BedRoundedIcon sx={{ fontSize: 14, color: '#4361EE' }} />
+                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                  {item.bedrooms} Bed
+                </Typography>
+              </Stack>
+            ) : null}
+            {(item.area || item.landArea) ? (
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <SquareFootRoundedIcon sx={{ fontSize: 14, color: '#7C3AED' }} />
+                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                  {item.area ? `${item.area} sq.ft` : item.landArea}
+                </Typography>
+              </Stack>
+            ) : (
+              !item.bedrooms && (
+                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 500 }}>
+                  Verified Listing
+                </Typography>
+              )
+            )}
+          </Stack>
+        </Stack>
+
+        {/* Bottom group */}
+        <Box sx={{ mt: 'auto', pt: 1.2 }}>
+          <Divider sx={{ opacity: 0.6, mb: 1.2 }} />
+
+          {/* Price + Contact / View row */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ height: 40 }}>
+            <Box>
+              <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600, mb: 0.2 }}>
+                Expected Price
+              </Typography>
+              <Typography
+                fontWeight={900}
+                sx={{
+                  fontSize: '1.02rem',
+                  color: hasFullAccess ? '#0F766E' : '#94A3B8',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {hasFullAccess ? (itemPrice != null ? formatCurrency(itemPrice) : 'Contact for Price') : '---'}
               </Typography>
             </Box>
-          ) : (
-            <Tooltip title={item.contactNumber}>
+
+            {locked ? (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  px: 1.5,
-                  py: 0.75,
+                  px: 1.4,
+                  py: 0.65,
                   borderRadius: '10px',
-                  background: '#ECFDF5',
-                  cursor: 'pointer',
-                  '&:hover': { background: '#D1FAE5' },
-                  transition: 'background 0.15s',
+                  background: '#FFFBEB',
+                  border: '1px solid #FDE68A',
                 }}
               >
-                <PhoneRoundedIcon sx={{ fontSize: 13, color: '#10B981' }} />
-                <Typography sx={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
-                  Call
+                <LockRoundedIcon sx={{ fontSize: 13, color: '#F59E0B' }} />
+                <Typography sx={{ fontSize: '0.7rem', color: '#D97706', fontWeight: 700 }}>
+                  Locked
                 </Typography>
               </Box>
-            </Tooltip>
-          )}
-        </Stack>
+            ) : (editUrl || onDelete) ? (
+              <Stack direction="row" spacing={1} alignItems="center">
+                {editUrl && (
+                  <Button
+                    component={RouterLink}
+                    to={editUrl}
+                    size="small"
+                    startIcon={<EditRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                    sx={{
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.74rem',
+                      bgcolor: '#EFF6FF',
+                      color: '#2563EB',
+                      border: '1px solid #BFDBFE',
+                      px: 1.4,
+                      py: 0.6,
+                      boxShadow: 'none',
+                      '&:hover': { bgcolor: '#DBEAFE' },
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    onClick={onDelete}
+                    size="small"
+                    startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                    sx={{
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.74rem',
+                      bgcolor: '#FEF2F2',
+                      color: '#EF4444',
+                      border: '1px solid #FECACA',
+                      px: 1.4,
+                      py: 0.6,
+                      boxShadow: 'none',
+                      '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' },
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={1} alignItems="center">
+                {item.contactNumber && (
+                  <Tooltip title={`Call ${item.contactNumber}`}>
+                    <Box
+                      component="a"
+                      href={`tel:${item.contactNumber}`}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        px: 1.3,
+                        py: 0.65,
+                        borderRadius: '10px',
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        '&:hover': { background: '#D1FAE5' },
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      <PhoneRoundedIcon sx={{ fontSize: 13, color: '#10B981' }} />
+                      <Typography sx={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
+                        Call
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                )}
+                <Button
+                  component={RouterLink}
+                  to={detailUrl}
+                  size="small"
+                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                  sx={{
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.74rem',
+                    bgcolor: '#0F766E',
+                    color: '#FFFFFF',
+                    px: 1.5,
+                    py: 0.6,
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: '#0D655E' },
+                  }}
+                >
+                  Details
+                </Button>
+              </Stack>
+            )}
+          </Stack>
 
-        {/* Upgrade CTA for locked */}
-        {locked && (
-          <Button
-            component={RouterLink}
-            to="/subscription"
-            variant="outlined"
-            size="small"
-            startIcon={<LockRoundedIcon sx={{ fontSize: '14px !important' }} />}
-            fullWidth
-            sx={{
-              borderRadius: '12px',
-              borderColor: '#FDE68A',
-              background: '#FFFBEB',
-              color: '#D97706',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              mt: 'auto',
-              '&:hover': { background: '#FEF3C7', borderColor: '#F59E0B' },
-            }}
-          >
-            Upgrade to unlock details
-          </Button>
-        )}
+          {/* Upgrade CTA for locked */}
+          {locked && (
+            <Button
+              component={RouterLink}
+              to="/subscription"
+              variant="outlined"
+              size="small"
+              startIcon={<LockRoundedIcon sx={{ fontSize: '13px !important' }} />}
+              fullWidth
+              sx={{
+                borderRadius: '10px',
+                borderColor: '#FDE68A',
+                background: '#FFFBEB',
+                color: '#D97706',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                height: 34,
+                mt: 1.2,
+                '&:hover': { background: '#FEF3C7', borderColor: '#F59E0B' },
+              }}
+            >
+              Upgrade to unlock
+            </Button>
+          )}
+        </Box>
       </CardContent>
     </Card>
   )

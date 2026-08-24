@@ -217,60 +217,14 @@ export default function MyListingsPage() {
               <Typography variant="h6" fontWeight={800} sx={{ color: "#1E293B", mb: 2 }}>
                 🏢 My Properties ({properties.length})
               </Typography>
-              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }}>
+              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }} alignItems="stretch">
                 {properties.map((item) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                    <Box sx={{ position: "relative", width: "100%" }}>
-                      <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
-                        {renderStatusBadge(item.status, item.rejection_reason)}
-                      </Box>
-                      <PropertyCard item={item} />
-                      {/* Action Buttons */}
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          position: "absolute",
-                          bottom: 14,
-                          right: 14,
-                          zIndex: 2,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          component={RouterLink}
-                          to={`/dashboard/add-property?edit=${item.id}`}
-                          startIcon={<EditRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                          sx={{
-                            borderRadius: "10px",
-                            fontWeight: 700,
-                            fontSize: "0.72rem",
-                            background: "#EFF6FF",
-                            color: "#3B82F6",
-                            border: "1px solid #BFDBFE",
-                            "&:hover": { background: "#DBEAFE" },
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => setDeleteTarget({ id: item.id, type: "property" })}
-                          startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                          sx={{
-                            borderRadius: "10px",
-                            fontWeight: 700,
-                            fontSize: "0.72rem",
-                            background: "#FEF2F2",
-                            color: "#EF4444",
-                            border: "1px solid #FCA5A5",
-                            "&:hover": { background: "#FEE2E2" },
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </Stack>
-                    </Box>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id} sx={{ display: "flex" }}>
+                    <PropertyCard
+                      item={item}
+                      editUrl={`/dashboard/add-property?edit=${item.id}`}
+                      onDelete={() => setDeleteTarget({ id: item.id, type: "property", title: item.title })}
+                    />
                   </Grid>
                 ))}
               </Grid>
@@ -283,60 +237,14 @@ export default function MyListingsPage() {
               <Typography variant="h6" fontWeight={800} sx={{ color: "#1E293B", mb: 2 }}>
                 🚗 My Vehicles ({vehicles.length})
               </Typography>
-              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }}>
+              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }} alignItems="stretch">
                 {vehicles.map((item) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                    <Box sx={{ position: "relative", width: "100%" }}>
-                      <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
-                        {renderStatusBadge(item.status, item.rejection_reason)}
-                      </Box>
-                      <VehicleCard item={item} />
-                      {/* Action Buttons */}
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          position: "absolute",
-                          bottom: 14,
-                          right: 14,
-                          zIndex: 2,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          component={RouterLink}
-                          to={`/dashboard/add-vehicle?edit=${item.id}`}
-                          startIcon={<EditRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                          sx={{
-                            borderRadius: "10px",
-                            fontWeight: 700,
-                            fontSize: "0.72rem",
-                            background: "#EFF6FF",
-                            color: "#3B82F6",
-                            border: "1px solid #BFDBFE",
-                            "&:hover": { background: "#DBEAFE" },
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => setDeleteTarget({ id: item.id, type: "vehicle" })}
-                          startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "15px !important" }} />}
-                          sx={{
-                            borderRadius: "10px",
-                            fontWeight: 700,
-                            fontSize: "0.72rem",
-                            background: "#FEF2F2",
-                            color: "#EF4444",
-                            border: "1px solid #FCA5A5",
-                            "&:hover": { background: "#FEE2E2" },
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </Stack>
-                    </Box>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id} sx={{ display: "flex" }}>
+                    <VehicleCard
+                      item={item}
+                      editUrl={`/dashboard/add-vehicle?edit=${item.id}`}
+                      onDelete={() => setDeleteTarget({ id: item.id, type: "vehicle", title: item.title || `${item.brand} ${item.model}` })}
+                    />
                   </Grid>
                 ))}
               </Grid>

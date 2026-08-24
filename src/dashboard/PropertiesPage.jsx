@@ -15,6 +15,7 @@ import Loader               from '../components/Loader'
 import EmptyState           from '../components/EmptyState'
 import { propertyService }  from '../services/api'
 import { extractError }     from '../utils/mappers'
+import { useAppState }      from '../hooks/useAppState'
 
 const TYPES = [
   'All', 'Residential', 'Commercial', 'Agricultural',
@@ -22,6 +23,7 @@ const TYPES = [
 ]
 
 export default function PropertiesPage() {
+  const { user } = useAppState()
   const [properties, setProperties] = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
@@ -29,6 +31,16 @@ export default function PropertiesPage() {
   const [typeFilter, setType]       = useState('All')
   const [sortBy,     setSortBy]     = useState('latest')
   const abortRef                    = useRef(null)
+
+  const hasFullAccess = Boolean(
+    user?.isPremium ||
+    user?.is_premium ||
+    user?.role === 'premium' ||
+    user?.role === 'admin' ||
+    user?.role === 'seller' ||
+    user?.is_admin ||
+    user?.isAdmin
+  )
 
   const fetchProperties = useCallback(async () => {
     if (abortRef.current) abortRef.current.abort()
@@ -88,7 +100,18 @@ export default function PropertiesPage() {
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Chip
+            label={hasFullAccess ? "👑 Premium Access Active" : "Free Plan — View Limited"}
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.78rem",
+              background: hasFullAccess ? "#ECFDF5" : "#FEF3C7",
+              color: hasFullAccess ? "#059669" : "#D97706",
+              border: hasFullAccess ? "1px solid #A7F3D0" : "1px solid #FDE68A",
+              borderRadius: "10px",
+            }}
+          />
           <Button
             onClick={fetchProperties}
             disabled={loading}
@@ -201,10 +224,9 @@ export default function PropertiesPage() {
           iconBg="#EEF2FF"
         />
       ) : (
-        <Grid container spacing={2.5}>
+        <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }} alignItems="stretch">
           {filtered.map((item) => (
-            <Grid item xs={12} sm={6} lg={4} key={item.id}>
-              {/* ✅ xl replaced with lg — xl prop was removed in MUI Grid v2 */}
+            <Grid size={{ xs: 12, sm: 6, md: 6, lg: 4 }} key={item.id} sx={{ display: 'flex' }}>
               <PropertyCard item={item} />
             </Grid>
           ))}

@@ -38,6 +38,7 @@ export function extractError(err) {
  * Handles both snake_case (API) and camelCase (legacy) fields.
  */
 export function normalizeProperty(p) {
+  const priceVal = p.price ?? p.expected_price ?? p.expectedPrice ?? null
   return {
     id:            p.id,
     title:         p.title          || '',
@@ -50,9 +51,10 @@ export function normalizeProperty(p) {
     area:          p.area           ?? null,
     landArea:      p.land_area      || p.landArea       || '',
     cropsGrown:    p.crops_grown    || p.cropsGrown     || '',
-    price:         p.price          ?? p.expectedPrice  ?? null,
+    price:         priceVal,
+    expectedPrice: priceVal,
     rentLease:     p.rent_lease     || p.rentLease      || '',
-    contactNumber: p.contact_number || p.contactNumber  || '',
+    contactNumber: p.contact_number || p.contactNumber  || p.contact || '',
     images:        p.images         || [],
     ownerId:       p.owner_id       || p.ownerId        || null,
     createdAt:     p.created_at     || p.createdAt      || null,
@@ -67,6 +69,7 @@ export const mapProperty = normalizeProperty
  * Converts a raw API vehicle object → the shape used by the frontend.
  */
 export function normalizeVehicle(v) {
+  const priceVal = v.price ?? v.expected_price ?? v.expectedPrice ?? null
   return {
     id:            v.id,
     title:         v.title           || '',
@@ -79,9 +82,10 @@ export function normalizeVehicle(v) {
     kmDriven:      v.km_driven       ?? v.kmDriven      ?? null,
     color:         v.color           || '',
     location:      v.location        || '',
-    price:         v.price           ?? null,
+    price:         priceVal,
+    expectedPrice: priceVal,
     description:   v.description     || '',
-    contactNumber: v.contact_number  || v.contactNumber || '',
+    contactNumber: v.contact_number  || v.contactNumber || v.contact || '',
     images:        v.images          || [],
     ownerId:       v.owner_id        || v.ownerId       || null,
     createdAt:     v.created_at      || v.createdAt     || null,
