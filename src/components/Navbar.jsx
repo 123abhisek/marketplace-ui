@@ -160,7 +160,7 @@ function getNavConfig() {
         { label: "FAQ", to: "/faq" },
         //  { label: "Profile", to: "/free-dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
         { label: "Contact Us", to: "/contact" },
-        { label: "Become Seller", to: "/dashboard/become-seller" },
+        // { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       mobile: [
         {
@@ -198,7 +198,7 @@ function getNavConfig() {
           to: "/contact",
           icon: <ContactSupportRoundedIcon fontSize="small" />,
         },
-        { label: "Become Seller", to: "/dashboard/become-seller" },
+        // { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       dropdown: [
         {
@@ -238,7 +238,7 @@ function getNavConfig() {
         { label: "FAQ", to: "/faq" },
         // { label: "Blog", to: "/blog" },
         { label: "Contact Us", to: "/contact" },
-        { label: "Become Seller", to: "/dashboard/become-seller" },
+        // { label: "Become Seller", to: "/dashboard/become-seller" },
       ],
       mobile: [
         {
@@ -278,7 +278,7 @@ function getNavConfig() {
           to: "/contact",
           icon: <ContactSupportRoundedIcon fontSize="small" />,
         },
-        { label: "Become Seller", to: "/become-seller" },
+        // { label: "Become Seller", to: "/become-seller" },
       ],
       dropdown: [
         {

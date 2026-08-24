@@ -23,7 +23,7 @@ const LINKS = {
     { label: "Home", href: "/" },
     { label: "Explore Listings", href: "/explore" },
     { label: "Upgrade Premium", href: "/subscription" },
-    { label: "Become Seller", href: "/become-seller" },
+    // { label: "Become Seller", href: "/become-seller" },
     { label: "How It Works", href: "/how-it-works" },
   ],
   Account: [

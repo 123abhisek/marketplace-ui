@@ -41,23 +41,23 @@ const slides = [
     secondaryId: "how-it-works",
     icon: "property",
   },
+  // {
+  //   id: 2,
+  //   image:
+  //     "https://i.pinimg.com/1200x/27/e8/54/27e85448f171d24855dbfc841f88c8d4.jpg",
+  //   badge: "Become a Seller",
+  //   eyebrow: "Post • Sell • Earn",
+  //   title: "Start selling property & vehicles today",
+  //   description:
+  //     "List your property, land, or vehicle with ease using one unified account. Connect directly with buyers and manage all your listings from your dashboard.",
+  //   primaryLabel: "Become a Seller",
+  //   secondaryLabel: "Post a Listing",
+  //   primaryPath: "/dashboard/become-seller",
+  //   secondaryId: "how-it-works",
+  //   icon: "seller",
+  // },
   {
     id: 2,
-    image:
-      "https://i.pinimg.com/1200x/27/e8/54/27e85448f171d24855dbfc841f88c8d4.jpg",
-    badge: "Become a Seller",
-    eyebrow: "Post • Sell • Earn",
-    title: "Start selling property & vehicles today",
-    description:
-      "List your property, land, or vehicle with ease using one unified account. Connect directly with buyers and manage all your listings from your dashboard.",
-    primaryLabel: "Become a Seller",
-    secondaryLabel: "Post a Listing",
-    primaryPath: "/dashboard/become-seller",
-    secondaryId: "how-it-works",
-    icon: "seller",
-  },
-  {
-    id: 3,
     image:
       "https://i.pinimg.com/1200x/08/31/aa/0831aa47a2daf7104fc4a40e18b299cf.jpg",
     badge: "EasyDeal Vehicles",
@@ -72,7 +72,7 @@ const slides = [
     icon: "vehicle",
   },
   {
-    id: 4,
+    id: 3,
     image:
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
     badge: "EasyDeal Premium",
@@ -408,7 +408,7 @@ export default function CarouselHero() {
               {currentSlide.primaryLabel}
             </Button>
 
-            <Button
+            {/* <Button
               onClick={() => navigate("/dashboard/become-seller")}
               startIcon={<StorefrontRoundedIcon />}
               sx={{
@@ -427,7 +427,7 @@ export default function CarouselHero() {
               }}
             >
               Become a Seller
-            </Button>
+            </Button> */}
 
             <Button
               onClick={handleSecondary}

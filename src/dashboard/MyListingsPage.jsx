@@ -217,10 +217,10 @@ export default function MyListingsPage() {
               <Typography variant="h6" fontWeight={800} sx={{ color: "#1E293B", mb: 2 }}>
                 🏢 My Properties ({properties.length})
               </Typography>
-              <Grid container spacing={2.5}>
+              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }}>
                 {properties.map((item) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                    <Box sx={{ position: "relative" }}>
+                    <Box sx={{ position: "relative", width: "100%" }}>
                       <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
                         {renderStatusBadge(item.status, item.rejection_reason)}
                       </Box>
@@ -283,10 +283,10 @@ export default function MyListingsPage() {
               <Typography variant="h6" fontWeight={800} sx={{ color: "#1E293B", mb: 2 }}>
                 🚗 My Vehicles ({vehicles.length})
               </Typography>
-              <Grid container spacing={2.5}>
+              <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }}>
                 {vehicles.map((item) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                    <Box sx={{ position: "relative" }}>
+                    <Box sx={{ position: "relative", width: "100%" }}>
                       <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
                         {renderStatusBadge(item.status, item.rejection_reason)}
                       </Box>

@@ -170,12 +170,12 @@ function SidebarContent({ onNavigate, user }) {
                 label="Subscription"
                 onClick={onNavigate}
               />
-              <SidebarLink
+              {/* <SidebarLink
                 to="/dashboard/become-seller"
                 icon={VerifiedUserRoundedIcon}
                 label="Become Seller"
                 onClick={onNavigate}
-              />
+              /> */}
               <SidebarLink
                 to="/dashboard/logout"
                 icon={LogoutRoundedIcon}
