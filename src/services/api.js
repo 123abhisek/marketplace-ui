@@ -31,8 +31,8 @@ export const tokenStore = (() => {
 })();
 
 
-async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
-  const headers = {};
+async function apiFetch(method, path, body = undefined, isFormEncoded = false, options = {}) {
+  const headers = { ...(options?.headers || {}) };
 
   if (body !== undefined) {
     headers["Content-Type"] = isFormEncoded
@@ -46,7 +46,20 @@ async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const cleanPath = String(path || "").replace(/^\/+/, "");
+  let cleanPath = String(path || "").replace(/^\/+/, "");
+
+  if (options?.params && typeof options.params === "object") {
+    const searchParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") {
+        searchParams.append(k, String(v));
+      }
+    });
+    const qs = searchParams.toString();
+    if (qs) {
+      cleanPath += (cleanPath.includes("?") ? "&" : "?") + qs;
+    }
+  }
 
   const res = await fetch(`${API}${cleanPath}`, {
     method,
@@ -64,23 +77,41 @@ async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
     return null;
   }
 
-  const ct = res.headers.get("content-type") || "";
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  const isBinary =
+    options?.responseType === "blob" ||
+    ct.includes("application/vnd.openxmlformats") ||
+    ct.includes("spreadsheetml") ||
+    ct.includes("application/octet-stream") ||
+    ct.includes("application/pdf") ||
+    ct.includes("application/zip") ||
+    ct.includes("excel");
 
   let data = null;
 
   try {
-    data = ct.includes("application/json")
-      ? await res.json()
-      : await res.text();
+    if (isBinary && res.ok) {
+      data = await res.blob();
+    } else if (ct.includes("application/json")) {
+      data = await res.json();
+    } else {
+      data = await res.text();
+    }
   } catch {
     data = null;
   }
 
   if (!res.ok) {
-    const backendMessage =
-      typeof data === "object" && data !== null
-        ? data.detail || data.message
-        : null;
+    let backendMessage = null;
+    if (data instanceof Blob) {
+      try {
+        const text = await data.text();
+        const json = JSON.parse(text);
+        backendMessage = json.detail || json.message;
+      } catch {}
+    } else if (typeof data === "object" && data !== null) {
+      backendMessage = data.detail || data.message;
+    }
 
     const err = new Error(backendMessage || `HTTP ${res.status}`);
 
@@ -102,10 +133,10 @@ async function apiFetch(method, path, body = undefined, isFormEncoded = false) {
   return data;
 }
 
-const get = (path) => apiFetch("GET", path);
-const post = (path, body, isForm) => apiFetch("POST", path, body, isForm);
-const del = (path) => apiFetch("DELETE", path);
-const put = (path, body) => apiFetch("PUT", path, body);
+const get = (path, options) => apiFetch("GET", path, undefined, false, options);
+const post = (path, body, isForm, options) => apiFetch("POST", path, body, isForm, options);
+const del = (path, options) => apiFetch("DELETE", path, undefined, false, options);
+const put = (path, body, isForm, options) => apiFetch("PUT", path, body, isForm, options);
 
 export const api = {
   get,
@@ -115,6 +146,7 @@ export const api = {
 };
 
 export default api;
+
 
 export const authService = {
   login: async ({ email, password }) => {

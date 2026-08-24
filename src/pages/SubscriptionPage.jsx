@@ -29,7 +29,7 @@ import api from "../services/api";
 
 const PLAN_AMOUNT = 299;
 const GST_RATE = 0.06;
-const PLAN_MONTHS = 1;
+const PLAN_MONTHS = 12;
 
 const PLAN_FEATURES = [
   "View full listing prices",

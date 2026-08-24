@@ -60,6 +60,7 @@ import AdminReportsPage from "../pages/admin/AdminReportsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
 import AdminApprovalsPage from "../pages/admin/AdminApprovalsPage";
 import AdminSellerRequests from "../pages/admin/AdminSellerRequests";
+import AdminSubscriptionsPage from "../pages/admin/AdminSubscriptionsPage";
 
 /* Free dashboard redirects for backward compat */
 import FreeDashboard from "../pages/FreeDashboard";
@@ -255,6 +256,7 @@ export const routes = [
           { index: true, element: <Navigate to="overview" replace /> },
           { path: "overview", element: <AdminOverviewPage /> },
           { path: "users", element: <AdminUsersPage /> },
+          { path: "subscriptions", element: <AdminSubscriptionsPage /> },
           { path: "approvals", element: <AdminApprovalsPage /> },
           { path: "properties/add", element: <AddPropertyPage /> },
           { path: "vehicles/add", element: <AddVehiclePage /> },

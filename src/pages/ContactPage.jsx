@@ -82,7 +82,7 @@ const CONTACT_CARDS = [
   {
     icon: <LocationOnRoundedIcon />,
     label: "Office",
-    value: "Bengaluru, Karnataka, IN",
+    value: "Uttara kannada, Karnataka, IN",
     sub: "560001, India",
     color: "#c2410c",
     iconBg: "rgba(194,65,12,0.10)",

@@ -108,6 +108,15 @@ const adminOrdersService = {
   },
 
   /**
+   * Export all users Excel
+   */
+  exportUsers: async () => {
+    return api.get("admin/export/users.xlsx", {
+      responseType: "blob",
+    });
+  },
+
+  /**
    * Export customers Excel
    */
   exportCustomers: async () => {
@@ -124,6 +133,23 @@ const adminOrdersService = {
       responseType: "blob",
     });
   },
+
+  /**
+   * Get premium subscriptions and total revenue
+   */
+  getPremiumSubscriptions: async () => {
+    return api.get("admin/premium-subscriptions");
+  },
+
+  /**
+   * Export premium subscriptions Excel
+   */
+  exportPremiumSubscriptions: async () => {
+    return api.get("admin/export/premium-subscriptions.xlsx", {
+      responseType: "blob",
+    });
+  },
 };
 
 export default adminOrdersService;
+

@@ -182,6 +182,7 @@ const navItems = [
   { label: "Overview", path: "/admin/overview" },
   { label: "Approvals", path: "/admin/approvals" },
   { label: "Users", path: "/admin/users" },
+  { label: "Subscriptions", path: "/admin/subscriptions" },
   { label: "Seller Requests", path: "/admin/seller-requests" },
   { label: "Add Property", path: "/admin/properties/add" },
   { label: "Add Vehicle", path: "/admin/vehicles/add" },
@@ -190,6 +191,7 @@ const navItems = [
   { label: "Reports", path: "/admin/reports" },
   { label: "Settings", path: "/admin/settings" },
 ];
+
 
 function SidebarContent({ location, onNavigate, mobile = false }) {
   return (

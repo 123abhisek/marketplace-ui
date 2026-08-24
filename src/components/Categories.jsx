@@ -42,7 +42,7 @@ const items = [
   {
     title: "Houses",
     icon: <HouseRoundedIcon sx={{ fontSize: 28 }} />,
-    desc: "Independent houses, villas, and family homes.",
+    desc: "Rent/Sale: Independent houses, villas, and family homes.",
     tag: "Family",
     accent: "#2563eb",
     soft: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)",
@@ -60,7 +60,7 @@ const items = [
   {
     title: "Land",
     icon: <TerrainRoundedIcon sx={{ fontSize: 28 }} />,
-    desc: "Plots, sites, and agricultural land for sale.",
+    desc: "Plots & Land: Residential plots, sites, and agricultural land for sale or lease.",
     tag: "Investment",
     accent: "#0891b2",
     soft: "linear-gradient(135deg, #ecfeff 0%, #ffffff 100%)",
