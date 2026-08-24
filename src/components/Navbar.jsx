@@ -137,19 +137,10 @@ function getNavConfig() {
           to: "/contact",
           icon: <ContactSupportRoundedIcon fontSize="small" />,
         },
-        {
-          label: "Login",
-          to: "/login",
-          icon: <LoginRoundedIcon fontSize="small" />,
-        },
-        {
-          label: "Register",
-          to: "/register",
-          icon: <PersonAddAlt1RoundedIcon fontSize="small" />,
-        },
       ],
       dropdown: [],
     },
+
 
     free: {
       desktop: [
