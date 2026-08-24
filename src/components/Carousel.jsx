@@ -59,7 +59,7 @@ const slides = [
   {
     id: 2,
     image:
-      "https://i.pinimg.com/1200x/08/31/aa/0831aa47a2daf7104fc4a40e18b299cf.jpg",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     badge: "EasyDeal Vehicles",
     eyebrow: "Cars • Bikes • More",
     title: "Discover trusted vehicles near you",
@@ -74,7 +74,7 @@ const slides = [
   {
     id: 3,
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+      "https://i.pinimg.com/1200x/d6/44/87/d64487145fe58ec916aa9998eb80fbcb.jpg",
     badge: "EasyDeal Premium",
     eyebrow: "Unlock • Connect • Growth",
     title: "Sell smarter with EasyDeal Premium",
