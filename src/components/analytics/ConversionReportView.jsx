@@ -1,4 +1,4 @@
-﻿// src/components/analytics/ConversionReportView.jsx
+// src/components/analytics/ConversionReportView.jsx
 import React, { useMemo } from "react";
 import {
   Box,
@@ -43,16 +43,29 @@ import {
   BEST_PERFORMING_LISTINGS,
 } from "./analyticsData";
 
-export default function ConversionReportView({ searchQuery = "" }) {
+export default function ConversionReportView({ data, searchQuery = "" }) {
+  const kpis = data?.kpis;
+  const recentList = data?.recent_bookings || [];
+  const convRate = kpis?.conversion_rate || 0;
+  const totalBookings = kpis?.total_bookings || 0;
+  const confirmed = kpis?.confirmed_bookings || 0;
+  const pending = kpis?.pending_bookings || 0;
+
   const filteredListings = useMemo(() => {
-    return BEST_PERFORMING_LISTINGS.filter((item) => {
+    return recentList.map(b => ({
+      listing: b.listing_title || `Listing ${b.id}`,
+      type: b.category,
+      views: "—",
+      bookings: b.status === "Confirmed" || b.status === "Completed" ? 1 : 0,
+      rate: b.status === "Confirmed" || b.status === "Completed" ? "100%" : "0%",
+    })).filter((item) => {
       const matchSearch =
         !searchQuery ||
         item.listing.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.type.toLowerCase().includes(searchQuery.toLowerCase());
       return matchSearch;
     });
-  }, [searchQuery]);
+  }, [recentList, searchQuery]);
 
   return (
     <Stack spacing={3}>
@@ -60,60 +73,60 @@ export default function ConversionReportView({ searchQuery = "" }) {
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Overall Conversion"
-            value="7.8%"
+            title="Conversion Rate"
+            value={`${convRate}%`}
             growth={1.4}
-            comparison="Visitors to closed deals"
+            comparison="Confirmed vs total bookings"
             sparkColor="#10B981"
-            sparkline={[{ v: 6.2 }, { v: 6.8 }, { v: 7.1 }, { v: 7.5 }, { v: 7.8 }]}
+            sparkline={[{ v: 0 }, { v: convRate }]}
             icon={<TrendingUpRoundedIcon />}
             color="#10B981"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Enquiry Conversion"
-            value="16.0%"
+            title="Total Bookings"
+            value={`${totalBookings}`}
             growth={1.8}
-            comparison="Views to Enquiry"
+            comparison="Recorded customer requests"
             sparkColor="#0F766E"
-            sparkline={[{ v: 14.2 }, { v: 14.8 }, { v: 15.2 }, { v: 15.6 }, { v: 16.0 }]}
+            sparkline={[{ v: 0 }, { v: totalBookings }]}
             icon={<FilterAltRoundedIcon />}
             color="#0F766E"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Contact / Call Rate"
-            value="62.5%"
+            title="Confirmed Inquiries"
+            value={`${confirmed}`}
             growth={3.2}
-            comparison="Enquiries to Call"
+            comparison="Successfully completed"
             sparkColor="#2563EB"
-            sparkline={[{ v: 54 }, { v: 57 }, { v: 59 }, { v: 61 }, { v: 62.5 }]}
+            sparkline={[{ v: 0 }, { v: confirmed }]}
             icon={<CheckCircleOutlineRoundedIcon />}
             color="#2563EB"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Booking Conversion"
-            value="25.0%"
+            title="Pending Conversion"
+            value={`${pending}`}
             growth={2.1}
-            comparison="Calls to Confirmed Visit"
+            comparison="Inquiries in progress"
             sparkColor="#6366F1"
-            sparkline={[{ v: 21 }, { v: 22.5 }, { v: 23.5 }, { v: 24.2 }, { v: 25.0 }]}
+            sparkline={[{ v: 0 }, { v: pending }]}
             icon={<CheckCircleOutlineRoundedIcon />}
             color="#6366F1"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Deal Closure Rate"
-            value="70.0%"
+            title="Total Listings"
+            value={`${(kpis?.total_properties || 0) + (kpis?.total_vehicles || 0)}`}
             growth={4.5}
-            comparison="Bookings to Closed Sale"
+            comparison="Live marketplace inventory"
             sparkColor="#8B5CF6"
-            sparkline={[{ v: 61 }, { v: 64 }, { v: 66 }, { v: 68 }, { v: 70 }]}
+            sparkline={[{ v: 0 }, { v: (kpis?.total_properties || 0) + (kpis?.total_vehicles || 0) }]}
             icon={<CheckCircleOutlineRoundedIcon />}
             color="#8B5CF6"
           />

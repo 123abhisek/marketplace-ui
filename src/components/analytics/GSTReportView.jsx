@@ -1,4 +1,4 @@
-﻿// src/components/analytics/GSTReportView.jsx
+// src/components/analytics/GSTReportView.jsx
 import React, { useMemo } from "react";
 import {
   Box,
@@ -46,25 +46,50 @@ import {
   formatCompactINR,
 } from "./analyticsData";
 
-export default function GSTReportView({ searchQuery = "", onExportGST }) {
+export default function GSTReportView({ data, searchQuery = "", onExportGST }) {
+  const kpis = data?.kpis;
+  const recentList = data?.recent_bookings || [];
+  const totalTaxable = kpis?.total_revenue || 0;
+  const totalGst = kpis?.gst_collected || Math.round(totalTaxable * 0.18);
+  const cgst = Math.round(totalGst / 2);
+  const sgst = Math.round(totalGst / 2);
+  const invoiceTotal = totalTaxable + totalGst;
+
   const filteredInvoices = useMemo(() => {
-    return GST_REPORT_TABLE.filter((item) => {
+    return recentList.map((b) => {
+      const taxable = b.amount || 0;
+      const tGst = Math.round(taxable * 0.18);
+      const c = Math.round(tGst / 2);
+      const s = Math.round(tGst / 2);
+      const tot = taxable + tGst;
+      return {
+        invoice: `INV-${b.raw_id ? b.raw_id.slice(0, 6).toUpperCase() : b.id.replace('BK-', '')}`,
+        date: b.date || "—",
+        customer: b.customer,
+        taxable,
+        cgst: c,
+        sgst: s,
+        igst: 0,
+        totalGst: tGst,
+        total: tot,
+      };
+    }).filter((item) => {
       const matchSearch =
         !searchQuery ||
-        item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.invoice.toLowerCase().includes(searchQuery.toLowerCase());
+        item.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.invoice?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchSearch;
     });
-  }, [searchQuery]);
+  }, [recentList, searchQuery]);
 
   const handleExport = () => {
     if (onExportGST) {
       onExportGST();
       return;
     }
-    // Client-side CSV generator for GST
+    // Client-side CSV generator for GST from real records
     const headers = ["Invoice Number", "Date", "Customer", "Taxable Amount", "CGST", "SGST", "IGST", "Total GST", "Invoice Total"];
-    const rows = GST_REPORT_TABLE.map((r) => [
+    const rows = filteredInvoices.map((r) => [
       r.invoice,
       r.date,
       `"${r.customer}"`,
@@ -93,12 +118,12 @@ export default function GSTReportView({ searchQuery = "", onExportGST }) {
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Total Taxable Amount"
-            value="₹12,45,800"
+            title="Total Taxable Value"
+            value={`₹${Number(totalTaxable).toLocaleString('en-IN')}`}
             growth={18.4}
-            comparison="Base taxable base"
+            comparison="Taxable transactions base"
             sparkColor="#2563EB"
-            sparkline={[{ v: 640 }, { v: 780 }, { v: 850 }, { v: 1040 }, { v: 1245 }]}
+            sparkline={[{ v: 0 }, { v: totalTaxable }]}
             icon={<ReceiptLongRoundedIcon />}
             color="#2563EB"
           />
@@ -106,11 +131,11 @@ export default function GSTReportView({ searchQuery = "", onExportGST }) {
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="CGST (9%)"
-            value="₹1,05,622"
+            value={`₹${Number(cgst).toLocaleString('en-IN')}`}
             growth={15.2}
-            comparison="Central GST portion"
+            comparison="Central GST liability"
             sparkColor="#0F766E"
-            sparkline={[{ v: 57 }, { v: 70 }, { v: 76 }, { v: 89 }, { v: 105 }]}
+            sparkline={[{ v: 0 }, { v: cgst }]}
             icon={<AccountBalanceRoundedIcon />}
             color="#0F766E"
           />
@@ -118,36 +143,36 @@ export default function GSTReportView({ searchQuery = "", onExportGST }) {
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="SGST (9%)"
-            value="₹1,05,622"
+            value={`₹${Number(sgst).toLocaleString('en-IN')}`}
             growth={15.2}
-            comparison="Karnataka State GST"
+            comparison="State GST liability (Karnataka)"
             sparkColor="#6366F1"
-            sparkline={[{ v: 57 }, { v: 70 }, { v: 76 }, { v: 89 }, { v: 105 }]}
+            sparkline={[{ v: 0 }, { v: sgst }]}
             icon={<AccountBalanceRoundedIcon />}
             color="#6366F1"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="IGST (18%)"
-            value="₹13,000"
-            growth={18.0}
-            comparison="Interstate transactions"
+            title="Total GST (18%)"
+            value={`₹${Number(totalGst).toLocaleString('en-IN')}`}
+            growth={15.2}
+            comparison="Combined statutory tax"
             sparkColor="#F59E0B"
-            sparkline={[{ v: 0 }, { v: 0 }, { v: 7.6 }, { v: 9.2 }, { v: 13 }]}
-            icon={<AccountBalanceRoundedIcon />}
+            sparkline={[{ v: 0 }, { v: totalGst }]}
+            icon={<CurrencyRupeeRoundedIcon />}
             color="#F59E0B"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Total GST Collected"
-            value="₹2,24,244"
-            growth={15.2}
-            comparison="100% Tax Compliant"
+            title="Gross Invoice Total"
+            value={`₹${Number(invoiceTotal).toLocaleString('en-IN')}`}
+            growth={17.8}
+            comparison="Tax inclusive invoice sum"
             sparkColor="#10B981"
-            sparkline={[{ v: 115 }, { v: 140 }, { v: 153 }, { v: 187 }, { v: 224 }]}
-            icon={<CurrencyRupeeRoundedIcon />}
+            sparkline={[{ v: 0 }, { v: invoiceTotal }]}
+            icon={<ReceiptLongRoundedIcon />}
             color="#10B981"
           />
         </Grid>
@@ -325,19 +350,27 @@ export default function GSTReportView({ searchQuery = "", onExportGST }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredInvoices.map((row) => (
-                  <TableRow key={row.invoice} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
-                    <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.invoice}</TableCell>
-                    <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 750 }}>{formatINR(row.taxable)}</TableCell>
-                    <TableCell align="right" sx={{ color: "#0F766E" }}>{formatINR(row.cgst)}</TableCell>
-                    <TableCell align="right" sx={{ color: "#2563EB" }}>{formatINR(row.sgst)}</TableCell>
-                    <TableCell align="right" sx={{ color: "#8B5CF6" }}>{formatINR(row.igst)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800, color: "#F59E0B" }}>{formatINR(row.totalGst)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 950, color: BI_COLORS.navy }}>{formatINR(row.total)}</TableCell>
+                {filteredInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4, color: BI_COLORS.neutral }}>
+                      No GST invoices recorded in the database.
+                    </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredInvoices.map((row) => (
+                    <TableRow key={row.invoice} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
+                      <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.invoice}</TableCell>
+                      <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date}</TableCell>
+                      <TableCell>{row.customer}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 750 }}>{formatINR(row.taxable)}</TableCell>
+                      <TableCell align="right" sx={{ color: "#0F766E" }}>{formatINR(row.cgst)}</TableCell>
+                      <TableCell align="right" sx={{ color: "#2563EB" }}>{formatINR(row.sgst)}</TableCell>
+                      <TableCell align="right" sx={{ color: "#8B5CF6" }}>{formatINR(row.igst)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 800, color: "#F59E0B" }}>{formatINR(row.totalGst)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 950, color: BI_COLORS.navy }}>{formatINR(row.total)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

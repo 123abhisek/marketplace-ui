@@ -1,4 +1,4 @@
-﻿// src/components/analytics/UserSellerReportView.jsx
+// src/components/analytics/UserSellerReportView.jsx
 import React, { useMemo } from "react";
 import {
   Box,
@@ -41,18 +41,32 @@ import {
   USER_TYPE_DONUT,
   SELLER_GROWTH_TREND,
   SELLER_REQUEST_STATUS_DONUT,
-  TOP_SELLERS_TABLE,
 } from "./analyticsData";
 
-export default function UserSellerReportView({ searchQuery = "" }) {
+export default function UserSellerReportView({ data, searchQuery = "" }) {
+  const kpis = data?.kpis;
+  const topSellers = data?.top_sellers || [];
+  const totalCustomers = kpis?.total_customers || 0;
+  const totalSellers = kpis?.total_sellers || 0;
+  const totalUsers = totalCustomers + totalSellers;
+
   const filteredSellers = useMemo(() => {
-    return TOP_SELLERS_TABLE.filter((item) => {
+    return topSellers.map((s, idx) => ({
+      rank: idx + 1,
+      seller: s.name,
+      listings: "—",
+      views: "—",
+      enquiries: s.bookings || 0,
+      bookings: s.bookings || 0,
+      revenue: `₹${Number(s.revenue || 0).toLocaleString('en-IN')}`,
+      rate: s.bookings > 0 ? "100%" : "0%",
+    })).filter((item) => {
       const matchSearch =
         !searchQuery ||
-        item.seller.toLowerCase().includes(searchQuery.toLowerCase());
+        item.seller?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchSearch;
     });
-  }, [searchQuery]);
+  }, [topSellers, searchQuery]);
 
   return (
     <Stack spacing={3}>
@@ -61,71 +75,71 @@ export default function UserSellerReportView({ searchQuery = "" }) {
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
             title="Total Users"
-            value="5,890"
+            value={`${totalUsers}`}
             growth={21.3}
-            comparison="+880 this month"
+            comparison="All registered accounts"
             sparkColor="#2563EB"
-            sparkline={[{ v: 2100 }, { v: 3010 }, { v: 4240 }, { v: 5010 }, { v: 5890 }]}
+            sparkline={[{ v: 0 }, { v: totalUsers }]}
             icon={<PeopleAltRoundedIcon />}
             color="#2563EB"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
-            title="New Signups"
-            value="880"
+            title="Customers"
+            value={`${totalCustomers}`}
             growth={14.2}
-            comparison="New monthly joins"
+            comparison="Buyers and explorers"
             sparkColor="#10B981"
-            sparkline={[{ v: 320 }, { v: 490 }, { v: 660 }, { v: 770 }, { v: 880 }]}
+            sparkline={[{ v: 0 }, { v: totalCustomers }]}
             icon={<PersonAddRoundedIcon />}
             color="#10B981"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
-            title="Active Accounts"
-            value="4,180"
+            title="Active Sellers"
+            value={`${totalSellers}`}
             growth={17.4}
-            comparison="70.9% DAU/MAU"
+            comparison="Verified partners"
             sparkColor="#0F766E"
-            sparkline={[{ v: 1450 }, { v: 2100 }, { v: 2980 }, { v: 3560 }, { v: 4180 }]}
+            sparkline={[{ v: 0 }, { v: totalSellers }]}
             icon={<HowToRegRoundedIcon />}
             color="#0F766E"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
-            title="Premium Members"
-            value="1,298"
+            title="Total Listings"
+            value={`${(kpis?.total_properties || 0) + (kpis?.total_vehicles || 0)}`}
             growth={22.0}
-            comparison="₹299 plan conversion"
+            comparison="Properties & vehicles"
             sparkColor="#8B5CF6"
-            sparkline={[{ v: 480 }, { v: 690 }, { v: 920 }, { v: 1110 }, { v: 1298 }]}
+            sparkline={[{ v: 0 }, { v: (kpis?.total_properties || 0) + (kpis?.total_vehicles || 0) }]}
             icon={<WorkspacePremiumRoundedIcon />}
             color="#8B5CF6"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
-            title="Verified Sellers"
-            value="342"
+            title="Properties"
+            value={`${kpis?.total_properties || 0}`}
             growth={9.8}
-            comparison="Active merchant base"
+            comparison="Real estate inventory"
             sparkColor="#F59E0B"
-            sparkline={[{ v: 190 }, { v: 250 }, { v: 305 }, { v: 325 }, { v: 342 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.total_properties || 0 }]}
             icon={<StorefrontRoundedIcon />}
             color="#F59E0B"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <KPICard
-            title="Pending Requests"
-            value="28"
+            title="Vehicles"
+            value={`${kpis?.total_vehicles || 0}`}
             growth={-12.5}
-            comparison="Awaiting approval"
+            comparison="Automotive inventory"
             sparkColor="#EF4444"
-            sparkline={[{ v: 45 }, { v: 38 }, { v: 34 }, { v: 30 }, { v: 28 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.total_vehicles || 0 }]}
             icon={<HourglassTopRoundedIcon />}
             color="#EF4444"
           />
@@ -295,24 +309,32 @@ export default function UserSellerReportView({ searchQuery = "" }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredSellers.map((row) => (
-                  <TableRow key={row.rank} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
-                    <TableCell sx={{ fontWeight: 950, color: BI_COLORS.navy }}>#{row.rank}</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.seller}</TableCell>
-                    <TableCell align="right">{row.listings}</TableCell>
-                    <TableCell align="right">{row.views.toLocaleString()}</TableCell>
-                    <TableCell align="right">{row.enquiries}</TableCell>
-                    <TableCell align="right">{row.bookings}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900, color: "#10B981" }}>{row.revenue}</TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        size="small"
-                        label={row.rate}
-                        sx={{ height: 22, fontWeight: 800, fontSize: "0.74rem", bgcolor: "#DCFCE7", color: "#166534" }}
-                      />
+                {filteredSellers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4, color: BI_COLORS.neutral }}>
+                      No merchant partners found in the database.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredSellers.map((row) => (
+                    <TableRow key={row.rank} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
+                      <TableCell sx={{ fontWeight: 950, color: BI_COLORS.navy }}>#{row.rank}</TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.seller}</TableCell>
+                      <TableCell align="right">{row.listings}</TableCell>
+                      <TableCell align="right">{row.views.toLocaleString()}</TableCell>
+                      <TableCell align="right">{row.enquiries}</TableCell>
+                      <TableCell align="right">{row.bookings}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 900, color: "#10B981" }}>{row.revenue}</TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          size="small"
+                          label={row.rate}
+                          sx={{ height: 22, fontWeight: 800, fontSize: "0.74rem", bgcolor: "#DCFCE7", color: "#166534" }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

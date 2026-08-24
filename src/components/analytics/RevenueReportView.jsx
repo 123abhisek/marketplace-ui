@@ -1,4 +1,4 @@
-﻿// src/components/analytics/RevenueReportView.jsx
+// src/components/analytics/RevenueReportView.jsx
 import React, { useMemo } from "react";
 import {
   Box,
@@ -48,18 +48,44 @@ import {
   formatCompactINR,
 } from "./analyticsData";
 
-export default function RevenueReportView({ category = "all", searchQuery = "" }) {
+export default function RevenueReportView({ data, category = "all", searchQuery = "" }) {
+  const kpis = data?.kpis;
+  const recentList = data?.recent_bookings || [];
+  const topSellers = data?.top_sellers || [];
+  const categoryDist = data?.category_distribution || [];
+
+  const grossRevenue = kpis?.total_revenue || 0;
+  const gstAmount = kpis?.gst_collected || Math.round(grossRevenue * 0.18);
+  const netRevenue = Math.max(0, grossRevenue - gstAmount);
+  const aov = kpis?.confirmed_bookings ? Math.round(grossRevenue / kpis.confirmed_bookings) : 0;
+
   const filteredRevenueTable = useMemo(() => {
-    return REVENUE_TABLE_DATA.filter((item) => {
-      const matchCat = category === "all" || item.category.toLowerCase() === category.toLowerCase();
+    return recentList.map(b => {
+      const gross = b.amount || 0;
+      const gst = Math.round(gross * 0.18);
+      const net = gross - gst;
+      return {
+        id: b.id,
+        date: b.date,
+        customer: b.customer,
+        seller: b.seller,
+        category: b.category,
+        gross,
+        discount: 0,
+        gst,
+        net,
+        status: b.status === "Confirmed" || b.status === "Completed" ? "Paid" : b.status,
+      };
+    }).filter((item) => {
+      const matchCat = category === "all" || item.category?.toLowerCase() === category.toLowerCase();
       const matchSearch =
         !searchQuery ||
-        item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.seller.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchQuery.toLowerCase());
+        item.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.seller?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [category, searchQuery]);
+  }, [recentList, category, searchQuery]);
 
   return (
     <Stack spacing={3}>
@@ -68,35 +94,35 @@ export default function RevenueReportView({ category = "all", searchQuery = "" }
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="Gross Revenue"
-            value="₹12,45,800"
+            value={`₹${Number(grossRevenue).toLocaleString('en-IN')}`}
             growth={18.4}
-            comparison="+₹1.95L vs last period"
+            comparison="Confirmed transaction volume"
             sparkColor="#10B981"
-            sparkline={[{ v: 640 }, { v: 780 }, { v: 850 }, { v: 1040 }, { v: 1245 }]}
+            sparkline={[{ v: 0 }, { v: grossRevenue }]}
             icon={<CurrencyRupeeRoundedIcon />}
             color="#10B981"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Discounts & Coupons"
-            value="₹50,000"
+            title="Avg Order Value"
+            value={`₹${Number(aov).toLocaleString('en-IN')}`}
             growth={4.2}
-            comparison="4.0% of gross"
-            sparkColor="#EF4444"
-            sparkline={[{ v: 24 }, { v: 30 }, { v: 35 }, { v: 42 }, { v: 50 }]}
+            comparison="Per confirmed booking"
+            sparkColor="#6366F1"
+            sparkline={[{ v: 0 }, { v: aov }]}
             icon={<LocalOfferRoundedIcon />}
-            color="#EF4444"
+            color="#6366F1"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="GST (18%)"
-            value="₹2,24,244"
+            value={`₹${Number(gstAmount).toLocaleString('en-IN')}`}
             growth={15.2}
-            comparison="Statutory compliance"
+            comparison="Statutory tax computation"
             sparkColor="#F59E0B"
-            sparkline={[{ v: 115 }, { v: 140 }, { v: 165 }, { v: 187 }, { v: 224 }]}
+            sparkline={[{ v: 0 }, { v: gstAmount }]}
             icon={<AccountBalanceRoundedIcon />}
             color="#F59E0B"
           />
@@ -104,25 +130,25 @@ export default function RevenueReportView({ category = "all", searchQuery = "" }
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="Net Revenue"
-            value="₹9,71,556"
+            value={`₹${Number(netRevenue).toLocaleString('en-IN')}`}
             growth={19.5}
-            comparison="Retained marketplace margin"
+            comparison="Net after GST"
             sparkColor="#0F766E"
-            sparkline={[{ v: 500 }, { v: 609 }, { v: 665 }, { v: 810 }, { v: 971 }]}
+            sparkline={[{ v: 0 }, { v: netRevenue }]}
             icon={<TrendingUpRoundedIcon />}
             color="#0F766E"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Avg Transaction Value"
-            value="₹42,800"
-            growth={6.8}
-            comparison="+₹2.7k per booking"
-            sparkColor="#6366F1"
-            sparkline={[{ v: 35 }, { v: 37 }, { v: 39 }, { v: 41 }, { v: 42.8 }]}
+            title="Confirmed Invoices"
+            value={`${kpis?.confirmed_bookings || 0}`}
+            growth={11.0}
+            comparison="Total paid invoices"
+            sparkColor="#2563EB"
+            sparkline={[{ v: 0 }, { v: kpis?.confirmed_bookings || 0 }]}
             icon={<ReceiptLongRoundedIcon />}
-            color="#6366F1"
+            color="#2563EB"
           />
         </Grid>
       </Grid>
@@ -287,44 +313,52 @@ export default function RevenueReportView({ category = "all", searchQuery = "" }
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredRevenueTable.map((row) => (
-                  <TableRow key={row.id} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
-                    <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date}</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.id}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell>{row.seller}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={row.category}
-                        sx={{
-                          height: 22,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          bgcolor: row.category === "Property" ? `${BI_COLORS.property}15` : `${BI_COLORS.vehicle}15`,
-                          color: row.category === "Property" ? BI_COLORS.property : BI_COLORS.vehicle,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800 }}>{formatINR(row.gross)}</TableCell>
-                    <TableCell align="right" sx={{ color: "#EF4444" }}>-{formatINR(row.discount)}</TableCell>
-                    <TableCell align="right" sx={{ color: "#F59E0B" }}>{formatINR(row.gst)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900, color: "#10B981" }}>{formatINR(row.net)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={row.status}
-                        sx={{
-                          height: 22,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          bgcolor: row.status === "Paid" ? "#DCFCE7" : "#FEF3C7",
-                          color: row.status === "Paid" ? "#166534" : "#B45309",
-                        }}
-                      />
+                {filteredRevenueTable.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} align="center" sx={{ py: 4, color: BI_COLORS.neutral }}>
+                      No revenue transactions found in the database.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredRevenueTable.map((row) => (
+                    <TableRow key={row.id} hover sx={{ "& td": { fontSize: "0.83rem", fontWeight: 650, py: 1.4 } }}>
+                      <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date || "—"}</TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.id}</TableCell>
+                      <TableCell>{row.customer}</TableCell>
+                      <TableCell>{row.seller}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.category}
+                          sx={{
+                            height: 22,
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            bgcolor: row.category === "Property" ? `${BI_COLORS.property}15` : `${BI_COLORS.vehicle}15`,
+                            color: row.category === "Property" ? BI_COLORS.property : BI_COLORS.vehicle,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 800 }}>{formatINR(row.gross)}</TableCell>
+                      <TableCell align="right" sx={{ color: "#EF4444" }}>-{formatINR(row.discount)}</TableCell>
+                      <TableCell align="right" sx={{ color: "#F59E0B" }}>{formatINR(row.gst)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 900, color: "#10B981" }}>{formatINR(row.net)}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.status}
+                          sx={{
+                            height: 22,
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            bgcolor: row.status === "Paid" ? "#DCFCE7" : "#FEF3C7",
+                            color: row.status === "Paid" ? "#166534" : "#B45309",
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

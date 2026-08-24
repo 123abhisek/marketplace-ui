@@ -94,6 +94,20 @@ const adminOrdersService = {
   },
 
   /**
+   * Get rich analytics summary
+   */
+  getAnalyticsSummary: async () => {
+    return api.get("admin/analytics-summary");
+  },
+
+  /**
+   * Get pending listings
+   */
+  getPendingListings: async () => {
+    return api.get("admin/pending-listings");
+  },
+
+  /**
    * Export customers Excel
    */
   exportCustomers: async () => {

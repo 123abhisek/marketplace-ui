@@ -1,4 +1,4 @@
-﻿// src/components/analytics/BookingReportView.jsx
+// src/components/analytics/BookingReportView.jsx
 import React, { useMemo } from "react";
 import {
   Box,
@@ -46,18 +46,28 @@ import {
   formatINR,
 } from "./analyticsData";
 
-export default function BookingReportView({ category = "all", searchQuery = "" }) {
+export default function BookingReportView({ data, category = "all", searchQuery = "" }) {
+  const kpis = data?.kpis;
+  const recentList = data?.recent_bookings || [];
+  const statusDist = data?.status_distribution || [
+    { name: "Confirmed", value: kpis?.confirmed_bookings || 0, color: "#10B981" },
+    { name: "Pending", value: kpis?.pending_bookings || 0, color: "#F59E0B" },
+    { name: "Cancelled", value: kpis?.cancelled_bookings || 0, color: "#EF4444" },
+  ];
+  const topSellers = data?.top_sellers || [];
+  const categoryDist = data?.category_distribution || [];
+
   const filteredBookings = useMemo(() => {
-    return RECENT_BOOKINGS_TABLE.filter((item) => {
-      const matchCat = category === "all" || item.category.toLowerCase() === category.toLowerCase();
+    return recentList.filter((item) => {
+      const matchCat = category === "all" || item.category?.toLowerCase() === category.toLowerCase();
       const matchSearch =
         !searchQuery ||
-        item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.seller.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchQuery.toLowerCase());
+        item.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.seller?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [category, searchQuery]);
+  }, [recentList, category, searchQuery]);
 
   return (
     <Stack spacing={3}>
@@ -65,12 +75,12 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Total Enquiries"
-            value="1,248"
+            title="Total Bookings"
+            value={kpis?.total_bookings != null ? `${kpis.total_bookings}` : "0"}
             growth={12.6}
-            comparison="+140 vs prev period"
+            comparison="All recorded bookings"
             sparkColor={BI_COLORS.bookings}
-            sparkline={[{ v: 800 }, { v: 920 }, { v: 1040 }, { v: 1140 }, { v: 1248 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.total_bookings || 0 }]}
             icon={<ConfirmationNumberRoundedIcon />}
             color={BI_COLORS.bookings}
           />
@@ -78,35 +88,35 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="Confirmed Bookings"
-            value="580"
+            value={kpis?.confirmed_bookings != null ? `${kpis.confirmed_bookings}` : "0"}
             growth={14.8}
-            comparison="46.5% of enquiries"
+            comparison={`${kpis?.total_bookings ? Math.round((kpis.confirmed_bookings / kpis.total_bookings) * 100) : 0}% confirmation rate`}
             sparkColor="#10B981"
-            sparkline={[{ v: 380 }, { v: 440 }, { v: 490 }, { v: 530 }, { v: 580 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.confirmed_bookings || 0 }]}
             icon={<CheckCircleRoundedIcon />}
             color="#10B981"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Completed Visits"
-            value="248"
+            title="Gross Revenue"
+            value={kpis?.total_revenue != null ? `₹${Number(kpis.total_revenue).toLocaleString('en-IN')}` : "₹0"}
             growth={18.2}
-            comparison="85.5% satisfaction"
+            comparison="Settled transaction value"
             sparkColor="#0F766E"
-            sparkline={[{ v: 140 }, { v: 170 }, { v: 195 }, { v: 220 }, { v: 248 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.total_revenue || 0 }]}
             icon={<DoneAllRoundedIcon />}
             color="#0F766E"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
-            title="Pending Review"
-            value="340"
+            title="Pending Bookings"
+            value={kpis?.pending_bookings != null ? `${kpis.pending_bookings}` : "0"}
             growth={-4.5}
-            comparison="Avg resolution 4.2h"
+            comparison="Awaiting confirmation"
             sparkColor="#F59E0B"
-            sparkline={[{ v: 410 }, { v: 380 }, { v: 360 }, { v: 350 }, { v: 340 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.pending_bookings || 0 }]}
             icon={<PendingRoundedIcon />}
             color="#F59E0B"
           />
@@ -114,11 +124,11 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
         <Grid item xs={12} sm={6} lg={2.4}>
           <KPICard
             title="Cancelled"
-            value="80"
+            value={kpis?.cancelled_bookings != null ? `${kpis.cancelled_bookings}` : "0"}
             growth={-12.0}
-            comparison="Reduced drop-off"
+            comparison="Cancelled or rejected"
             sparkColor="#EF4444"
-            sparkline={[{ v: 110 }, { v: 98 }, { v: 90 }, { v: 85 }, { v: 80 }]}
+            sparkline={[{ v: 0 }, { v: kpis?.cancelled_bookings || 0 }]}
             icon={<CancelRoundedIcon />}
             color="#EF4444"
           />
@@ -162,16 +172,13 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
               <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: BI_COLORS.navy }}>
                 Booking Status Breakdown
               </Typography>
-              <Typography sx={{ fontSize: "0.8rem", color: BI_COLORS.neutral, mb: 2 }}>
-                Current distribution across all bookings
-              </Typography>
-
               <Box sx={{ width: "100%", height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
+
                   <PieChart>
-                    <Pie data={BOOKING_STATUS_DATA} innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
-                      {BOOKING_STATUS_DATA.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Pie data={statusDist} innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
+                      {statusDist.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || "#0F766E"} />
                       ))}
                     </Pie>
                     <RechartsTooltip contentStyle={{ borderRadius: 12 }} />
@@ -180,7 +187,7 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
               </Box>
 
               <Stack spacing={1} sx={{ mt: 1 }}>
-                {BOOKING_STATUS_DATA.map((item) => (
+                {statusDist.map((item) => (
                   <Stack key={item.name} direction="row" justifyContent="space-between" alignItems="center">
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: item.color }} />
@@ -204,18 +211,17 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
                 Property vs Vehicle Bookings
               </Typography>
               <Typography sx={{ fontSize: "0.8rem", color: BI_COLORS.neutral, mb: 2 }}>
-                Category comparison across real estate and automotive listings
+                Category distribution across real estate and automotive transactions
               </Typography>
 
               <Box sx={{ width: "100%", height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={BOOKING_CATEGORY_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={categoryDist.length > 0 ? categoryDist : [{ category: "Property", count: 0 }, { category: "Vehicle", count: 0 }]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(27,42,67,0.06)" />
                     <XAxis dataKey="category" tick={{ fontSize: 10.5, fill: BI_COLORS.neutral, fontWeight: 700 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: BI_COLORS.neutral, fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <RechartsTooltip contentStyle={{ borderRadius: 12 }} />
-                    <Bar dataKey="property" name="Property" fill={BI_COLORS.property} radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="vehicle" name="Vehicle" fill={BI_COLORS.vehicle} radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="count" name="Bookings" fill={BI_COLORS.property} radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -234,15 +240,21 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
               </Typography>
 
               <Box sx={{ width: "100%", height: 260 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={TOP_SELLERS_BY_BOOKINGS} margin={{ top: 5, right: 20, left: 40, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(27,42,67,0.06)" />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: BI_COLORS.neutral }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: BI_COLORS.navy, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                    <RechartsTooltip contentStyle={{ borderRadius: 12 }} />
-                    <Bar dataKey="bookings" name="Bookings" fill={BI_COLORS.bookings} radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {topSellers.length === 0 ? (
+                  <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Typography sx={{ color: BI_COLORS.neutral, fontSize: "0.85rem" }}>No seller bookings recorded yet</Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart layout="vertical" data={topSellers} margin={{ top: 5, right: 20, left: 40, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(27,42,67,0.06)" />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: BI_COLORS.neutral }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: BI_COLORS.navy, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                      <RechartsTooltip contentStyle={{ borderRadius: 12 }} />
+                      <Bar dataKey="bookings" name="Bookings" fill={BI_COLORS.bookings} radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -253,7 +265,7 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
       <Card sx={{ borderRadius: "20px", border: `1px solid ${BI_COLORS.border}`, boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)" }}>
         <CardContent sx={{ p: 3 }}>
           <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: BI_COLORS.navy, mb: 0.5 }}>
-            Recent Bookings Log
+            Recent Bookings Log ({filteredBookings.length})
           </Typography>
           <Typography sx={{ fontSize: "0.8rem", color: BI_COLORS.neutral, mb: 2 }}>
             Real-time audit log of customer inquiries and appointment schedules
@@ -273,43 +285,51 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredBookings.map((row) => (
-                  <TableRow key={row.id} hover sx={{ "& td": { fontSize: "0.84rem", fontWeight: 650, py: 1.5 } }}>
-                    <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.id}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell>{row.seller}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={row.category}
-                        sx={{
-                          height: 22,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          bgcolor: row.category === "Property" ? `${BI_COLORS.property}15` : `${BI_COLORS.vehicle}15`,
-                          color: row.category === "Property" ? BI_COLORS.property : BI_COLORS.vehicle,
-                        }}
-                      />
+                {filteredBookings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: BI_COLORS.neutral }}>
+                      No booking records found in the database.
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900, color: BI_COLORS.navy }}>{formatINR(row.amount)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={row.status}
-                        sx={{
-                          height: 22,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          bgcolor:
-                            row.status === "Confirmed" ? "#DCFCE7" : row.status === "Completed" ? "#CCFBF1" : row.status === "Pending" ? "#FEF3C7" : "#FEE2E2",
-                          color:
-                            row.status === "Confirmed" ? "#166534" : row.status === "Completed" ? "#0F766E" : row.status === "Pending" ? "#B45309" : "#991B1B",
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredBookings.map((row) => (
+                    <TableRow key={row.id} hover sx={{ "& td": { fontSize: "0.84rem", fontWeight: 650, py: 1.5 } }}>
+                      <TableCell sx={{ fontWeight: 800, color: BI_COLORS.navy }}>{row.id}</TableCell>
+                      <TableCell>{row.customer}</TableCell>
+                      <TableCell>{row.seller}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.category}
+                          sx={{
+                            height: 22,
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            bgcolor: row.category === "Property" ? `${BI_COLORS.property}15` : `${BI_COLORS.vehicle}15`,
+                            color: row.category === "Property" ? BI_COLORS.property : BI_COLORS.vehicle,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 900, color: BI_COLORS.navy }}>{formatINR(row.amount)}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.status}
+                          sx={{
+                            height: 22,
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            bgcolor:
+                              row.status === "Confirmed" || row.status === "Completed" ? "#DCFCE7" : row.status === "Pending" ? "#FEF3C7" : "#FEE2E2",
+                            color:
+                              row.status === "Confirmed" || row.status === "Completed" ? "#166534" : row.status === "Pending" ? "#B45309" : "#991B1B",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ color: BI_COLORS.neutral }}>{row.date || "—"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -318,3 +338,4 @@ export default function BookingReportView({ category = "all", searchQuery = "" }
     </Stack>
   );
 }
+
