@@ -271,12 +271,13 @@ export default function AddVehiclePage() {
         price: priceVal,
         contact: String(data.contactNumber ?? "").trim(),
         location: String(data.location ?? "").trim(),
-        vehicle_number: data.vehicleNumber ? String(data.vehicleNumber).trim() : null,
-        rto_code: data.rtoCode ? String(data.rtoCode).trim() : null,
-        km_driven: data.kmDriven ? String(data.kmDriven).trim() : null,
+        vehicle_number: String(data.vehicleNumber ?? "").trim(),
+        rto_code: String(data.rtoCode ?? "").trim(),
+        km_driven: String(data.kmDriven ?? "0").trim(),
         state: String(data.state ?? "").trim(),
         images: allImages,
       };
+
 
       if (isEditMode) {
         await vehicleService.update(editId, payload);

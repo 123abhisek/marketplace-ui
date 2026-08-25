@@ -227,25 +227,32 @@ export const propertyService = {
   deleteOne: (id) => del(`property/${id}`),
   update: (id, payload) => {
     const finalPayload = { ...payload };
-    if (payload.price !== undefined && payload.price !== "") {
-      const p = parseFloat(String(payload.price));
-      if (!Number.isNaN(p)) finalPayload.price = p;
+    if (payload.price !== undefined) {
+      finalPayload.price = parseFloat(String(payload.price ?? "0")) || 0;
     }
     if (payload.rooms !== undefined) {
-      const r = parseInt(String(payload.rooms), 10);
-      finalPayload.rooms = Number.isNaN(r) ? null : r;
+      finalPayload.rooms = parseInt(String(payload.rooms ?? "0"), 10) || 0;
     }
     if (payload.bedrooms !== undefined) {
-      const b = parseInt(String(payload.bedrooms), 10);
-      finalPayload.bedrooms = Number.isNaN(b) ? null : b;
+      finalPayload.bedrooms = parseInt(String(payload.bedrooms ?? "0"), 10) || 0;
     }
     if (payload.area !== undefined) {
-      const a = parseFloat(String(payload.area));
-      finalPayload.area = Number.isNaN(a) ? null : a;
+      finalPayload.area = parseFloat(String(payload.area ?? "0")) || 0;
     }
     if (payload.land_area !== undefined) {
-      const la = parseFloat(String(payload.land_area));
-      finalPayload.land_area = Number.isNaN(la) ? null : la;
+      finalPayload.land_area = parseFloat(String(payload.land_area ?? "0")) || 0;
+    }
+    if (payload.apartment_name !== undefined) {
+      finalPayload.apartment_name = String(payload.apartment_name ?? "").trim();
+    }
+    if (payload.floor !== undefined) {
+      finalPayload.floor = String(payload.floor ?? "").trim();
+    }
+    if (payload.crops_grown !== undefined) {
+      finalPayload.crops_grown = String(payload.crops_grown ?? "").trim();
+    }
+    if (payload.rent_lease !== undefined) {
+      finalPayload.rent_lease = String(payload.rent_lease ?? "").trim();
     }
     return put(`property/${id}`, finalPayload);
   },
@@ -262,49 +269,21 @@ export const propertyService = {
     }
 
     const finalPayload = {
-      ...payload,
-      price,
+      title: String(payload.title ?? "").trim(),
+      property_type: String(payload.property_type ?? "").trim(),
+      location: String(payload.location ?? "").trim(),
+      contact: String(payload.contact ?? "").trim(),
+      price: price || 0,
+      rooms: parseInt(String(payload.rooms ?? "0"), 10) || 0,
+      bedrooms: parseInt(String(payload.bedrooms ?? "0"), 10) || 0,
+      area: parseFloat(String(payload.area ?? "0")) || 0,
+      land_area: parseFloat(String(payload.land_area ?? "0")) || 0,
+      apartment_name: String(payload.apartment_name ?? "").trim(),
+      floor: String(payload.floor ?? "").trim(),
+      crops_grown: String(payload.crops_grown ?? "").trim(),
+      rent_lease: String(payload.rent_lease ?? "").trim(),
+      images: Array.isArray(payload.images) ? payload.images : [],
     };
-
-    if (payload.rooms !== undefined && payload.rooms !== null && payload.rooms !== "") {
-      const r = parseInt(String(payload.rooms), 10);
-      if (!Number.isNaN(r)) finalPayload.rooms = r;
-      else delete finalPayload.rooms;
-    } else {
-      delete finalPayload.rooms;
-    }
-
-    if (payload.bedrooms !== undefined && payload.bedrooms !== null && payload.bedrooms !== "") {
-      const b = parseInt(String(payload.bedrooms), 10);
-      if (!Number.isNaN(b)) finalPayload.bedrooms = b;
-      else delete finalPayload.bedrooms;
-    } else {
-      delete finalPayload.bedrooms;
-    }
-
-    if (payload.area !== undefined && payload.area !== null && payload.area !== "") {
-      const a = parseFloat(String(payload.area));
-      if (!Number.isNaN(a)) finalPayload.area = a;
-      else delete finalPayload.area;
-    } else {
-      delete finalPayload.area;
-    }
-
-    if (payload.land_area !== undefined && payload.land_area !== null && payload.land_area !== "") {
-      const la = parseFloat(String(payload.land_area));
-      if (!Number.isNaN(la)) finalPayload.land_area = la;
-      else delete finalPayload.land_area;
-    } else {
-      delete finalPayload.land_area;
-    }
-
-    Object.keys(finalPayload).forEach((k) => {
-      if (finalPayload[k] === undefined || finalPayload[k] === null || finalPayload[k] === "") {
-        if (k !== "title" && k !== "property_type" && k !== "location" && k !== "contact") {
-          delete finalPayload[k];
-        }
-      }
-    });
 
     return post("property/add", finalPayload);
   },
@@ -319,7 +298,13 @@ export const vehicleService = {
   getOne: (id) => get(`vehicle/${id}`),
   myListings: () => get("vehicle/my/listings"),
   deleteOne: (id) => del(`vehicle/${id}`),
-  update: (id, payload) => put(`vehicle/${id}`, payload),
+  update: (id, payload) => {
+    const finalPayload = { ...payload };
+    if (payload.price !== undefined) {
+      finalPayload.price = parseFloat(String(payload.price ?? "0")) || 0;
+    }
+    return put(`vehicle/${id}`, finalPayload);
+  },
 
   add: async ({
     title,
@@ -350,23 +335,24 @@ export const vehicleService = {
     }
 
     const payload = {
-      title: title?.trim(),
-      expectedPrice: price,
+      title: String(title ?? "").trim(),
+      expectedPrice: price || 0,
       contactNumber: String(contactNumber ?? "").trim(),
-      vehicleNumber: vehicleNumber ? String(vehicleNumber).trim() : null,
-      brand: brand ? String(brand).trim() : null,
-      model: model ? String(model).trim() : null,
-      year: year ? String(year).trim() : null,
-      rtoCode: rtoCode ? String(rtoCode).trim() : null,
-      kmDriven: kmDriven ? String(kmDriven).trim() : null,
-      state: state ? String(state).trim() : null,
-      location: location ? String(location).trim() : null,
+      vehicleNumber: String(vehicleNumber ?? "").trim(),
+      brand: String(brand ?? "").trim(),
+      model: String(model ?? "").trim(),
+      year: String(year ?? "").trim(),
+      rtoCode: String(rtoCode ?? "").trim(),
+      kmDriven: String(kmDriven ?? "0").trim(),
+      state: String(state ?? "").trim(),
+      location: String(location ?? "").trim(),
       images: Array.isArray(images) ? images : [],
     };
 
     return post("vehicle/add", payload);
   },
 };
+
 
 
 

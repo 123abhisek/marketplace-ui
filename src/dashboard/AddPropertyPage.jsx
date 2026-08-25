@@ -239,16 +239,17 @@ export default function AddPropertyPage() {
         location: toStr(data.location),
         contact: toStr(data.contactNumber),
         price: priceVal,
-        apartment_name: toStr(data.apartmentName) || null,
-        floor: toStr(data.floor) || null,
-        rooms: toIntOrNull(data.rooms),
-        bedrooms: toIntOrNull(data.bedrooms),
-        crops_grown: toStr(data.cropsGrown) || null,
-        rent_lease: toStr(data.rentLease) || null,
-        area: toFloatOrNull(data.area),
-        land_area: toFloatOrNull(data.landArea),
+        apartment_name: toStr(data.apartmentName),
+        floor: toStr(data.floor),
+        rooms: parseInt(String(data.rooms ?? "0"), 10) || 0,
+        bedrooms: parseInt(String(data.bedrooms ?? "0"), 10) || 0,
+        crops_grown: toStr(data.cropsGrown),
+        rent_lease: toStr(data.rentLease),
+        area: parseFloat(String(data.area ?? "0")) || 0,
+        land_area: parseFloat(String(data.landArea ?? "0")) || 0,
         images: [...existingUrls, ...base64Images],
       };
+
 
       if (isEditMode) {
         await propertyService.update(editId, payload);
