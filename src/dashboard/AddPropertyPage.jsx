@@ -105,11 +105,13 @@ export default function AddPropertyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit"); // present when editing existing listing
+  const isEditMode = Boolean(editId);
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
   const [imageError, setImageError] = useState("");
   const [loadingEdit, setLoadingEdit] = useState(isEditMode);
+
 
 
   useEffect(() => {
@@ -302,7 +304,7 @@ export default function AddPropertyPage() {
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <Grid container spacing={2.5}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormInput
                     name="title"
                     label="Listing Title *"
@@ -310,7 +312,7 @@ export default function AddPropertyPage() {
                     rules={{ required: "Title is required" }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <SelectInput
                     name="propertyType"
                     label="Property Type *"
@@ -320,21 +322,21 @@ export default function AddPropertyPage() {
                     options={PROPERTY_TYPES}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <FormInput
                     name="location"
                     label="Location / Address"
                     control={control}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <FormInput
                     name="apartmentName"
                     label="Apartment / Society Name"
                     control={control}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <FormInput
                     name="contactNumber"
                     label="Contact Number *"
@@ -369,7 +371,7 @@ export default function AddPropertyPage() {
               <Grid container spacing={2.5}>
                 {isResidential && (
                   <>
-                    <Grid item xs={6} sm={4}>
+                    <Grid size={{ xs: 6, sm: 4 }}>
                       {/* floor → string on backend, free text like "G", "1st", "2" */}
                       <FormInput
                         name="floor"
@@ -377,11 +379,11 @@ export default function AddPropertyPage() {
                         control={control}
                       />
                     </Grid>
-                    <Grid item xs={6} sm={4}>
+                    <Grid size={{ xs: 6, sm: 4 }}>
                       {/* rooms → string on backend */}
                       <FormInput name="rooms" label="Rooms" control={control} />
                     </Grid>
-                    <Grid item xs={6} sm={4}>
+                    <Grid size={{ xs: 6, sm: 4 }}>
                       {/* bedrooms → string on backend */}
                       <FormInput
                         name="bedrooms"
@@ -391,7 +393,7 @@ export default function AddPropertyPage() {
                     </Grid>
                   </>
                 )}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <FormInput
                     name="area"
                     label="Built-up Area (sqft) *"
@@ -402,7 +404,7 @@ export default function AddPropertyPage() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <FormInput
                     name="landArea"
                     label="Land Area (acres) *"
@@ -414,7 +416,7 @@ export default function AddPropertyPage() {
                   />
                 </Grid>
                 {isAgri && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormInput
                       name="cropsGrown"
                       label="Crops Grown"
@@ -441,7 +443,7 @@ export default function AddPropertyPage() {
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                   <FormInput
                     name="expectedPrice"
                     label="Expected Price (₹) *"
@@ -452,7 +454,7 @@ export default function AddPropertyPage() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                   <SelectInput
                     name="rentLease"
                     label="Rent / Lease / Sale"
@@ -462,6 +464,7 @@ export default function AddPropertyPage() {
                   />
                 </Grid>
               </Grid>
+
 
             </CardContent>
           </Card>

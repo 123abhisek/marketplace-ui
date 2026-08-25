@@ -253,7 +253,7 @@ export default function AddVehiclePage() {
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <Grid container spacing={2.5}>
 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormInput
                     name="title"
                     label="Listing Title"
@@ -262,7 +262,7 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormInput
                     name="vehicleNumber"
                     label="Vehicle Registration Number"
@@ -270,7 +270,7 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormInput
                     name="brand"
                     label="Brand (e.g. Hyundai)"
@@ -278,7 +278,7 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput
                     name="model"
                     label="Model (e.g. i20)"
@@ -287,7 +287,7 @@ export default function AddVehiclePage() {
                 </Grid>
 
                 {/* Bug Fix 5 — year numeric + range validation */}
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput
                     name="year"
                     label="Year of Manufacture"
@@ -304,7 +304,7 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput
                     name="rtoCode"
                     label="RTO Code (e.g. KA03)"
@@ -328,7 +328,7 @@ export default function AddVehiclePage() {
               <Grid container spacing={2.5}>
 
                 {/* Bug Fix 5 — kmDriven numeric validation */}
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput
                     name="kmDriven"
                     label="KM Driven"
@@ -345,11 +345,11 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput name="state" label="State" control={control} />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormInput name="location" label="City / Area" control={control} />
                 </Grid>
 
@@ -368,7 +368,7 @@ export default function AddVehiclePage() {
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <Grid container spacing={2.5}>
 
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormInput
                     name="expectedPrice"
                     label="Asking Price"
@@ -385,7 +385,7 @@ export default function AddVehiclePage() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormInput
                     name="contactNumber"
                     label="Contact Number"
@@ -401,6 +401,7 @@ export default function AddVehiclePage() {
                 </Grid>
 
               </Grid>
+
             </CardContent>
           </Card>
 

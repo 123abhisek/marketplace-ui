@@ -13,10 +13,12 @@ import {
   InputAdornment,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
@@ -177,7 +179,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
       sx={{
         ...cardSx,
         width: "100%",
-        height: "100%",
+        height: 480, // Fixed height for all cards
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -195,7 +197,8 @@ function ListingCard({ item, navigate, index, isPremium }) {
       <Box
         sx={{
           position: "relative",
-          height: 230,
+          height: 220,
+          width: "100%",
           flexShrink: 0,
           overflow: "hidden",
           background: COLORS.surfaceSoft,
@@ -209,6 +212,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            display: "block",
             filter: !isPremium ? "blur(7px)" : "none",
             transform: !isPremium ? "scale(1.08)" : "scale(1)",
             transition: "transform .6s ease, filter .6s ease",
@@ -234,8 +238,8 @@ function ListingCard({ item, navigate, index, isPremium }) {
           >
             <Box
               sx={{
-                width: 46,
-                height: 46,
+                width: 44,
+                height: 44,
                 borderRadius: "14px",
                 background: "rgba(255,255,255,0.22)",
                 backdropFilter: "blur(12px)",
@@ -245,12 +249,12 @@ function ListingCard({ item, navigate, index, isPremium }) {
                 mb: 1,
               }}
             >
-              <LockRoundedIcon sx={{ fontSize: 24, color: "#ffffff" }} />
+              <LockRoundedIcon sx={{ fontSize: 22, color: "#ffffff" }} />
             </Box>
-            <Typography sx={{ fontWeight: 900, fontSize: "0.98rem", color: "#ffffff" }}>
+            <Typography sx={{ fontWeight: 900, fontSize: "0.95rem", color: "#ffffff" }}>
               Premium only
             </Typography>
-            <Typography sx={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>
+            <Typography sx={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.85)" }}>
               Unlock full details and pricing
             </Typography>
           </Box>
@@ -264,6 +268,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
             }}
           />
         )}
+
 
         <Chip
           label={item.itemType === "property" ? "Property" : "Vehicle"}
@@ -294,27 +299,33 @@ function ListingCard({ item, navigate, index, isPremium }) {
       {/* Content */}
       <CardContent
         sx={{
-          p: 2.4,
+          p: 2.2,
           flexGrow: 1,
           display: "flex",
           flexDirection: "column",
+          justifyContent: "space-between",
+          overflow: "hidden",
         }}
       >
-        <Stack spacing={1.2} sx={{ flexGrow: 1 }}>
+        <Stack spacing={1} sx={{ overflow: "hidden" }}>
           <Stack
             direction="row"
-            alignItems="center"
+            alignItems="flex-start"
             justifyContent="space-between"
             spacing={1}
           >
             <Typography
               sx={{
-                fontSize: "1.05rem",
+                fontSize: "1rem",
                 fontWeight: 900,
                 color: COLORS.text,
                 lineHeight: 1.3,
                 letterSpacing: "-0.02em",
-                minHeight: 48,
+                height: 42,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
               }}
             >
               {getTitle(item.raw)}
@@ -324,7 +335,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
               size="small"
               sx={{
                 flexShrink: 0,
-                height: 26,
+                height: 24,
                 borderRadius: "999px",
                 fontWeight: 800,
                 fontSize: "0.68rem",
@@ -336,8 +347,9 @@ function ListingCard({ item, navigate, index, isPremium }) {
           </Stack>
 
           <Stack direction="row" spacing={0.8} alignItems="center">
-            <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
+            <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint, flexShrink: 0 }} />
             <Typography
+              noWrap
               sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}
             >
               {getLocation(item.raw)}
@@ -345,14 +357,16 @@ function ListingCard({ item, navigate, index, isPremium }) {
           </Stack>
 
           <Stack direction="row" spacing={0.8} alignItems="center">
-            <BusinessRoundedIcon sx={{ fontSize: 16, color: COLORS.faint }} />
+            <BusinessRoundedIcon sx={{ fontSize: 16, color: COLORS.faint, flexShrink: 0 }} />
             <Typography
+              noWrap
               sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}
             >
               {getCompany(item.raw, item.itemType)}
             </Typography>
           </Stack>
         </Stack>
+
 
         {/* Footer */}
         <Box sx={{ mt: "auto", pt: 1.5 }}>
@@ -474,11 +488,69 @@ function ListingCard({ item, navigate, index, isPremium }) {
   );
 }
 
+function ListingCardSkeleton() {
+  return (
+    <Card
+      sx={{
+        ...cardSx,
+        width: "100%",
+        height: 480,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Image Skeleton */}
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={220}
+        animation="wave"
+        sx={{ bgcolor: "rgba(226,232,240,0.6)" }}
+      />
+
+      {/* Content Skeleton */}
+      <CardContent
+        sx={{
+          p: 2.2,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <Stack spacing={1.2}>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+            <Skeleton variant="text" width="65%" height={26} animation="wave" />
+            <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "999px" }} animation="wave" />
+          </Stack>
+
+          <Skeleton variant="text" width="45%" height={20} animation="wave" />
+          <Skeleton variant="text" width="55%" height={20} animation="wave" />
+        </Stack>
+
+        {/* Footer Skeleton */}
+        <Box sx={{ mt: "auto", pt: 1.5 }}>
+          <Divider sx={{ borderColor: COLORS.border, mb: 1.5 }} />
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Box>
+              <Skeleton variant="text" width={40} height={14} animation="wave" />
+              <Skeleton variant="text" width={90} height={24} animation="wave" />
+            </Box>
+            <Skeleton variant="rounded" width={110} height={42} sx={{ borderRadius: "14px" }} animation="wave" />
+          </Stack>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ExplorePage() {
   const navigate = useNavigate();
   const { user, properties: contextProps = [], vehicles: contextVehs = [], refreshListings } = useAppState();
   const isPremium = Boolean(user?.isPremium || user?.is_premium || user?.role === "admin" || user?.role === "premium");
 
+  const [loading, setLoading] = useState(true);
   const [apiProps, setApiProps] = useState([]);
   const [apiVehs, setApiVehs] = useState([]);
   const [search, setSearch] = useState("");
@@ -491,6 +563,7 @@ export default function ExplorePage() {
   const [slideIndex, setSlideIndex] = useState(0);
 
   const fetchExploreListings = useCallback(async () => {
+    setLoading(true);
     try {
       const [pRes, vRes] = await Promise.allSettled([
         propertyService.getAll(),
@@ -504,8 +577,11 @@ export default function ExplorePage() {
       setApiVehs(vList);
     } catch (err) {
       console.error("Failed to load explore listings:", err);
+    } finally {
+      setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchExploreListings();
@@ -745,7 +821,7 @@ export default function ExplorePage() {
                 }}
               >
                 <Grid container spacing={2} alignItems="flex-end">
-                  <Grid item xs={12} md={8}>
+                  <Grid size={{ xs: 12, md: 8 }}>
                     <Chip
                       label={activeSlide.chip}
                       sx={{
@@ -846,7 +922,8 @@ export default function ExplorePage() {
                     </Stack>
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+
                     <Stack
                       direction="row"
                       spacing={1}
@@ -968,12 +1045,12 @@ export default function ExplorePage() {
                 </Stack>
 
                 <Grid container spacing={1.5}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 3.5 }}>
                     <TextField
                       fullWidth
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search by title, location, category, company..."
+                      placeholder="Search title, location, brand..."
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -992,25 +1069,7 @@ export default function ExplorePage() {
                     />
                   </Grid>
 
-                  <Grid item xs={6} md={2}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        sx={{
-                          minHeight: 52,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                        }}
-                      >
-                        <MenuItem value="all">All items</MenuItem>
-                        <MenuItem value="property">Properties</MenuItem>
-                        <MenuItem value="vehicle">Vehicles</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={6} md={2}>
+                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
                     <FormControl fullWidth>
                       <Select
                         value={categoryFilter}
@@ -1023,14 +1082,14 @@ export default function ExplorePage() {
                       >
                         {categoryOptions.map((option) => (
                           <MenuItem key={option} value={option}>
-                            {option === "all" ? "All categories" : option}
+                            {option === "all" ? "All Categories" : option}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                     <FormControl fullWidth>
                       <Select
                         value={companyFilter}
@@ -1043,19 +1102,19 @@ export default function ExplorePage() {
                       >
                         {companyOptions.map((option) => (
                           <MenuItem key={option} value={option}>
-                            {option === "all" ? "All companies" : option}
+                            {option === "all" ? "All Brands / Builders" : option}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={6} md={1}>
+                  <Grid size={{ xs: 6, sm: 3, md: 1 }}>
                     <TextField
                       fullWidth
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
-                      placeholder="Min"
+                      placeholder="Min ₹"
                       type="number"
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -1068,12 +1127,12 @@ export default function ExplorePage() {
                     />
                   </Grid>
 
-                  <Grid item xs={6} md={1}>
+                  <Grid size={{ xs: 6, sm: 3, md: 1 }}>
                     <TextField
                       fullWidth
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
-                      placeholder="Max"
+                      placeholder="Max ₹"
                       type="number"
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -1086,7 +1145,7 @@ export default function ExplorePage() {
                     />
                   </Grid>
 
-                  <Grid item xs={8} md={3}>
+                  <Grid size={{ xs: 8, sm: 6, md: 2 }}>
                     <FormControl fullWidth>
                       <Select
                         value={sortBy}
@@ -1109,16 +1168,16 @@ export default function ExplorePage() {
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={4} md={2}>
+                  <Grid size={{ xs: 4, sm: 6, md: 12 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
                     <Button
-                      fullWidth
                       onClick={resetFilters}
                       startIcon={
                         <RestartAltRoundedIcon sx={{ fontSize: 18 }} />
                       }
                       sx={{
-                        minHeight: 52,
-                        borderRadius: "16px",
+                        minHeight: 44,
+                        px: 2.5,
+                        borderRadius: "14px",
                         textTransform: "none",
                         fontWeight: 800,
                         fontSize: "0.86rem",
@@ -1190,40 +1249,29 @@ export default function ExplorePage() {
                       border: `1px solid ${COLORS.border}`,
                     }}
                   />
-                  <Chip
-                    icon={
-                      <ApartmentRoundedIcon
-                        sx={{ fontSize: "16px !important" }}
-                      />
-                    }
-                    label={
-                      typeFilter === "all"
-                        ? "Properties + vehicles"
-                        : typeFilter
-                    }
-                    sx={{
-                      borderRadius: "999px",
-                      fontWeight: 700,
-                      background: COLORS.surfaceSoft,
-                      border: `1px solid ${COLORS.border}`,
-                    }}
-                  />
                 </Stack>
               </Stack>
             </CardContent>
           </Card>
 
           {/* Grid */}
-          {filteredItems.length > 0 ? (
-            <Grid container spacing={2} alignItems="stretch">
-              {
-                
-                filteredItems.map((item, index) => (
+          {loading ? (
+            <Grid container spacing={2.5} alignItems="stretch">
+              {Array.from({ length: 6 }).map((_, index) => (
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                  lg={4}
+                  size={{ xs: 12, sm: 6, lg: 4 }}
+                  key={`skeleton-${index}`}
+                  sx={{ display: "flex" }}
+                >
+                  <ListingCardSkeleton />
+                </Grid>
+              ))}
+            </Grid>
+          ) : filteredItems.length > 0 ? (
+            <Grid container spacing={2.5} alignItems="stretch">
+              {filteredItems.map((item, index) => (
+                <Grid
+                  size={{ xs: 12, sm: 6, lg: 4 }}
                   key={item.id}
                   sx={{ display: "flex" }}
                 >
@@ -1232,6 +1280,8 @@ export default function ExplorePage() {
               ))}
             </Grid>
           ) : (
+
+
             <Card
               sx={{
                 ...cardSx,

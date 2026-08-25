@@ -12,11 +12,13 @@ import {
   Grid,
   IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
+
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
@@ -528,7 +530,107 @@ function BookingCard({ booking, onOpenInvoice }) {
   )
 }
 
+function BookingCardSkeleton() {
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        display: 'flex',
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          background: '#fff',
+          borderRadius: '26px',
+          border: '1px solid #e2e8f0',
+          overflow: 'hidden',
+          boxShadow: '0 18px 40px rgba(15,23,42,0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Box
+          sx={{
+            height: 6,
+            background: 'linear-gradient(90deg,#0f766e,#14b8a6,#22d3ee)',
+          }}
+        />
+
+        <Box
+          sx={{
+            p: 2.5,
+            background:
+              'linear-gradient(180deg, rgba(240,253,250,0.95) 0%, rgba(255,255,255,1) 70%)',
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+              <Skeleton
+                variant="rounded"
+                width={58}
+                height={58}
+                animation="wave"
+                sx={{ borderRadius: '18px', flexShrink: 0 }}
+              />
+
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Skeleton variant="text" width="75%" height={24} animation="wave" />
+                <Skeleton variant="text" width="50%" height={18} animation="wave" sx={{ mt: 0.5 }} />
+                <Stack direction="row" spacing={0.8} sx={{ mt: 1 }}>
+                  <Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '999px' }} animation="wave" />
+                  <Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '999px' }} animation="wave" />
+                </Stack>
+              </Box>
+            </Stack>
+
+            <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+              <Skeleton variant="text" width={45} height={14} animation="wave" sx={{ ml: 'auto' }} />
+              <Skeleton variant="text" width={85} height={26} animation="wave" sx={{ ml: 'auto' }} />
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <Stack spacing={1.2}>
+            {[1, 2, 3, 4].map((i) => (
+              <Stack
+                key={i}
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ py: 0.8, borderBottom: '1px solid rgba(226,232,240,0.7)' }}
+              >
+                <Skeleton variant="text" width="32%" height={18} animation="wave" />
+                <Skeleton variant="text" width="45%" height={18} animation="wave" />
+              </Stack>
+            ))}
+          </Stack>
+
+          <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
+            <Skeleton
+              variant="rounded"
+              width={130}
+              height={42}
+              animation="wave"
+              sx={{ borderRadius: '14px' }}
+            />
+            <Skeleton
+              variant="rounded"
+              width={120}
+              height={42}
+              animation="wave"
+              sx={{ borderRadius: '14px' }}
+            />
+          </Stack>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
 export default function MyBookingsPage() {
+
   const navigate = useNavigate()
 
   const [bookings, setBookings] = useState([])
@@ -795,29 +897,25 @@ export default function MyBookingsPage() {
         </Box>
 
         {loading ? (
-          <Box
-            sx={{
-              p: 4,
-              borderRadius: '24px',
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <Typography sx={{ color: '#64748b', fontWeight: 700 }}>
-              Loading bookings...
-            </Typography>
-          </Box>
+          <Grid container spacing={3} alignItems="stretch">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Grid size={{ xs: 12, md: 6 }} key={`booking-skeleton-${index}`} sx={{ display: 'flex' }}>
+                <BookingCardSkeleton />
+              </Grid>
+            ))}
+          </Grid>
         ) : filtered.length === 0 ? (
           <EmptyState />
         ) : (
           <Grid container spacing={3} alignItems="stretch">
             {filtered.map((booking) => (
-              <Grid item xs={12} md={6} key={booking?.id || booking?.booking_id} sx={{ display: 'flex' }}>
+              <Grid size={{ xs: 12, md: 6 }} key={booking?.id || booking?.booking_id} sx={{ display: 'flex' }}>
                 <BookingCard booking={booking} onOpenInvoice={handleOpenInvoice} />
               </Grid>
             ))}
           </Grid>
         )}
+
       </Box>
 
       <InvoiceDialog

@@ -24,10 +24,12 @@ import VehicleDetailPage from "../pages/VehicleDetailPage";
 /* Auth */
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 /* Dashboard */
 import DashboardHome from "../dashboard/DashboardHome";
 import ProfilePage from "../dashboard/ProfilePage";
+import ChangePasswordPage from "../dashboard/ChangePasswordPage";
 import SubscriptionStatusPage from "../dashboard/SubscriptionStatusPage";
 import LogoutPage from "../dashboard/LogoutPage";
 import MyBookingsPage from "../dashboard/MyBookingsPage";
@@ -85,6 +87,8 @@ export const routes = [
       { path: "/privacy-policy", element: <PrivacyPolicyPage /> },
       { path: "/terms", element: <TermsOfServicePage /> },
       { path: "/refund-policy", element: <RefundPolicyPage /> },
+      { path: "/forgot-password", element: <ForgotPasswordPage /> },
+      { path: "/reset-password", element: <ForgotPasswordPage /> },
     ],
   },
 
@@ -98,6 +102,7 @@ export const routes = [
       { path: "/register", element: <RegisterPage /> },
     ],
   },
+
 
   /*
    * Unified dashboard — ALL authenticated users
@@ -167,6 +172,12 @@ export const routes = [
         element: <ProfilePage />,
         handle: { title: "Profile", sub: "Manage your account" },
       },
+      {
+        path: "change-password",
+        element: <ChangePasswordPage />,
+        handle: { title: "Change Password", sub: "Update your account password" },
+      },
+
       {
         path: "subscription",
         element: <SubscriptionStatusPage />,

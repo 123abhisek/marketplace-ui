@@ -1,7 +1,7 @@
 
 import {
   Box, Button, Chip, Grid, InputAdornment,
-  MenuItem, Stack, TextField, Typography,
+  MenuItem, Skeleton, Stack, TextField, Typography,
 } from '@mui/material'
 import SearchRoundedIcon        from '@mui/icons-material/SearchRounded'
 import TuneRoundedIcon          from '@mui/icons-material/TuneRounded'
@@ -9,25 +9,103 @@ import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
 import NoteAddRoundedIcon       from '@mui/icons-material/NoteAddRounded'
 import RefreshRoundedIcon       from '@mui/icons-material/RefreshRounded'
 import { Link as RouterLink }   from 'react-router-dom'
-import { useState }             from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import VehicleCard              from '../components/VehicleCard'
-import Loader                   from '../components/Loader'
 import EmptyState               from '../components/EmptyState'
 import { useAppState }          from '../hooks/useAppState'
+import { vehicleService }       from '../services/api'
 
 const BRANDS = ['All', 'Maruti', 'Hyundai', 'Honda', 'Toyota', 'Royal Enfield', 'Bajaj', 'Hero']
 
+function VehicleCardSkeleton() {
+  return (
+    <Box
+      sx={{
+        borderRadius: '20px',
+        boxShadow: '0 2px 16px rgba(15,23,42,0.06)',
+        border: '1px solid #E2E8F0',
+        overflow: 'hidden',
+        height: '100%',
+        minHeight: 440,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: '#FFFFFF',
+      }}
+    >
+      <Skeleton
+        variant="rectangular"
+        height={200}
+        animation="wave"
+        sx={{ bgcolor: 'rgba(226,232,240,0.6)' }}
+      />
+      <Stack spacing={1.5} sx={{ p: 2.5, flexGrow: 1, justifyContent: 'space-between' }}>
+        <Box>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+            <Skeleton variant="text" height={26} width="70%" animation="wave" />
+            <Skeleton variant="rounded" height={24} width={50} sx={{ borderRadius: '999px' }} animation="wave" />
+          </Stack>
+          <Skeleton variant="text" height={18} width="45%" animation="wave" sx={{ mt: 0.5 }} />
+
+          <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+            <Skeleton variant="rounded" height={22} width={65} sx={{ borderRadius: '8px' }} animation="wave" />
+            <Skeleton variant="rounded" height={22} width={75} sx={{ borderRadius: '8px' }} animation="wave" />
+            <Skeleton variant="rounded" height={22} width={60} sx={{ borderRadius: '8px' }} animation="wave" />
+          </Stack>
+        </Box>
+
+        <Box sx={{ pt: 1 }}>
+          <Skeleton variant="text" height={1} animation="wave" sx={{ mb: 1.5, bgcolor: '#E2E8F0' }} />
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Skeleton variant="text" height={14} width={40} animation="wave" />
+              <Skeleton variant="text" height={28} width={90} animation="wave" />
+            </Box>
+            <Skeleton
+              variant="rounded"
+              height={40}
+              width={110}
+              animation="wave"
+              sx={{ borderRadius: '12px' }}
+            />
+          </Stack>
+        </Box>
+      </Stack>
+    </Box>
+  )
+}
+
 export default function VehiclesPage() {
-  const { user, vehicles = [], vehiclesLoading, refreshVehicles } = useAppState()
-  const [search,  setSearch]  = useState('')
-  const [brand,   setBrand]   = useState('All')
-  const [sortBy,  setSortBy]  = useState('latest')
+  const { user } = useAppState()
+  const [vehicles, setVehicles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [brand, setBrand] = useState('All')
+  const [sortBy, setSortBy] = useState('latest')
   const [refreshing, setRefreshing] = useState(false)
+
+  const fetchVehicles = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await vehicleService.getAll()
+      const list = Array.isArray(data) ? data : data?.data || data?.items || []
+      setVehicles(list)
+    } catch (err) {
+      console.error("Failed to load vehicles:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchVehicles()
+  }, [fetchVehicles])
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    try { await refreshVehicles() } finally { setRefreshing(false) }
+    try { await fetchVehicles() } finally { setRefreshing(false) }
   }
+
 
   const filtered = vehicles
     .filter((v) => {
@@ -70,7 +148,7 @@ export default function VehiclesPage() {
             Vehicle Listings
           </Typography>
           <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', mt: 0.25 }}>
-            {vehiclesLoading ? 'Loading…' : `${vehicles.length} vehicles available`}
+            {loading ? 'Loading…' : `${vehicles.length} vehicles available`}
           </Typography>
         </Box>
 
@@ -88,7 +166,7 @@ export default function VehiclesPage() {
           />
           <Button
             onClick={handleRefresh}
-            disabled={refreshing || vehiclesLoading}
+            disabled={refreshing || loading}
             startIcon={<RefreshRoundedIcon />}
             sx={{
               borderRadius: '12px',
@@ -100,6 +178,7 @@ export default function VehiclesPage() {
             Refresh
           </Button>
         </Stack>
+
       </Stack>
 
       {/* ── Filters Bar ── */}
@@ -170,15 +249,21 @@ export default function VehiclesPage() {
         ))}
       </Stack>
 
-      {!vehiclesLoading && (
+      {!loading && (
         <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8' }}>
           Showing <strong style={{ color: '#1E293B' }}>{filtered.length}</strong> of {vehicles.length} vehicles
         </Typography>
       )}
 
       {/* ── Grid ── */}
-      {vehiclesLoading ? (
-        <Loader count={6} />
+      {loading ? (
+        <Grid container spacing={{ xs: 2.5, sm: 3, md: 3.5 }} alignItems="stretch">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 6, lg: 4 }} key={`vehicle-skel-${i}`} sx={{ display: 'flex' }}>
+              <VehicleCardSkeleton />
+            </Grid>
+          ))}
+        </Grid>
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No vehicles found"
@@ -195,6 +280,7 @@ export default function VehiclesPage() {
           ))}
         </Grid>
       )}
+
     </Stack>
   )
 }

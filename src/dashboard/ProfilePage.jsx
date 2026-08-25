@@ -1,7 +1,7 @@
-
 // src/dashboard/ProfilePage.jsx
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import {
   Avatar,
   Box,
@@ -11,8 +11,10 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   LinearProgress,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
@@ -27,28 +29,37 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded'
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded'
+import HomeWorkRoundedIcon from '@mui/icons-material/HomeWorkRounded'
+import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import StarsRoundedIcon from '@mui/icons-material/StarsRounded'
 import FormInput from '../components/FormInput'
 import SelectInput from '../components/SelectInput'
 import ImageUploader from '../components/ImageUploader'
 import { useAppState } from '../hooks/useAppState'
 
 const UI = {
-  bg: '#F5F7FB',
+  bg: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceSoft: '#F8FAFC',
-  border: 'rgba(15,23,42,0.08)',
-  borderStrong: 'rgba(15,23,42,0.12)',
+  surfaceSoft: '#F1F5F9',
+  border: 'rgba(226, 232, 240, 0.9)',
+  borderStrong: 'rgba(203, 213, 225, 0.8)',
   text: '#0F172A',
   muted: '#64748B',
   faint: '#94A3B8',
   primary: '#0F766E',
-  primarySoft: 'rgba(15,118,110,0.08)',
-  primaryBorder: 'rgba(15,118,110,0.16)',
-  premium: '#B45309',
-  premiumSoft: 'rgba(180,83,9,0.10)',
-  premiumBorder: 'rgba(180,83,9,0.16)',
-  shadowSm: '0 2px 12px rgba(15,23,42,0.04)',
-  shadowMd: '0 10px 30px rgba(15,23,42,0.06)',
+  primaryDark: '#0b5f59',
+  primarySoft: 'rgba(15, 118, 110, 0.08)',
+  primaryBorder: 'rgba(15, 118, 110, 0.20)',
+  premium: '#D97706',
+  premiumSoft: 'rgba(217, 119, 6, 0.10)',
+  premiumBorder: 'rgba(217, 119, 6, 0.22)',
+  shadowSm: '0 4px 20px rgba(15, 23, 42, 0.04)',
+  shadowMd: '0 10px 30px rgba(15, 23, 42, 0.07)',
 }
 
 const cardSx = {
@@ -56,20 +67,20 @@ const cardSx = {
   border: `1px solid ${UI.border}`,
   background: UI.surface,
   boxShadow: UI.shadowSm,
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
 }
 
 function SectionHeader({ icon, title, description }) {
   return (
     <Box sx={{ mb: 2.5 }}>
-      <Stack direction="row" spacing={1.2} alignItems="flex-start">
+      <Stack direction="row" spacing={1.5} alignItems="center">
         <Box
           sx={{
-            width: 34,
-            height: 34,
-            borderRadius: '10px',
-            background: UI.surfaceSoft,
-            border: `1px solid ${UI.border}`,
-            color: UI.text,
+            width: 38,
+            height: 38,
+            borderRadius: '12px',
+            background: UI.primarySoft,
+            color: UI.primary,
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,
@@ -82,7 +93,7 @@ function SectionHeader({ icon, title, description }) {
           <Typography
             sx={{
               color: UI.text,
-              fontSize: '0.98rem',
+              fontSize: '1.02rem',
               fontWeight: 800,
               lineHeight: 1.25,
             }}
@@ -90,132 +101,131 @@ function SectionHeader({ icon, title, description }) {
             {title}
           </Typography>
 
-          {description ? (
+          {description && (
             <Typography
               sx={{
-                mt: 0.45,
+                mt: 0.35,
                 fontSize: '0.82rem',
                 color: UI.muted,
-                lineHeight: 1.6,
+                lineHeight: 1.5,
               }}
             >
               {description}
             </Typography>
-          ) : null}
+          )}
         </Box>
       </Stack>
     </Box>
   )
 }
 
-function SummaryStat({ label, value, tone = 'default' }) {
-  const toneMap = {
-    default: {
-      color: UI.text,
-      bg: UI.surfaceSoft,
-      border: UI.border,
+function MetricStatCard({ icon, value, label, subtext, tone = 'teal' }) {
+  const tones = {
+    teal: {
+      bg: 'rgba(15, 118, 110, 0.09)',
+      color: '#0F766E',
+      badgeBg: '#ECFDF5',
+      badgeColor: '#059669',
     },
-    primary: {
-      color: UI.primary,
-      bg: UI.primarySoft,
-      border: UI.primaryBorder,
+    amber: {
+      bg: 'rgba(217, 119, 6, 0.10)',
+      color: '#D97706',
+      badgeBg: '#FFFBEB',
+      badgeColor: '#B45309',
     },
-    premium: {
-      color: UI.premium,
-      bg: UI.premiumSoft,
-      border: UI.premiumBorder,
+    blue: {
+      bg: 'rgba(37, 99, 235, 0.09)',
+      color: '#2563EB',
+      badgeBg: '#EFF6FF',
+      badgeColor: '#1D4ED8',
+    },
+    purple: {
+      bg: 'rgba(124, 58, 237, 0.09)',
+      color: '#7C3AED',
+      badgeBg: '#F5F3FF',
+      badgeColor: '#6D28D9',
     },
   }
 
-  const current = toneMap[tone] || toneMap.default
+  const currentTone = tones[tone] || tones.teal
 
   return (
     <Card
       sx={{
-        borderRadius: '18px',
-        border: `1px solid ${current.border}`,
-        background: current.bg,
-        boxShadow: 'none',
+        ...cardSx,
+        p: 2.2,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: UI.shadowMd,
+        },
       }}
     >
-      <CardContent sx={{ p: 2 }}>
-        <Typography
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Box
           sx={{
-            fontSize: '0.76rem',
-            color: UI.muted,
-            fontWeight: 700,
-            lineHeight: 1.3,
+            width: 44,
+            height: 44,
+            borderRadius: '14px',
+            background: currentTone.bg,
+            color: currentTone.color,
+            display: 'grid',
+            placeItems: 'center',
           }}
         >
-          {label}
-        </Typography>
+          {icon}
+        </Box>
+
+        {subtext && (
+          <Chip
+            size="small"
+            label={subtext}
+            sx={{
+              height: 22,
+              borderRadius: '999px',
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              background: currentTone.badgeBg,
+              color: currentTone.badgeColor,
+              border: `1px solid ${currentTone.bg}`,
+            }}
+          />
+        )}
+      </Stack>
+
+      <Box sx={{ mt: 2 }}>
         <Typography
           sx={{
-            mt: 0.8,
-            fontSize: '1.35rem',
-            color: current.color,
+            fontSize: { xs: '1.45rem', sm: '1.65rem' },
             fontWeight: 900,
-            lineHeight: 1,
+            color: UI.text,
+            lineHeight: 1.1,
             letterSpacing: '-0.03em',
           }}
         >
           {value}
         </Typography>
-      </CardContent>
-    </Card>
-  )
-}
-
-function InfoRow({ icon, label, value }) {
-  return (
-    <Stack direction="row" spacing={1.2} alignItems="flex-start">
-      <Box
-        sx={{
-          width: 30,
-          height: 30,
-          borderRadius: '10px',
-          background: UI.surfaceSoft,
-          border: `1px solid ${UI.border}`,
-          color: UI.faint,
-          display: 'grid',
-          placeItems: 'center',
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </Box>
-
-      <Box sx={{ minWidth: 0 }}>
         <Typography
           sx={{
-            fontSize: '0.72rem',
-            color: UI.faint,
+            mt: 0.5,
+            fontSize: '0.8rem',
             fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            color: UI.muted,
           }}
         >
           {label}
         </Typography>
-        <Typography
-          sx={{
-            mt: 0.2,
-            fontSize: '0.86rem',
-            color: UI.text,
-            fontWeight: 700,
-            lineHeight: 1.5,
-            wordBreak: 'break-word',
-          }}
-        >
-          {value || 'Not added'}
-        </Typography>
       </Box>
-    </Stack>
+    </Card>
   )
 }
 
 export default function ProfilePage() {
-  const { user = {}, updateProfile } = useAppState()
+  const navigate = useNavigate()
+  const { user = {}, properties = [], vehicles = [], updateProfile } = useAppState()
 
   const [files, setFiles] = useState(
     user.photo ? [{ name: 'profile-photo', preview: user.photo }] : [],
@@ -240,6 +250,13 @@ export default function ProfilePage() {
 
   const values = watch()
 
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }, [])
+
   const initials = useMemo(() => {
     const name = values.name?.trim() || user.name?.trim() || 'User'
     const parts = name.split(' ').filter(Boolean)
@@ -259,328 +276,335 @@ export default function ProfilePage() {
       values.occupation,
       values.email,
       values.mobile,
+      files[0]?.preview || user.photo,
     ]
     const done = fields.filter((item) => String(item || '').trim()).length
     return Math.round((done / fields.length) * 100)
-  }, [values])
+  }, [values, files, user.photo])
 
-  const planLabel = user.isPremium ? 'Premium Member' : 'Free Member'
+  const userPropertiesCount = useMemo(() => {
+    return properties.filter(
+      (p) => p.userId === user?.id || p.user_id === user?.id || p.owner_id === user?.id,
+    ).length
+  }, [properties, user?.id])
+
+  const userVehiclesCount = useMemo(() => {
+    return vehicles.filter(
+      (v) => v.userId === user?.id || v.user_id === user?.id || v.owner_id === user?.id,
+    ).length
+  }, [vehicles, user?.id])
+
+  const isPremium = Boolean(
+    user.isPremium || user.is_premium || user.role === 'premium' || user.role === 'admin',
+  )
+  const isSeller = user.role === 'seller' || user.is_seller
+
   const profilePhoto = files[0]?.preview || user.photo || user.avatar_url || ''
 
   const onSubmit = async (data) => {
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 400))
-    updateProfile({ ...data, photo: files[0]?.preview || user.photo })
-    setSubmitting(false)
-    setShowUploader(false)
+    try {
+      await updateProfile({ ...data, photo: files[0]?.preview || user.photo })
+      setShowUploader(false)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
-    <Box sx={{ background: UI.bg, p: { xs: 1, sm: 1.5, md: 2 } }}>
-      <Stack spacing={2.5}>
+    <Box sx={{ background: UI.bg, minHeight: '100vh', pb: 6 }}>
+      <Stack spacing={3}>
+        {/* ── Page Greeting & Breadcrumb ── */}
+        <Box sx={{ pt: { xs: 1, sm: 2 } }}>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: { xs: '1.45rem', sm: '1.85rem' },
+              color: UI.text,
+              letterSpacing: '-0.03em',
+            }}
+          >
+            {greeting}, {values.name?.split(' ')[0] || user.name?.split(' ')[0] || 'Member'}! 👋
+          </Typography>
+          <Typography sx={{ color: UI.muted, fontSize: '0.88rem', mt: 0.35 }}>
+            Here is your personal profile, credentials, and account overview
+          </Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2.5}>
-            <Grid item xs={12} lg={4}>
-              <Stack spacing={2.5}>
-                <Card sx={{ ...cardSx, overflow: 'hidden', boxShadow: UI.shadowMd }}>
-                  <Box
+        {/* ── Prominent Hero Profile Card (Material Design) ── */}
+        <Card
+          sx={{
+            borderRadius: '28px',
+            border: `1px solid ${UI.border}`,
+            background:
+              'linear-gradient(135deg, rgba(240, 253, 250, 0.95) 0%, rgba(255, 255, 255, 1) 45%, rgba(240, 249, 255, 0.95) 100%)',
+            boxShadow: UI.shadowMd,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.8, sm: 3.5, md: 4 } }}>
+            <Stack
+              direction={{ xs: 'column-reverse', sm: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={3}
+            >
+              {/* Left Info */}
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.2 }}>
+                  <Chip
+                    icon={
+                      isPremium ? (
+                        <WorkspacePremiumRoundedIcon sx={{ fontSize: '15px !important', color: '#B45309 !important' }} />
+                      ) : (
+                        <StarsRoundedIcon sx={{ fontSize: '15px !important', color: '#0F766E !important' }} />
+                      )
+                    }
+                    label={isPremium ? '👑 Premium Member' : isSeller ? 'Verified Seller' : 'Active Member'}
+                    size="small"
                     sx={{
-                      height: { xs: 126, sm: 150 },
-                      background:
-                        'linear-gradient(135deg, #EEF6FF 0%, #EAFBF5 48%, #F8FAFC 100%)',
-                      position: 'relative',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        background:
-                          'radial-gradient(circle at top right, rgba(59,130,246,0.18), transparent 30%), radial-gradient(circle at left center, rgba(16,185,129,0.12), transparent 28%)',
-                      },
+                      height: 26,
+                      borderRadius: '999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      background: isPremium ? UI.premiumSoft : UI.primarySoft,
+                      color: isPremium ? UI.premium : UI.primary,
+                      border: `1px solid ${isPremium ? UI.premiumBorder : UI.primaryBorder}`,
                     }}
                   />
 
-                  <CardContent sx={{ p: 0 }}>
-                    <Box sx={{ px: { xs: 2, sm: 2.5 }, pb: 2.5 }}>
-                      <Stack
-                        direction={{ xs: 'column', sm: 'row', lg: 'column' }}
-                        spacing={{ xs: 1.5, sm: 1.8, lg: 1.5 }}
-                        alignItems={{ xs: 'flex-start', sm: 'flex-end', lg: 'flex-start' }}
-                        sx={{ mt: { xs: -4.5, sm: -5, lg: -5 } }}
-                      >
-                        <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                          <Avatar
-                            src={profilePhoto}
-                            sx={{
-                              width: { xs: 86, sm: 94 },
-                              height: { xs: 86, sm: 94 },
-                              border: '4px solid #fff',
-                              boxShadow: '0 12px 30px rgba(15,23,42,0.12)',
-                              background: '#E2E8F0',
-                              color: UI.text,
-                              fontSize: '1.8rem',
-                              fontWeight: 900,
-                            }}
-                          >
-                            {initials}
-                          </Avatar>
-
-                          <Button
-                            type="button"
-                            onClick={() => setShowUploader((prev) => !prev)}
-                            sx={{
-                              minWidth: 0,
-                              width: 34,
-                              height: 34,
-                              p: 0,
-                              borderRadius: '12px',
-                              position: 'absolute',
-                              right: -6,
-                              bottom: -6,
-                              background: UI.text,
-                              color: '#fff',
-                              border: '2px solid #fff',
-                              boxShadow: '0 8px 18px rgba(15,23,42,0.16)',
-                              '&:hover': { background: '#1E293B' },
-                            }}
-                          >
-                            <CameraAltRoundedIcon sx={{ fontSize: 16 }} />
-                          </Button>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            minWidth: 0,
-                            flex: 1,
-                            pt: { xs: 0, sm: 3.8, lg: 0 },
-                            width: '100%',
-                          }}
-                        >
-                          <Stack
-                            direction={{ xs: 'column', sm: 'row' }}
-                            spacing={1}
-                            alignItems={{ xs: 'flex-start', sm: 'center' }}
-                            justifyContent="space-between"
-                          >
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography
-                                sx={{
-                                  fontSize: { xs: '1.3rem', sm: '1.35rem' },
-                                  fontWeight: 900,
-                                  color: UI.text,
-                                  letterSpacing: '-0.03em',
-                                  lineHeight: 1.08,
-                                  wordBreak: 'break-word',
-                                }}
-                              >
-                                {values.name || 'Your Name'}
-                              </Typography>
-
-                              <Typography
-                                sx={{
-                                  mt: 0.6,
-                                  fontSize: '0.84rem',
-                                  color: UI.muted,
-                                  lineHeight: 1.65,
-                                }}
-                              >
-                                Keep your account details current so buyers and sellers can trust your profile.
-                              </Typography>
-                            </Box>
-
-                            <Chip
-                              icon={
-                                <WorkspacePremiumRoundedIcon
-                                  sx={{
-                                    fontSize: '14px !important',
-                                    color: `${user.isPremium ? UI.premium : UI.faint} !important`,
-                                  }}
-                                />
-                              }
-                              label={planLabel}
-                              size="small"
-                              sx={{
-                                mt: { xs: 1, sm: 0 },
-                                height: 28,
-                                borderRadius: '999px',
-                                fontSize: '0.72rem',
-                                fontWeight: 800,
-                                background: user.isPremium ? UI.premiumSoft : UI.surfaceSoft,
-                                color: user.isPremium ? UI.premium : UI.muted,
-                                border: `1px solid ${
-                                  user.isPremium ? UI.premiumBorder : UI.border
-                                }`,
-                              }}
-                            />
-                          </Stack>
-                        </Box>
-                      </Stack>
-
-                      <Stack spacing={1.35} sx={{ mt: 2.2 }}>
-                        <InfoRow
-                          icon={<EmailRoundedIcon sx={{ fontSize: 16 }} />}
-                          label="Email"
-                          value={values.email || 'email@example.com'}
-                        />
-                        <InfoRow
-                          icon={<PhoneRoundedIcon sx={{ fontSize: 16 }} />}
-                          label="Mobile"
-                          value={values.mobile || user.phone || 'Add your phone number'}
-                        />
-                        <InfoRow
-                          icon={<FmdGoodRoundedIcon sx={{ fontSize: 16 }} />}
-                          label="Location"
-                          value={
-                            [values.city, values.state].filter(Boolean).join(', ') ||
-                            values.location ||
-                            'Add your location'
-                          }
-                        />
-                      </Stack>
-
-                      {showUploader ? (
-                        <Box sx={{ mt: 2.25 }}>
-                          <Divider sx={{ mb: 2, borderColor: UI.border }} />
-                          <ImageUploader
-                            value={files}
-                            onChange={(f) => {
-                              setFiles(f.slice(-1))
-                              setShowUploader(false)
-                            }}
-                            label="Choose Profile Photo"
-                          />
-                        </Box>
-                      ) : null}
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                <Grid container spacing={1.6}>
-                  <Grid item xs={6} lg={12}>
-                    <SummaryStat label="Profile completion" value={`${completion}%`} tone="primary" />
-                  </Grid>
-                  <Grid item xs={6} lg={12}>
-                    <SummaryStat
-                      label="Membership"
-                      value={user.isPremium ? 'Premium' : 'Free'}
-                      tone={user.isPremium ? 'premium' : 'default'}
+                  <Stack direction="row" spacing={0.6} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#10B981',
+                        boxShadow: '0 0 0 3px rgba(16,185,129,0.2)',
+                      }}
                     />
-                  </Grid>
-                </Grid>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#10B981' }}>
+                      Online
+                    </Typography>
+                  </Stack>
+                </Stack>
 
+                <Typography
+                  sx={{
+                    fontSize: { xs: '1.6rem', sm: '2.1rem' },
+                    fontWeight: 900,
+                    color: UI.text,
+                    letterSpacing: '-0.035em',
+                    lineHeight: 1.1,
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {values.name || user.name || 'Your Name'}
+                </Typography>
+
+                <Typography sx={{ mt: 0.6, fontSize: '0.9rem', color: UI.muted, fontWeight: 600 }}>
+                  {values.occupation || 'Marketplace Member'} {values.city ? `• ${values.city}` : ''}
+                </Typography>
+
+                <Stack direction="row" spacing={1.5} sx={{ mt: 2.5, flexWrap: 'wrap', gap: 1 }}>
+                  {!isPremium ? (
+                    <Button
+                      onClick={() => navigate('/subscription')}
+                      variant="contained"
+                      startIcon={<WorkspacePremiumRoundedIcon />}
+                      sx={{
+                        minHeight: 42,
+                        px: 2.4,
+                        borderRadius: '14px',
+                        textTransform: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.86rem',
+                        color: '#fff',
+                        background: 'linear-gradient(135deg, #0F766E 0%, #0D9488 100%)',
+                        boxShadow: '0 6px 16px rgba(15,118,110,0.28)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)',
+                        },
+                      }}
+                    >
+                      Upgrade to Premium (₹299)
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => navigate('/dashboard/subscription')}
+                      variant="outlined"
+                      startIcon={<CheckCircleRoundedIcon />}
+                      sx={{
+                        minHeight: 42,
+                        px: 2,
+                        borderRadius: '14px',
+                        textTransform: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.85rem',
+                        color: UI.primary,
+                        borderColor: UI.primaryBorder,
+                        background: '#fff',
+                      }}
+                    >
+                      Active Premium Plan
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => navigate('/dashboard/change-password')}
+                    variant="outlined"
+                    startIcon={<LockResetRoundedIcon />}
+                    sx={{
+                      minHeight: 42,
+                      px: 2,
+                      borderRadius: '14px',
+                      textTransform: 'none',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      color: '#475569',
+                      borderColor: '#CBD5E1',
+                      background: '#fff',
+                      '&:hover': { background: '#F8FAFC', borderColor: '#94A3B8' },
+                    }}
+                  >
+                    Change Password
+                  </Button>
+                </Stack>
+              </Box>
+
+              {/* Right Avatar with Ring */}
+              <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                <Box
+                  sx={{
+                    p: 0.8,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(15,118,110,0.2) 0%, rgba(34,211,238,0.2) 100%)',
+                    boxShadow: '0 12px 30px rgba(15,23,42,0.08)',
+                  }}
+                >
+                  <Avatar
+                    src={profilePhoto}
+                    sx={{
+                      width: { xs: 90, sm: 110 },
+                      height: { xs: 90, sm: 110 },
+                      border: '4px solid #fff',
+                      background: '#E2E8F0',
+                      color: UI.text,
+                      fontSize: '2rem',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {initials}
+                  </Avatar>
+                </Box>
+
+                <Tooltip title="Change Profile Picture">
+                  <IconButton
+                    onClick={() => setShowUploader((prev) => !prev)}
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      bottom: 0,
+                      width: 38,
+                      height: 38,
+                      borderRadius: '12px',
+                      background: UI.text,
+                      color: '#fff',
+                      border: '2px solid #fff',
+                      boxShadow: '0 4px 14px rgba(15,23,42,0.2)',
+                      '&:hover': { background: '#1E293B' },
+                    }}
+                  >
+                    <CameraAltRoundedIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Stack>
+
+            {/* Photo Uploader Dropdown */}
+            {showUploader && (
+              <Box sx={{ mt: 3, pt: 2.5, borderTop: `1px solid ${UI.border}` }}>
+                <ImageUploader
+                  value={files}
+                  onChange={(f) => {
+                    setFiles(f.slice(-1))
+                    setShowUploader(false)
+                  }}
+                  label="Upload High-Resolution Profile Photo (Max 40MB)"
+                />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── 4 Key Metric Stat Cards (Inspired by Reference UI) ── */}
+        <Grid container spacing={2.5} alignItems="stretch">
+          <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
+            <MetricStatCard
+              icon={<TaskAltRoundedIcon sx={{ fontSize: 24 }} />}
+              value={`${completion}%`}
+              label="Profile Strength"
+              subtext="Progress"
+              tone="teal"
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
+            <MetricStatCard
+              icon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 24 }} />}
+              value={isPremium ? 'Premium' : 'Free'}
+              label="Account Tier"
+              subtext={isPremium ? 'Active' : 'Basic'}
+              tone="amber"
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
+            <MetricStatCard
+              icon={<HomeWorkRoundedIcon sx={{ fontSize: 24 }} />}
+              value={userPropertiesCount}
+              label="Properties Listed"
+              subtext="Real Estate"
+              tone="blue"
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
+            <MetricStatCard
+              icon={<DirectionsCarRoundedIcon sx={{ fontSize: 24 }} />}
+              value={userVehiclesCount}
+              label="Vehicles Listed"
+              subtext="Automotive"
+              tone="purple"
+            />
+          </Grid>
+        </Grid>
+
+        {/* ── Form & Sidebar Layout ── */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Grid container spacing={3} alignItems="flex-start">
+            {/* Left Main Form Column */}
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <Stack spacing={3}>
+                {/* 1. Personal Information */}
                 <Card sx={cardSx}>
-                  <CardContent sx={{ p: 2.25 }}>
-                    <Stack spacing={1.6}>
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: '0.82rem',
-                            fontWeight: 800,
-                            color: UI.faint,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                          }}
-                        >
-                          Profile strength
-                        </Typography>
-                        <Typography
-                          sx={{
-                            mt: 0.8,
-                            fontSize: '0.92rem',
-                            color: UI.text,
-                            fontWeight: 800,
-                            lineHeight: 1.45,
-                          }}
-                        >
-                          Complete your details for a stronger marketplace profile.
-                        </Typography>
-                      </Box>
-
-                      <Box>
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ mb: 0.8 }}
-                        >
-                          <Typography sx={{ fontSize: '0.78rem', color: UI.muted, fontWeight: 700 }}>
-                            Completion
-                          </Typography>
-                          <Typography sx={{ fontSize: '0.78rem', color: UI.primary, fontWeight: 800 }}>
-                            {completion}%
-                          </Typography>
-                        </Stack>
-
-                        <LinearProgress
-                          variant="determinate"
-                          value={completion}
-                          sx={{
-                            height: 8,
-                            borderRadius: 999,
-                            backgroundColor: UI.surfaceSoft,
-                            '& .MuiLinearProgress-bar': {
-                              borderRadius: 999,
-                              backgroundColor: UI.primary,
-                            },
-                          }}
-                        />
-                      </Box>
-
-                      <Stack spacing={1.1}>
-                        {[
-                          { ok: !!values.name, label: 'Full name added' },
-                          { ok: !!values.email, label: 'Email added' },
-                          { ok: !!values.mobile, label: 'Mobile number added' },
-                          { ok: !!values.city && !!values.state, label: 'City and state added' },
-                        ].map((item) => (
-                          <Stack key={item.label} direction="row" spacing={1} alignItems="center">
-                            <TaskAltRoundedIcon
-                              sx={{
-                                fontSize: 17,
-                                color: item.ok ? UI.primary : UI.faint,
-                              }}
-                            />
-                            <Typography
-                              sx={{
-                                fontSize: '0.82rem',
-                                color: item.ok ? UI.text : UI.muted,
-                                fontWeight: 700,
-                              }}
-                            >
-                              {item.label}
-                            </Typography>
-                          </Stack>
-                        ))}
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            </Grid>
-
-            <Grid item xs={12} lg={8}>
-              <Stack spacing={2.5}>
-                <Card sx={cardSx}>
-                  <CardContent sx={{ p: { xs: 2.2, sm: 2.8 } }}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
                     <SectionHeader
-                      icon={<PersonRoundedIcon sx={{ fontSize: 18 }} />}
+                      icon={<PersonRoundedIcon sx={{ fontSize: 20 }} />}
                       title="Personal Information"
-                      description="Update your identity details and basic profile information."
+                      description="Your verified name, gender, date of birth, and profession."
                     />
+                    <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
-                    <Divider sx={{ mb: 2.8, borderColor: UI.border }} />
-
-                    <Grid container spacing={2.2}>
-                      <Grid item xs={12} sm={6}>
+                    <Grid container spacing={2.5}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormInput
                           name="name"
                           label="Full Name"
                           control={control}
-                          rules={{ required: 'Name is required' }}
+                          rules={{ required: 'Full name is required' }}
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <SelectInput
                           name="gender"
                           label="Gender"
@@ -593,7 +617,7 @@ export default function ProfilePage() {
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormInput
                           name="dob"
                           label="Date of Birth"
@@ -602,199 +626,312 @@ export default function ProfilePage() {
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormInput
                           name="occupation"
-                          label="Occupation"
+                          label="Occupation / Business"
                           control={control}
+                          placeholder="e.g. Real Estate Consultant, Engineer"
                         />
                       </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
 
+                {/* 2. Location & Address */}
                 <Card sx={cardSx}>
-                  <CardContent sx={{ p: { xs: 2.2, sm: 2.8 } }}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
                     <SectionHeader
-                      icon={<FmdGoodRoundedIcon sx={{ fontSize: 18 }} />}
-                      title="Location"
-                      description="Set your city, state, pincode, and locality details."
+                      icon={<FmdGoodRoundedIcon sx={{ fontSize: 20 }} />}
+                      title="Address & Location"
+                      description="Specify your city, state, pincode, and operational area."
                     />
+                    <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
-                    <Divider sx={{ mb: 2.8, borderColor: UI.border }} />
-
-                    <Grid container spacing={2.2}>
-                      <Grid item xs={12}>
+                    <Grid container spacing={2.5}>
+                      <Grid size={{ xs: 12 }}>
                         <FormInput
                           name="location"
                           label="Full Address / Locality"
                           control={control}
+                          placeholder="Street name, landmark, area"
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={4}>
-                        <FormInput
-                          name="state"
-                          label="State"
-                          control={control}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={4}>
+                      <Grid size={{ xs: 12, sm: 4 }}>
                         <FormInput
                           name="city"
                           label="City"
                           control={control}
+                          placeholder="e.g. Bengaluru, Mysuru"
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={4}>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <FormInput
+                          name="state"
+                          label="State"
+                          control={control}
+                          placeholder="e.g. Karnataka"
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4 }}>
                         <FormInput
                           name="pincode"
                           label="Pincode"
                           control={control}
+                          placeholder="e.g. 560001"
                         />
                       </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
 
+                {/* 3. Contact & Communication */}
                 <Card sx={cardSx}>
-                  <CardContent sx={{ p: { xs: 2.2, sm: 2.8 } }}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
                     <SectionHeader
-                      icon={<EmailRoundedIcon sx={{ fontSize: 18 }} />}
+                      icon={<EmailRoundedIcon sx={{ fontSize: 20 }} />}
                       title="Contact Information"
-                      description="These details help buyers and sellers reach you easily."
+                      description="Verified contact channels for inquiries and site visits."
                     />
+                    <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
-                    <Divider sx={{ mb: 2.8, borderColor: UI.border }} />
-
-                    <Grid container spacing={2.2}>
-                      <Grid item xs={12} sm={6}>
+                    <Grid container spacing={2.5}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormInput
                           name="email"
                           label="Email Address"
                           control={control}
-                          rules={{ required: 'Email is required' }}
+                          rules={{ required: 'Email address is required' }}
                         />
                       </Grid>
 
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormInput
                           name="mobile"
-                          label="Mobile Number"
+                          label="Mobile / WhatsApp Number"
                           control={control}
+                          placeholder="+91 9876543210"
                         />
                       </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
 
-                <Card sx={cardSx}>
-                  <CardContent
-                    sx={{
-                      p: { xs: 2.2, sm: 2.4 },
-                    }}
+                {/* 4. Action / Save Bar */}
+                <Card
+                  sx={{
+                    ...cardSx,
+                    p: { xs: 2, sm: 2.5 },
+                    background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+                  }}
+                >
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={2}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'stretch', sm: 'center' }}
                   >
-                    <Stack
-                      direction={{ xs: 'column', sm: 'row' }}
-                      spacing={1.5}
-                      alignItems={{ xs: 'stretch', sm: 'center' }}
-                      justifyContent="space-between"
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: '12px',
+                          background: UI.primarySoft,
+                          color: UI.primary,
+                          display: 'grid',
+                          placeItems: 'center',
+                        }}
+                      >
+                        <BadgeRoundedIcon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.92rem', color: UI.text }}>
+                          Save Profile Updates
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.78rem', color: UI.muted }}>
+                          All changes update across your live listings immediately.
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={submitting}
+                      startIcon={<SaveRoundedIcon />}
+                      sx={{
+                        minHeight: 46,
+                        px: 3.5,
+                        borderRadius: '14px',
+                        textTransform: 'none',
+                        fontWeight: 900,
+                        fontSize: '0.92rem',
+                        color: '#fff',
+                        background: 'linear-gradient(135deg, #0F766E 0%, #0D9488 100%)',
+                        boxShadow: '0 8px 20px rgba(15,118,110,0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)',
+                        },
+                      }}
                     >
-                      <Stack direction="row" spacing={1.2} alignItems="center">
-                        <Box
+                      {submitting ? 'Saving Changes…' : 'Save Changes'}
+                    </Button>
+                  </Stack>
+                </Card>
+              </Stack>
+            </Grid>
+
+            {/* Right Sidebar Column */}
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <Stack spacing={3}>
+                {/* Profile Strength Checklist */}
+                <Card sx={cardSx}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', color: UI.text }}>
+                          Profile Strength
+                        </Typography>
+                        <Chip
+                          label={`${completion}%`}
+                          size="small"
                           sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: '12px',
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.border}`,
-                            color: UI.text,
-                            display: 'grid',
-                            placeItems: 'center',
+                            fontWeight: 900,
+                            color: UI.primary,
+                            background: UI.primarySoft,
+                            border: `1px solid ${UI.primaryBorder}`,
                           }}
-                        >
-                          <BadgeRoundedIcon sx={{ fontSize: 18 }} />
-                        </Box>
-                        <Box>
-                          <Typography
-                            sx={{
-                              fontSize: '0.95rem',
-                              color: UI.text,
-                              fontWeight: 800,
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            Ready to save your updates
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: '0.82rem',
-                              color: UI.muted,
-                              lineHeight: 1.55,
-                            }}
-                          >
-                            Review your information and save changes to update your profile.
-                          </Typography>
-                        </Box>
+                        />
                       </Stack>
 
-                      <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={1.2}
-                        sx={{ width: { xs: '100%', sm: 'auto' } }}
-                      >
-                        <Button
-                          type="button"
-                          onClick={() => setShowUploader((prev) => !prev)}
-                          startIcon={<EditRoundedIcon />}
-                          sx={{
-                            minHeight: 46,
-                            px: 2.2,
-                            borderRadius: '14px',
-                            textTransform: 'none',
-                            fontWeight: 800,
-                            fontSize: '0.88rem',
-                            color: UI.text,
-                            background: UI.surfaceSoft,
-                            border: `1px solid ${UI.borderStrong}`,
-                            '&:hover': { background: '#F1F5F9' },
-                          }}
-                        >
-                          Change Photo
-                        </Button>
+                      <LinearProgress
+                        variant="determinate"
+                        value={completion}
+                        sx={{
+                          height: 8,
+                          borderRadius: 999,
+                          backgroundColor: UI.surfaceSoft,
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 999,
+                            background: 'linear-gradient(90deg, #0F766E 0%, #22D3EE 100%)',
+                          },
+                        }}
+                      />
 
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          disabled={submitting}
-                          startIcon={<SaveRoundedIcon />}
-                          sx={{
-                            minHeight: 46,
-                            px: 2.6,
-                            borderRadius: '14px',
-                            textTransform: 'none',
-                            fontWeight: 900,
-                            fontSize: '0.9rem',
-                            background: UI.text,
-                            color: '#fff',
-                            boxShadow: '0 12px 24px rgba(15,23,42,0.12)',
-                            '&:hover': {
-                              background: '#1E293B',
-                              boxShadow: '0 16px 28px rgba(15,23,42,0.16)',
-                            },
-                            '&.Mui-disabled': {
-                              background: '#CBD5E1',
-                              color: '#fff',
-                            },
-                          }}
-                        >
-                          {submitting ? 'Saving...' : 'Save Changes'}
-                        </Button>
+                      <Typography sx={{ fontSize: '0.8rem', color: UI.muted, lineHeight: 1.5 }}>
+                        Complete your contact and location details to establish credibility with prospective buyers.
+                      </Typography>
+
+                      <Divider sx={{ borderColor: UI.border }} />
+
+                      <Stack spacing={1.2}>
+                        {[
+                          { ok: !!values.name, label: 'Full name verified' },
+                          { ok: !!values.email, label: 'Email address added' },
+                          { ok: !!values.mobile, label: 'Phone number added' },
+                          { ok: !!values.city && !!values.state, label: 'City and state added' },
+                          { ok: !!(files[0]?.preview || user.photo), label: 'Profile photo uploaded' },
+                        ].map((item) => (
+                          <Stack key={item.label} direction="row" spacing={1.2} alignItems="center">
+                            <TaskAltRoundedIcon
+                              sx={{
+                                fontSize: 18,
+                                color: item.ok ? '#10B981' : '#CBD5E1',
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: '0.82rem',
+                                color: item.ok ? UI.text : UI.muted,
+                                fontWeight: item.ok ? 700 : 500,
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
+                          </Stack>
+                        ))}
                       </Stack>
                     </Stack>
                   </CardContent>
+                </Card>
+
+                {/* Account Security & Quick Actions */}
+                <Card sx={cardSx}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', color: UI.text, mb: 2 }}>
+                      Security & Quick Access
+                    </Typography>
+
+                    <Stack spacing={1.5}>
+                      <Button
+                        fullWidth
+                        onClick={() => navigate('/dashboard/change-password')}
+                        startIcon={<LockResetRoundedIcon sx={{ color: UI.primary }} />}
+                        endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+                        sx={{
+                          justifyContent: 'space-between',
+                          p: 1.6,
+                          borderRadius: '14px',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          color: UI.text,
+                          background: UI.surfaceSoft,
+                          border: `1px solid ${UI.border}`,
+                          '&:hover': { background: '#E2E8F0' },
+                        }}
+                      >
+                        Change Password
+                      </Button>
+
+                      <Button
+                        fullWidth
+                        onClick={() => navigate('/dashboard/subscription')}
+                        startIcon={<WorkspacePremiumRoundedIcon sx={{ color: UI.premium }} />}
+                        endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+                        sx={{
+                          justifyContent: 'space-between',
+                          p: 1.6,
+                          borderRadius: '14px',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          color: UI.text,
+                          background: UI.surfaceSoft,
+                          border: `1px solid ${UI.border}`,
+                          '&:hover': { background: '#E2E8F0' },
+                        }}
+                      >
+                        Subscription & Invoices
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                {/* Trust & Verification Guarantee */}
+                <Card
+                  sx={{
+                    ...cardSx,
+                    p: 2.5,
+                    background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
+                    borderColor: '#A7F3D0',
+                  }}
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                    <ShieldRoundedIcon sx={{ color: '#059669', fontSize: 26, mt: 0.2 }} />
+                    <Box>
+                      <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: '#065F46' }}>
+                        EasyDeal Trusted Profile
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.78rem', color: '#047857', mt: 0.4, lineHeight: 1.5 }}>
+                        Your information is encrypted and securely stored. Only approved contact details are shared with verified buyers.
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Card>
               </Stack>
             </Grid>

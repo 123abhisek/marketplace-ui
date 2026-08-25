@@ -203,7 +203,18 @@ export const authService = {
   },
 
   updateProfile: (payload) => put("auth/me", payload),
+
+  changePassword: ({ current_password, new_password }) =>
+    post("auth/change-password", { current_password, new_password }),
+
+  forgotPassword: ({ email }) =>
+    post("auth/forgot-password", { email }),
+
+  resetPassword: ({ email, new_password }) =>
+    post("auth/reset-password", { email, new_password }),
 };
+
+
 
 export const propertyService = {
   getAll: (params = {}) => {

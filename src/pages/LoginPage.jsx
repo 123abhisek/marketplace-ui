@@ -444,8 +444,25 @@ export default function LoginPage() {
                 )}
               />
 
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -0.5, mb: 0.5 }}>
+                <Box
+                  component={RouterLink}
+                  to="/forgot-password"
+                  sx={{
+                    color: "#0f766e",
+                    fontSize: "0.83rem",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  Forgot password?
+                </Box>
+              </Box>
+
               <Button
                 type="submit"
+
                 fullWidth
                 disabled={loading}
                 endIcon={
