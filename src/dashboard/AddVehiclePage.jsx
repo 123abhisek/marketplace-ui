@@ -138,17 +138,27 @@ export default function AddVehiclePage() {
   const onSubmit = async (data) => {
     setImageError('')
     setApiError('')
+
+    // ── 40MB File Size Guard ──
+    const MAX_SIZE_BYTES = 40 * 1024 * 1024
+    const newFiles = files.filter(f => f.file !== null && !f.existing)
+    const rawFiles = newFiles
+      .map(f => (typeof f === 'object' && f.file instanceof File ? f.file : f))
+      .filter(Boolean)
+
+    const oversized = rawFiles.find(f => f.size > MAX_SIZE_BYTES)
+    if (oversized) {
+      setImageError('Please upload images below 40MB size.')
+      return
+    }
+
     setSubmitting(true)
 
-
     try {
-      const newFiles = files.filter(f => f.file !== null && !f.existing)
       const existingUrls = files.filter(f => f.existing).map(f => f.preview)
-      const rawFiles = newFiles
-        .map(f => (typeof f === 'object' && f.file instanceof File ? f.file : f))
-        .filter(Boolean)
       const base64Images = await filesToBase64(rawFiles)
       const allImages = [...existingUrls, ...base64Images]
+
 
       const payload = {
         title:          data.title,
@@ -421,8 +431,10 @@ export default function AddVehiclePage() {
                   setFiles(newFiles)
                   if (newFiles.length > 0) setImageError('')
                 }}
+                onSizeError={setImageError}
                 label="Upload Vehicle Photos (Optional)"
               />
+
             </CardContent>
           </Card>
 

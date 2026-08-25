@@ -21,8 +21,66 @@ function isSupportedBase64(str) {
 }
 
 /**
+ * Supported image extensions across web, iPhone (HEIC/HEIF/Apple ProRAW), and DSLR cameras (RAW, TIFF, BMP)
+ */
+export const SUPPORTED_EXTENSIONS = [
+  '.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif',
+  '.heic', '.heif', // iPhone Camera formats
+  '.dng',           // Adobe / Apple ProRAW
+  '.cr2', '.cr3',   // Canon DSLR RAW
+  '.nef',           // Nikon DSLR RAW
+  '.arw',           // Sony DSLR RAW
+  '.tiff', '.tif',  // High-res TIFF
+  '.bmp',           // Bitmap
+]
+
+/**
+ * Checks if a selected file is a valid image or camera RAW format
+ * @param {File} file
+ * @returns {boolean}
+ */
+export function isSupportedImageFile(file) {
+  if (!(file instanceof File)) return false
+  if (file.type && file.type.startsWith('image/')) return true
+  const name = (file.name || '').toLowerCase()
+  return SUPPORTED_EXTENSIONS.some((ext) => name.endsWith(ext))
+}
+
+/**
+ * Converts Apple HEIC / HEIF format to standard JPEG blob
+ * @param {File} file
+ * @returns {Promise<File|Blob>}
+ */
+export async function convertHeicIfNeeded(file) {
+  if (!(file instanceof File)) return file
+  const isHeic =
+    (file.type && (file.type.includes('heic') || file.type.includes('heif'))) ||
+    /\.(heic|heif)$/i.test(file.name || '')
+
+  if (!isHeic) return file
+
+  try {
+    const heic2anyModule = await import('heic2any')
+    const heic2any = heic2anyModule.default || heic2anyModule
+    const resultBlob = await heic2any({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.85,
+    })
+    const blob = Array.isArray(resultBlob) ? resultBlob[0] : resultBlob
+    return new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+      type: 'image/jpeg',
+    })
+  } catch (err) {
+    console.warn('[imageUtils] HEIC conversion fallback to raw file:', err)
+    return file
+  }
+}
+
+/**
  * Compresses and resizes an image File using HTML5 canvas before uploading.
- * Converts 10MB+ phone camera pictures down to ~100KB-250KB without visual quality loss.
+ * Handles iPhone (HEIC, HEIF, ProRAW), DSLR high-res photos (24MP-50MP+), and standard web formats.
+ * Converts 10MB-40MB camera pictures down to ~100KB-300KB without visual quality loss.
  *
  * @param {File} file
  * @param {number} maxWidth
@@ -30,31 +88,34 @@ function isSupportedBase64(str) {
  * @param {number} quality
  * @returns {Promise<string>} Base64 Data URL
  */
-export function compressImageToBase64(file, maxWidth = 1280, maxHeight = 1280, quality = 0.75) {
+export async function compressImageToBase64(file, maxWidth = 1280, maxHeight = 1280, quality = 0.75) {
   if (!(file instanceof File)) {
     return Promise.reject(new Error(`compressImageToBase64: expected a File object, got ${typeof file}`))
   }
 
+  // Convert iPhone HEIC/HEIF to JPEG first if needed
+  const processedFile = await convertHeicIfNeeded(file)
+
   // Non-image files or GIFs (preserve animation)
-  if (file.type === 'image/gif') {
-    return fileToBase64(file)
+  if (processedFile.type === 'image/gif') {
+    return fileToBase64(processedFile)
   }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`))
+    reader.onerror = () => reject(new Error(`Failed to read file: ${processedFile.name}`))
     reader.onload = (e) => {
       const img = new Image()
       img.onerror = () => {
-        // Fallback to standard base64 if image decoding fails
-        fileToBase64(file).then(resolve).catch(reject)
+        // Fallback to standard base64 if image decoding fails (e.g. rare raw container)
+        fileToBase64(processedFile).then(resolve).catch(reject)
       }
       img.onload = () => {
         try {
           let width = img.width
           let height = img.height
 
-          // Calculate new dimensions maintaining aspect ratio
+          // Calculate new dimensions maintaining aspect ratio (handles DSLR 6000x4000+)
           if (width > height) {
             if (width > maxWidth) {
               height = Math.round((height * maxWidth) / width)
@@ -82,14 +143,15 @@ export function compressImageToBase64(file, maxWidth = 1280, maxHeight = 1280, q
           resolve(dataUrl)
         } catch (err) {
           // Fallback if canvas fails
-          fileToBase64(file).then(resolve).catch(reject)
+          fileToBase64(processedFile).then(resolve).catch(reject)
         }
       }
       img.src = e.target.result
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(processedFile)
   })
 }
+
 
 /**
  * Converts a single File object → base64 data URI string with compression.

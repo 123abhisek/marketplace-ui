@@ -105,12 +105,12 @@ export default function AddPropertyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit"); // present when editing existing listing
-  const isEditMode = Boolean(editId);
-
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [imageError, setImageError] = useState("");
   const [loadingEdit, setLoadingEdit] = useState(isEditMode);
+
 
   useEffect(() => {
     return () => revokePreviewUrls(files.map((f) => f.preview));
@@ -184,14 +184,29 @@ export default function AddPropertyPage() {
   const isAgri = propType === "Agricultural";
 
   const onSubmit = async (data) => {
-    setSubmitting(true);
+    setImageError("");
     setApiError("");
+
+    // ── 40MB File Size Guard ──
+    const MAX_SIZE_BYTES = 40 * 1024 * 1024;
+    const newFiles = files.filter((f) => f.file !== null && !f.existing);
+    const rawNewFiles = newFiles
+      .map((f) => (typeof f === "object" && f.file instanceof File ? f.file : f))
+      .filter(Boolean);
+
+    const oversized = rawNewFiles.find((f) => f.size > MAX_SIZE_BYTES);
+    if (oversized) {
+      setImageError("Please upload images below 40MB size.");
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       // Separate new file uploads from existing image URLs
-      const newFiles = files.filter((f) => f.file !== null && !f.existing);
       const existingUrls = files.filter((f) => f.existing).map((f) => f.preview);
-      const base64Images = await filesToBase64(newFiles.map((f) => f.file ?? f));
+      const base64Images = await filesToBase64(rawNewFiles);
+
 
       const payload = {
         title: toStr(data.title),
@@ -465,11 +480,27 @@ export default function AddPropertyPage() {
                 description="Upload multiple photos (optional) to attract buyers (drag & drop supported)"
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
+              {/* Show image size validation error */}
+              {imageError && (
+                <Alert
+                  severity="warning"
+                  onClose={() => setImageError("")}
+                  sx={{ mb: 2, borderRadius: "12px", fontSize: "0.83rem" }}
+                >
+                  {imageError}
+                </Alert>
+              )}
+
               <ImageUploader
                 value={files}
-                onChange={setFiles}
+                onChange={(newFiles) => {
+                  setFiles(newFiles);
+                  if (newFiles.length > 0) setImageError("");
+                }}
+                onSizeError={setImageError}
                 label="Upload Property Photos (Optional)"
               />
+
             </CardContent>
           </Card>
 
