@@ -225,7 +225,30 @@ export const propertyService = {
   getOne: (id) => get(`property/${id}`),
   myListings: () => get("property/my/listings"),
   deleteOne: (id) => del(`property/${id}`),
-  update: (id, payload) => put(`property/${id}`, payload),
+  update: (id, payload) => {
+    const finalPayload = { ...payload };
+    if (payload.price !== undefined && payload.price !== "") {
+      const p = parseFloat(String(payload.price));
+      if (!Number.isNaN(p)) finalPayload.price = p;
+    }
+    if (payload.rooms !== undefined) {
+      const r = parseInt(String(payload.rooms), 10);
+      finalPayload.rooms = Number.isNaN(r) ? null : r;
+    }
+    if (payload.bedrooms !== undefined) {
+      const b = parseInt(String(payload.bedrooms), 10);
+      finalPayload.bedrooms = Number.isNaN(b) ? null : b;
+    }
+    if (payload.area !== undefined) {
+      const a = parseFloat(String(payload.area));
+      finalPayload.area = Number.isNaN(a) ? null : a;
+    }
+    if (payload.land_area !== undefined) {
+      const la = parseFloat(String(payload.land_area));
+      finalPayload.land_area = Number.isNaN(la) ? null : la;
+    }
+    return put(`property/${id}`, finalPayload);
+  },
 
   add: async (payload) => {
     const price = parseFloat(String(payload.price ?? "").trim());
@@ -234,7 +257,6 @@ export const propertyService = {
       const err = new Error(
         "Expected price is required and must be greater than 0.",
       );
-
       err.isFrontendError = true;
       throw err;
     }
@@ -244,9 +266,43 @@ export const propertyService = {
       price,
     };
 
+    if (payload.rooms !== undefined && payload.rooms !== null && payload.rooms !== "") {
+      const r = parseInt(String(payload.rooms), 10);
+      if (!Number.isNaN(r)) finalPayload.rooms = r;
+      else delete finalPayload.rooms;
+    } else {
+      delete finalPayload.rooms;
+    }
+
+    if (payload.bedrooms !== undefined && payload.bedrooms !== null && payload.bedrooms !== "") {
+      const b = parseInt(String(payload.bedrooms), 10);
+      if (!Number.isNaN(b)) finalPayload.bedrooms = b;
+      else delete finalPayload.bedrooms;
+    } else {
+      delete finalPayload.bedrooms;
+    }
+
+    if (payload.area !== undefined && payload.area !== null && payload.area !== "") {
+      const a = parseFloat(String(payload.area));
+      if (!Number.isNaN(a)) finalPayload.area = a;
+      else delete finalPayload.area;
+    } else {
+      delete finalPayload.area;
+    }
+
+    if (payload.land_area !== undefined && payload.land_area !== null && payload.land_area !== "") {
+      const la = parseFloat(String(payload.land_area));
+      if (!Number.isNaN(la)) finalPayload.land_area = la;
+      else delete finalPayload.land_area;
+    } else {
+      delete finalPayload.land_area;
+    }
+
     Object.keys(finalPayload).forEach((k) => {
-      if (finalPayload[k] === undefined || finalPayload[k] === null) {
-        delete finalPayload[k];
+      if (finalPayload[k] === undefined || finalPayload[k] === null || finalPayload[k] === "") {
+        if (k !== "title" && k !== "property_type" && k !== "location" && k !== "contact") {
+          delete finalPayload[k];
+        }
       }
     });
 
@@ -294,26 +350,25 @@ export const vehicleService = {
     }
 
     const payload = {
-      title,
-      vehicleNumber: vehicleNumber || undefined,
-      brand,
-      model,
-      year: year ? Number(year) : undefined,
-      rtoCode: rtoCode || undefined,
-      kmDriven: kmDriven ? Number(kmDriven) : undefined,
-      state: state || undefined,
-      location: location || undefined,
-      price,
-      contactNumber,
-      images: images || [],
+      title: title?.trim(),
+      expectedPrice: price,
+      contactNumber: String(contactNumber ?? "").trim(),
+      vehicleNumber: vehicleNumber ? String(vehicleNumber).trim() : null,
+      brand: brand ? String(brand).trim() : null,
+      model: model ? String(model).trim() : null,
+      year: year ? String(year).trim() : null,
+      rtoCode: rtoCode ? String(rtoCode).trim() : null,
+      kmDriven: kmDriven ? String(kmDriven).trim() : null,
+      state: state ? String(state).trim() : null,
+      location: location ? String(location).trim() : null,
+      images: Array.isArray(images) ? images : [],
     };
 
-    Object.keys(payload).forEach(
-      (k) => payload[k] === undefined && delete payload[k],
-    );
     return post("vehicle/add", payload);
   },
 };
+
+
 
 export const bookingService = {
   create: ({ listingId, listingType, amount, paymentMethod, payerUpiId }) => {
