@@ -136,14 +136,10 @@ export default function AddVehiclePage() {
 
   // ── Submit handler ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
-    if (!isEditMode && files.length === 0) {
-      setImageError('Please upload at least one photo of the vehicle.')
-      return
-    }
-
     setImageError('')
     setApiError('')
     setSubmitting(true)
+
 
     try {
       const newFiles = files.filter(f => f.file !== null && !f.existing)
@@ -403,8 +399,8 @@ export default function AddVehiclePage() {
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>📷</span>}
-                title="Vehicle Photos"
-                description="Upload exterior and interior photos — drag & drop supported"
+                title="Vehicle Photos (Optional)"
+                description="Upload exterior and interior photos (optional) — drag & drop supported"
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
 
@@ -425,10 +421,11 @@ export default function AddVehiclePage() {
                   setFiles(newFiles)
                   if (newFiles.length > 0) setImageError('')
                 }}
-                label="Upload Vehicle Photos"
+                label="Upload Vehicle Photos (Optional)"
               />
             </CardContent>
           </Card>
+
 
           {/* ── Submit row ── */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

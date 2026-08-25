@@ -461,17 +461,18 @@ export default function AddPropertyPage() {
             <CardContent sx={{ p: 3 }}>
               <SectionHeader
                 icon={<span style={{ fontSize: 15 }}>🖼️</span>}
-                title="Property Images"
-                description="Upload multiple photos to attract buyers (drag & drop supported)"
+                title="Property Images (Optional)"
+                description="Upload multiple photos (optional) to attract buyers (drag & drop supported)"
               />
               <Divider sx={{ mb: 3, opacity: 0.6 }} />
               <ImageUploader
                 value={files}
                 onChange={setFiles}
-                label="Upload Property Photos"
+                label="Upload Property Photos (Optional)"
               />
             </CardContent>
           </Card>
+
 
           {/* ── Action row ── */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
