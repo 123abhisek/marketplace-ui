@@ -560,36 +560,40 @@ function ListingCard({ item, user, isLoggedIn }) {
               borderTop: "1px solid rgba(226,232,240,.85)",
             }}
           >
-            {locked ? (
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                spacing={1}
-              >
-                <Box>
-                  <Typography
-                    sx={{
-                      color: "#94a3b8",
-                      fontSize: ".72rem",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Access
-                  </Typography>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              spacing={1}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    color: "#94a3b8",
+                    fontSize: ".7rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {priceLabel}
+                </Typography>
 
-                  <Typography
-                    sx={{
-                      color: "#0f172a",
-                      fontSize: ".98rem",
-                      fontWeight: 900,
-                    }}
-                  >
-                    Premium required
-                  </Typography>
-                </Box>
+                <Typography
+                  sx={{
+                    color: cfg.accent,
+                    fontWeight: 900,
+                    fontSize: "1.16rem",
+                  }}
+                >
+                  {safeItem.price !== null &&
+                  safeItem.price !== undefined &&
+                  safeItem.price !== ""
+                    ? formatCurrency(safeItem.price)
+                    : "Price on request"}
+                </Typography>
+              </Box>
 
+              {locked ? (
                 <Button
                   component={RouterLink}
                   to="/subscription"
@@ -605,41 +609,7 @@ function ListingCard({ item, user, isLoggedIn }) {
                 >
                   Unlock ₹299
                 </Button>
-              </Stack>
-            ) : (
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                spacing={1}
-              >
-                <Box>
-                  <Typography
-                    sx={{
-                      color: "#94a3b8",
-                      fontSize: ".7rem",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {priceLabel}
-                  </Typography>
-
-                  <Typography
-                    sx={{
-                      color: cfg.accent,
-                      fontWeight: 900,
-                      fontSize: "1.16rem",
-                    }}
-                  >
-                    {safeItem.price !== null &&
-                    safeItem.price !== undefined &&
-                    safeItem.price !== ""
-                      ? formatCurrency(safeItem.price)
-                      : "—"}
-                  </Typography>
-                </Box>
-
+              ) : (
                 <Button
                   component={RouterLink}
                   to={isLoggedIn ? detailPath : "/login"}
@@ -655,9 +625,10 @@ function ListingCard({ item, user, isLoggedIn }) {
                 >
                   {isLoggedIn ? "View details" : "Login to view"}
                 </Button>
-              </Stack>
-            )}
+              )}
+            </Stack>
           </Box>
+
         </Stack>
       </CardContent>
     </Card>

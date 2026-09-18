@@ -373,36 +373,37 @@ function ListingCard({ item, navigate, index, isPremium }) {
         <Box sx={{ mt: "auto", pt: 1.5 }}>
           <Divider sx={{ borderColor: COLORS.border, mb: 1.5 }} />
 
-          {!isPremium ? (
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={1}
-            >
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: "0.68rem",
-                    color: COLORS.faint,
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  ACCESS
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.88rem",
-                    fontWeight: 900,
-                    color: COLORS.text,
-                  }}
-                >
-                  Premium required
-                </Typography>
-              </Box>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={1.2}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "0.72rem",
+                  color: COLORS.faint,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Price
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.3,
+                  fontSize: "1.05rem",
+                  fontWeight: 900,
+                  color: COLORS.text,
+                }}
+              >
+                {formatPrice(getPrice(item.raw))}
+              </Typography>
+            </Box>
 
+            {!isPremium ? (
               <Button
                 onClick={() => navigate("/subscription")}
                 startIcon={<LockRoundedIcon sx={{ fontSize: 16 }} />}
@@ -423,38 +424,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
               >
                 Unlock ₹299
               </Button>
-            </Stack>
-          ) : (
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={1.2}
-            >
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: "0.72rem",
-                    color: COLORS.faint,
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  Price
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.3,
-                    fontSize: "1.05rem",
-                    fontWeight: 900,
-                    color: COLORS.text,
-                  }}
-                >
-                  {formatPrice(getPrice(item.raw))}
-                </Typography>
-              </Box>
-
+            ) : (
               <Button
                 onClick={() =>
                   navigate(
@@ -481,8 +451,9 @@ function ListingCard({ item, navigate, index, isPremium }) {
               >
                 View Details
               </Button>
-            </Stack>
-          )}
+            )}
+          </Stack>
+
         </Box>
       </CardContent>
     </Card>

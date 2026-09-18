@@ -310,11 +310,11 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                 fontWeight={900}
                 sx={{
                   fontSize: '1.02rem',
-                  color: hasFullAccess ? '#0F766E' : '#94A3B8',
+                  color: '#0F766E',
                   letterSpacing: '-0.02em',
                 }}
               >
-                {hasFullAccess ? (itemPrice != null ? formatCurrency(itemPrice) : 'Contact for Price') : '---'}
+                {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact for Price'}
               </Typography>
             </Box>
 

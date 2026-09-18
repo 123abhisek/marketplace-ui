@@ -308,11 +308,11 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                 fontWeight={900}
                 sx={{
                   fontSize: '1.02rem',
-                  color: hasFullAccess ? '#7C3AED' : '#94A3B8',
+                  color: '#7C3AED',
                   letterSpacing: '-0.02em',
                 }}
               >
-                {hasFullAccess ? (itemPrice != null ? formatCurrency(itemPrice) : 'Contact for Price') : '---'}
+                {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact for Price'}
               </Typography>
             </Box>
 
