@@ -34,9 +34,10 @@ import VillaRoundedIcon from "@mui/icons-material/VillaRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { propertyService, vehicleService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
+
 
 const COLORS = {
   pageBg: "#f5f7fb",
@@ -545,22 +546,218 @@ function ListingCardSkeleton() {
   );
 }
 
+function matchesCategory(item, filterCategory) {
+  if (!filterCategory || filterCategory === "all") return true;
+
+  const target = filterCategory.toLowerCase().trim();
+  const itemCat = String(getCategory(item.raw, item.itemType) || "").toLowerCase();
+  const itemType = String(item.itemType || "").toLowerCase();
+  const itemTitle = String(getTitle(item.raw) || "").toLowerCase();
+  const rawType = String(
+    item.raw?.property_type || item.raw?.category || item.raw?.type || ""
+  ).toLowerCase();
+  const rawModel = String(item.raw?.model || "").toLowerCase();
+  const rawBrand = String(item.raw?.brand || "").toLowerCase();
+  const rawDesc = String(item.raw?.description || "").toLowerCase();
+
+  // 1. Direct or exact match
+  if (itemCat === target || rawType === target) return true;
+
+  // 2. Preset category groups
+  if (target === "property" || target === "properties") {
+    return itemType === "property";
+  }
+
+  if (
+    target === "apartments" ||
+    target === "apartment" ||
+    target === "flat" ||
+    target === "flats"
+  ) {
+    return (
+      itemType === "property" &&
+      (itemCat.includes("apartment") ||
+        itemCat.includes("flat") ||
+        rawType.includes("apartment") ||
+        rawType.includes("flat") ||
+        itemTitle.includes("apartment") ||
+        itemTitle.includes("flat"))
+    );
+  }
+
+  if (
+    target === "houses" ||
+    target === "house" ||
+    target === "villa" ||
+    target === "villas" ||
+    target === "residential"
+  ) {
+    return (
+      itemType === "property" &&
+      (itemCat.includes("house") ||
+        itemCat.includes("villa") ||
+        itemCat.includes("residential") ||
+        rawType.includes("house") ||
+        rawType.includes("villa") ||
+        rawType.includes("residential") ||
+        itemTitle.includes("house") ||
+        itemTitle.includes("villa") ||
+        itemTitle.includes("home"))
+    );
+  }
+
+  if (target === "commercial" || target === "office" || target === "shop") {
+    return (
+      itemCat.includes("commercial") ||
+      rawType.includes("commercial") ||
+      itemTitle.includes("commercial") ||
+      itemTitle.includes("office") ||
+      itemTitle.includes("shop")
+    );
+  }
+
+  if (
+    target === "land" ||
+    target === "plots" ||
+    target === "plot" ||
+    target === "site" ||
+    target === "agricultural" ||
+    target === "farm"
+  ) {
+    return (
+      itemType === "property" &&
+      (itemCat.includes("land") ||
+        itemCat.includes("plot") ||
+        itemCat.includes("site") ||
+        itemCat.includes("agricultural") ||
+        rawType.includes("land") ||
+        rawType.includes("plot") ||
+        rawType.includes("site") ||
+        rawType.includes("agricultural") ||
+        itemTitle.includes("land") ||
+        itemTitle.includes("plot") ||
+        itemTitle.includes("site") ||
+        itemTitle.includes("acre"))
+    );
+  }
+
+  if (target === "cars" || target === "car") {
+    return (
+      itemType === "vehicle" &&
+      (itemCat.includes("car") ||
+        rawType.includes("car") ||
+        (!itemCat.includes("bike") &&
+          !itemCat.includes("scooter") &&
+          !itemCat.includes("truck") &&
+          !rawType.includes("bike") &&
+          !rawType.includes("scooter") &&
+          !rawType.includes("truck")))
+    );
+  }
+
+  if (
+    target === "bikes" ||
+    target === "bike" ||
+    target === "motorcycle" ||
+    target === "scooter" ||
+    target === "two wheeler"
+  ) {
+    return (
+      itemType === "vehicle" &&
+      (itemCat.includes("bike") ||
+        itemCat.includes("scooter") ||
+        itemCat.includes("motorcycle") ||
+        itemCat.includes("two wheeler") ||
+        rawType.includes("bike") ||
+        rawType.includes("scooter") ||
+        itemTitle.includes("bike") ||
+        itemTitle.includes("scooter") ||
+        itemTitle.includes("royal enfield") ||
+        itemTitle.includes("bullet") ||
+        itemTitle.includes("activa") ||
+        itemTitle.includes("jupiter") ||
+        rawBrand.includes("royal enfield") ||
+        rawBrand.includes("hero") ||
+        rawBrand.includes("bajaj") ||
+        rawBrand.includes("tvs") ||
+        rawBrand.includes("yamaha"))
+    );
+  }
+
+  if (
+    target === "trucks" ||
+    target === "truck" ||
+    target === "utility" ||
+    target === "commercial vehicle" ||
+    target === "tractor"
+  ) {
+    return (
+      itemType === "vehicle" &&
+      (itemCat.includes("truck") ||
+        itemCat.includes("commercial") ||
+        itemCat.includes("utility") ||
+        itemCat.includes("tractor") ||
+        itemCat.includes("pickup") ||
+        rawType.includes("truck") ||
+        rawType.includes("commercial") ||
+        rawType.includes("tractor") ||
+        itemTitle.includes("truck") ||
+        itemTitle.includes("tractor") ||
+        itemTitle.includes("pickup") ||
+        itemTitle.includes("lorry"))
+    );
+  }
+
+  return (
+    itemCat.includes(target) ||
+    rawType.includes(target) ||
+    itemTitle.includes(target) ||
+    rawModel.includes(target) ||
+    rawBrand.includes(target) ||
+    rawDesc.includes(target)
+  );
+}
+
 export default function ExplorePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, properties: contextProps = [], vehicles: contextVehs = [], refreshListings } = useAppState();
   const isPremium = Boolean(user?.isPremium || user?.is_premium || user?.role === "admin" || user?.role === "premium");
 
   const [loading, setLoading] = useState(true);
   const [apiProps, setApiProps] = useState([]);
   const [apiVehs, setApiVehs] = useState([]);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "all");
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("latest");
   const [slideIndex, setSlideIndex] = useState(0);
+
+  // Sync URL search params with state
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    const typeParam = searchParams.get("type");
+    const searchParam = searchParams.get("search");
+
+    if (catParam) {
+      setCategoryFilter(catParam);
+    } else {
+      setCategoryFilter("all");
+    }
+
+    if (typeParam) {
+      setTypeFilter(typeParam);
+    } else {
+      setTypeFilter("all");
+    }
+
+    if (searchParam) {
+      setSearch(searchParam);
+    }
+  }, [searchParams]);
 
   const fetchExploreListings = useCallback(async () => {
     setLoading(true);
@@ -581,7 +778,6 @@ export default function ExplorePage() {
       setLoading(false);
     }
   }, []);
-
 
   useEffect(() => {
     fetchExploreListings();
@@ -632,10 +828,22 @@ export default function ExplorePage() {
   }, [properties, vehicles]);
 
   const categoryOptions = useMemo(() => {
-    const set = new Set();
+    const popularCategories = [
+      "Property",
+      "Apartments",
+      "Houses",
+      "Commercial",
+      "Land",
+      "Cars",
+      "Bikes",
+      "Trucks",
+    ];
+    const set = new Set(popularCategories);
     allItems.forEach((item) => {
       const value = getCategory(item.raw, item.itemType);
-      if (value) set.add(value);
+      if (value && value !== "Property" && value !== "Vehicle") {
+        set.add(value);
+      }
     });
     return ["all", ...Array.from(set)];
   }, [allItems]);
@@ -675,9 +883,7 @@ export default function ExplorePage() {
     }
 
     if (categoryFilter !== "all") {
-      result = result.filter(
-        (item) => getCategory(item.raw, item.itemType) === categoryFilter,
-      );
+      result = result.filter((item) => matchesCategory(item, categoryFilter));
     }
 
     if (companyFilter !== "all") {
@@ -716,7 +922,16 @@ export default function ExplorePage() {
     sortBy,
   ]);
 
-  console.log("filteredItems",filteredItems)
+  const handleCategoryChange = (newCat) => {
+    setCategoryFilter(newCat);
+    const newParams = new URLSearchParams(searchParams);
+    if (newCat === "all") {
+      newParams.delete("category");
+    } else {
+      newParams.set("category", newCat);
+    }
+    setSearchParams(newParams);
+  };
 
   const resetFilters = () => {
     setSearch("");
@@ -726,9 +941,11 @@ export default function ExplorePage() {
     setMinPrice("");
     setMaxPrice("");
     setSortBy("latest");
+    setSearchParams({});
   };
 
   const activeSlide = carouselSlides[slideIndex];
+
 
   return (
     <>
@@ -1073,7 +1290,7 @@ export default function ExplorePage() {
                     <FormControl fullWidth>
                       <Select
                         value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        onChange={(e) => handleCategoryChange(e.target.value)}
                         sx={{
                           minHeight: 52,
                           borderRadius: "16px",
@@ -1194,7 +1411,11 @@ export default function ExplorePage() {
                   </Grid>
                 </Grid>
 
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+                  <Typography sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 700, mr: 0.5 }}>
+                    Showing {filteredItems.length} of {allItems.length} listings:
+                  </Typography>
+
                   <Chip
                     icon={
                       <CategoryRoundedIcon
@@ -1206,11 +1427,17 @@ export default function ExplorePage() {
                         ? "All categories"
                         : `Category: ${categoryFilter}`
                     }
+                    onDelete={
+                      categoryFilter !== "all"
+                        ? () => handleCategoryChange("all")
+                        : undefined
+                    }
                     sx={{
                       borderRadius: "999px",
                       fontWeight: 700,
-                      background: COLORS.surfaceSoft,
-                      border: `1px solid ${COLORS.border}`,
+                      background: categoryFilter !== "all" ? COLORS.primarySoft : COLORS.surfaceSoft,
+                      color: categoryFilter !== "all" ? COLORS.primary : COLORS.text,
+                      border: `1px solid ${categoryFilter !== "all" ? COLORS.primary : COLORS.border}`,
                     }}
                   />
                   <Chip
@@ -1224,11 +1451,17 @@ export default function ExplorePage() {
                         ? "All companies"
                         : `Company: ${companyFilter}`
                     }
+                    onDelete={
+                      companyFilter !== "all"
+                        ? () => setCompanyFilter("all")
+                        : undefined
+                    }
                     sx={{
                       borderRadius: "999px",
                       fontWeight: 700,
-                      background: COLORS.surfaceSoft,
-                      border: `1px solid ${COLORS.border}`,
+                      background: companyFilter !== "all" ? COLORS.blueSoft : COLORS.surfaceSoft,
+                      color: companyFilter !== "all" ? COLORS.blue : COLORS.text,
+                      border: `1px solid ${companyFilter !== "all" ? COLORS.blue : COLORS.border}`,
                     }}
                   />
                   <Chip
@@ -1242,6 +1475,14 @@ export default function ExplorePage() {
                         ? `Price: ${minPrice || 0} - ${maxPrice || "Any"}`
                         : "Any price"
                     }
+                    onDelete={
+                      minPrice || maxPrice
+                        ? () => {
+                            setMinPrice("");
+                            setMaxPrice("");
+                          }
+                        : undefined
+                    }
                     sx={{
                       borderRadius: "999px",
                       fontWeight: 700,
@@ -1250,6 +1491,7 @@ export default function ExplorePage() {
                     }}
                   />
                 </Stack>
+
               </Stack>
             </CardContent>
           </Card>

@@ -22,12 +22,15 @@ npm run build
 ## 🚀 Production Deployment & Automated Re-Deployment
 
 ### Option 1: One-Click Automated Script (`/home/deploy.sh`)
+
 Create `/home/deploy.sh` on your VPS server:
+
 ```bash
 sudo nano /home/deploy.sh
 ```
 
 Paste the following script:
+
 ```bash
 #!/bin/bash
 set -e
@@ -67,11 +70,13 @@ echo "=========================================="
 ```
 
 Make it executable:
+
 ```bash
 chmod +x /home/deploy.sh
 ```
 
 Run deployment anytime with a single command:
+
 ```bash
 /home/deploy.sh
 ```
@@ -79,6 +84,7 @@ Run deployment anytime with a single command:
 ---
 
 ### Option 2: Automatic Re-Deployment on `git push` (GitHub Actions CI/CD)
+
 Create `.github/workflows/deploy.yml` in your repository:
 
 ```yaml
@@ -126,6 +132,7 @@ jobs:
 ```
 
 **Required GitHub Repository Secrets** (`Settings` → `Secrets and variables` → `Actions`):
+
 - `SERVER_HOST`: Your VPS IP address / Domain
 - `SERVER_USER`: `root` (or sudo user)
 - `SERVER_SSH_KEY`: Server SSH private key
@@ -135,6 +142,7 @@ jobs:
 ### Option 3: Manual Re-Deployment Commands
 
 #### Frontend Re-Deployment:
+
 ```bash
 cd /home/marketplace-ui
 git status
@@ -147,6 +155,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 #### Backend Re-Deployment:
+
 ```bash
 cd /home/marketplace_backend
 git status
@@ -159,3 +168,4 @@ sudo systemctl status fastapi
 sudo journalctl -u fastapi -n 100 --no-pager
 ```
 
+ssh -L 15432:127.0.0.1:5432 root@46.250.239.148

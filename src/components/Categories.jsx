@@ -95,9 +95,23 @@ const items = [
   },
 ];
 
+import { useNavigate } from "react-router-dom";
+
 function CategoryCard({ item, index }) {
+  const navigate = useNavigate();
+
+  const handleExplore = (e) => {
+    e?.preventDefault?.();
+    if (item.title === "Property") {
+      navigate("/explore?type=property");
+    } else {
+      navigate(`/explore?category=${encodeURIComponent(item.title)}`);
+    }
+  };
+
   return (
     <Card
+      onClick={handleExplore}
       sx={{
         width: "100%",
         maxWidth: 320,
@@ -111,6 +125,7 @@ function CategoryCard({ item, index }) {
         border: "1px solid rgba(226,232,240,0.95)",
         boxShadow: "0 16px 40px rgba(15,23,42,0.06)",
         position: "relative",
+        cursor: "pointer",
         transition:
           "transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s cubic-bezier(.16,1,.3,1), border-color .22s ease",
         "&:hover": {
@@ -257,8 +272,10 @@ function CategoryCard({ item, index }) {
               </Box>
 
               <Box
-                component="a"
-                href="/explore"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleExplore(e);
+                }}
                 sx={{
                   width: 42,
                   height: 42,
@@ -286,6 +303,7 @@ function CategoryCard({ item, index }) {
     </Card>
   );
 }
+
 
 export default function Categories() {
   return (
