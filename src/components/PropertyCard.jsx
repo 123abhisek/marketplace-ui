@@ -16,6 +16,7 @@ import DeleteOutlineRoundedIcon  from '@mui/icons-material/DeleteOutlineRounded'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useAppState }           from '../hooks/useAppState'
 import { formatCurrency }        from '../utils/formatters'
+import { formatLandArea, formatBuiltupArea } from '../utils/landUnits'
 
 const TYPE_COLORS = {
   Residential: { bg: '#EEF2FF', color: '#4361EE' },
@@ -279,11 +280,11 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                 </Typography>
               </Stack>
             ) : null}
-            {(item.area || item.landArea) ? (
+            {(item.landArea || item.area) ? (
               <Stack direction="row" spacing={0.5} alignItems="center">
                 <SquareFootRoundedIcon sx={{ fontSize: 14, color: '#7C3AED' }} />
                 <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                  {item.area ? `${item.area} sq.ft` : item.landArea}
+                  {formatLandArea(item.landArea) || formatBuiltupArea(item.area)}
                 </Typography>
               </Stack>
             ) : (

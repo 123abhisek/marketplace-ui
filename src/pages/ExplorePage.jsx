@@ -148,9 +148,11 @@ function getLocation(item) {
 function getCategory(item, type) {
   return (
     item.category ||
-    item.type ||
+    item.property_type ||
     item.propertyType ||
+    item.vehicle_type ||
     item.vehicleType ||
+    item.type ||
     (type === "property" ? "Property" : "Vehicle")
   );
 }

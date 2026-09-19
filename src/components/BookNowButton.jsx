@@ -1,5 +1,5 @@
 // src/components/BookNowButton.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -10,7 +10,6 @@ import {
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { initiateBooking } from "../services/bookingService";
 
-
 export default function BookNowButton({
   propertyId,
   vehicleId,
@@ -19,18 +18,12 @@ export default function BookNowButton({
   amount,
   label = "Book a Site Visit",
   disabled = false,
-  initialAlreadyBooked = false,
   bookingStatusLoading = false,
   onSuccess,
   onError,
 }) {
   const [loading, setLoading] = useState(false);
-  const [booked, setBooked] = useState(false);
-  const [alreadyBooked, setAlreadyBooked] = useState(initialAlreadyBooked);
-
-  useEffect(() => {
-    setAlreadyBooked(initialAlreadyBooked);
-  }, [initialAlreadyBooked]);
+  const [lastBooked, setLastBooked] = useState(false);
 
   const [toast, setToast] = useState({
     open: false,
@@ -77,21 +70,12 @@ export default function BookNowButton({
         amount: validAmount,
       });
 
-      // First successful booking
-      setBooked(true);
-
-      showToast(result?.message || "Booking confirmed", "success");
+      setLastBooked(true);
+      showToast(result?.message || "Booking confirmed successfully!", "success");
 
       onSuccess?.(result);
     } catch (error) {
-      if (error?.status === 409) {
-        setAlreadyBooked(true);
-        showToast("You have already booked this listing", "info");
-        return;
-      }
-
-      const message = error?.message || "Booking failed. Please try again.";
-
+      const message = error?.message || error?.detail || "Booking failed. Please try again.";
       showToast(message, "error");
       onError?.(error);
     } finally {
@@ -99,15 +83,11 @@ export default function BookNowButton({
     }
   };
 
-  const isBooked = booked || alreadyBooked;
-
   const buttonText = loading
     ? "Processing..."
-    : booked
-      ? "Booked"
-      : alreadyBooked
-        ? "Already Booked"
-        : label;
+    : lastBooked
+      ? `${label} Again`
+      : label;
 
   if (bookingStatusLoading) {
     return (
@@ -130,7 +110,7 @@ export default function BookNowButton({
         fullWidth
         variant="contained"
         onClick={handleBookNow}
-        disabled={disabled || loading || isInvalidProps || isBooked}
+        disabled={disabled || loading || isInvalidProps}
         startIcon={
           loading ? (
             <CircularProgress size={16} color="inherit" />
@@ -144,26 +124,15 @@ export default function BookNowButton({
           fontWeight: 800,
           fontSize: "0.95rem",
           textTransform: "none",
-          background: booked
-            ? "#16a34a"
-            : alreadyBooked
-              ? "#cbd5e1"
-              : "linear-gradient(135deg, #0f766e, #0d9488)",
-          color: booked ? "#fff" : alreadyBooked ? "#475569" : "#fff",
-          boxShadow:
-            booked || alreadyBooked
-              ? "none"
-              : "0 8px 24px rgba(15,118,110,0.28)",
+          background: "linear-gradient(135deg, #0f766e, #0d9488)",
+          color: "#fff",
+          boxShadow: "0 8px 24px rgba(15,118,110,0.28)",
           "&:hover": {
-            background: booked
-              ? "#16a34a"
-              : alreadyBooked
-                ? "#cbd5e1"
-                : "linear-gradient(135deg, #0a5c55, #0f766e)",
+            background: "linear-gradient(135deg, #0a5c55, #0f766e)",
           },
           "&.Mui-disabled": {
-            background: booked ? "#16a34a" : "#cbd5e1",
-            color: booked ? "#fff" : "#64748b",
+            background: "#cbd5e1",
+            color: "#64748b",
             boxShadow: "none",
           },
         }}
@@ -171,7 +140,7 @@ export default function BookNowButton({
         {buttonText}
       </Button>
 
-      {booked && (
+      {lastBooked && (
         <Alert
           severity="success"
           sx={{
@@ -180,20 +149,7 @@ export default function BookNowButton({
             fontWeight: 600,
           }}
         >
-          Booking confirmed successfully.
-        </Alert>
-      )}
-
-      {alreadyBooked && (
-        <Alert
-          severity="info"
-          sx={{
-            mt: 1.2,
-            borderRadius: "10px",
-            fontWeight: 600,
-          }}
-        >
-          You have already booked this listing.
+          Booking confirmed. You can book again anytime if needed.
         </Alert>
       )}
 

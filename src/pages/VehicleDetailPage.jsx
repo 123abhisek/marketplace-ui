@@ -1003,10 +1003,10 @@ export default function VehicleDetailPage() {
               </Box>
 
               <Box sx={{ px: 2.5, py: 0.5 }}>
+                <SpecRow label="Category / Type" value={vehicle.category || vehicle.vehicle_type || vehicle.vehicleType} />
                 <SpecRow label="Brand" value={vehicle.brand} />
                 <SpecRow label="Model" value={vehicle.model} />
                 <SpecRow label="Year" value={vehicle.year} />
-                <SpecRow label="Vehicle Type" value={vehicle.vehicle_type} />
                 <SpecRow label="Fuel Type" value={vehicle.fuel_type} />
                 <SpecRow label="Transmission" value={vehicle.transmission} />
                 <SpecRow
@@ -1239,6 +1239,10 @@ export default function VehicleDetailPage() {
                   <Grid container rowSpacing={1.5} columnSpacing={2}>
                     {[
                       {
+                        icon: <DirectionsCarRoundedIcon sx={{ fontSize: 14 }} />,
+                        label: vehicle.category || vehicle.vehicle_type || vehicle.vehicleType,
+                      },
+                      {
                         icon: <SpeedRoundedIcon sx={{ fontSize: 14 }} />,
                         label: vehicle.km_driven
                           ? `${Number(vehicle.km_driven).toLocaleString("en-IN")} km`
@@ -1450,23 +1454,8 @@ export default function VehicleDetailPage() {
                     vehicleId={vehicle.id || id}
                     amount={100}
                     label="Book This Vehicle"
-                    disabled={isOwner}
                     onSuccess={() => navigate("/dashboard/my-bookings")}
                   />
-
-                  {isOwner && (
-                    <Typography
-                      sx={{
-                        mt: 1,
-                        textAlign: "center",
-                        fontSize: "0.76rem",
-                        color: "#94a3b8",
-                        fontWeight: 700,
-                      }}
-                    >
-                      You cannot book your own vehicle
-                    </Typography>
-                  )}
 
                   {vehicle.contact && (
                     <Button
