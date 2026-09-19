@@ -265,6 +265,7 @@ export default function AddVehiclePage() {
 
       const payload = {
         title: String(data.title ?? "").trim(),
+        category: String(data.category ?? "").trim(),
         brand: String(data.brand ?? "").trim(),
         model: String(data.model ?? "").trim(),
         year: String(data.year ?? "").trim(),
@@ -285,6 +286,7 @@ export default function AddVehiclePage() {
       } else {
         await vehicleService.add({
           title: data.title,
+          category: data.category,
           brand: data.brand,
           model: data.model,
           year: data.year,

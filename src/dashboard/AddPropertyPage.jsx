@@ -28,6 +28,12 @@ import { useAppState } from "../hooks/useAppState";
 import { propertyService } from "../services/api";
 import { extractError } from "../utils/mappers";
 import { filesToBase64, revokePreviewUrls } from "../utils/imageUtils";
+import {
+  LAND_AREA_UNITS,
+  BUILTUP_AREA_UNITS,
+  parseAreaAndUnit,
+  getLandConversionsPreview,
+} from "../utils/landUnits";
 
 const UI = {
   bg: "#F8FAFC",
@@ -151,7 +157,9 @@ export default function AddPropertyPage() {
       rooms: "",
       bedrooms: "",
       area: "",
+      areaUnit: "Sq. Ft.",
       landArea: "",
+      landAreaUnit: "Acres",
       cropsGrown: "",
       expectedPrice: "",
       rentLease: "Sale",
@@ -166,6 +174,9 @@ export default function AddPropertyPage() {
       const res = await propertyService.getOne(editId);
       const p = res?.data ?? res;
       if (p) {
+        const parsedArea = parseAreaAndUnit(p.area, "Sq. Ft.");
+        const parsedLandArea = parseAreaAndUnit(p.land_area, "Acres");
+
         reset({
           title: p.title || "",
           propertyType: p.property_type || PROPERTY_TYPES[0].value,
@@ -174,8 +185,10 @@ export default function AddPropertyPage() {
           floor: String(p.floor || ""),
           rooms: p.rooms !== null && p.rooms !== undefined ? String(p.rooms) : "",
           bedrooms: p.bedrooms !== null && p.bedrooms !== undefined ? String(p.bedrooms) : "",
-          area: p.area !== null && p.area !== undefined ? String(p.area) : "",
-          landArea: p.land_area !== null && p.land_area !== undefined ? String(p.land_area) : "",
+          area: parsedArea.value,
+          areaUnit: parsedArea.unit || "Sq. Ft.",
+          landArea: parsedLandArea.value,
+          landAreaUnit: parsedLandArea.unit || "Acres",
           cropsGrown: p.crops_grown || "",
           expectedPrice: p.price !== null && p.price !== undefined ? String(p.price) : "",
           rentLease: p.rent_lease || "Sale",
@@ -201,6 +214,8 @@ export default function AddPropertyPage() {
   }, [isEditMode, loadForEdit]);
 
   const propType = watch("propertyType");
+  const watchLandArea = watch("landArea");
+  const watchLandUnit = watch("landAreaUnit");
   const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(propType);
   const isAgri = propType === "Agricultural";
 
@@ -233,6 +248,14 @@ export default function AddPropertyPage() {
         return;
       }
 
+      const areaVal = toStr(data.area);
+      const areaUnitVal = toStr(data.areaUnit) || "Sq. Ft.";
+      const combinedArea = areaVal ? `${areaVal} ${areaUnitVal}` : "";
+
+      const landAreaVal = toStr(data.landArea);
+      const landAreaUnitVal = toStr(data.landAreaUnit) || "Acres";
+      const combinedLandArea = landAreaVal ? `${landAreaVal} ${landAreaUnitVal}` : "";
+
       const payload = {
         title: toStr(data.title),
         property_type: toStr(data.propertyType),
@@ -245,8 +268,8 @@ export default function AddPropertyPage() {
         bedrooms: parseInt(String(data.bedrooms ?? "0"), 10) || 0,
         crops_grown: toStr(data.cropsGrown),
         rent_lease: toStr(data.rentLease),
-        area: parseFloat(String(data.area ?? "0")) || 0,
-        land_area: parseFloat(String(data.landArea ?? "0")) || 0,
+        area: combinedArea,
+        land_area: combinedLandArea,
         images: [...existingUrls, ...base64Images],
       };
 
@@ -427,37 +450,91 @@ export default function AddPropertyPage() {
 
                 <Grid container spacing={2.5}>
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormInput
-                      name="area"
-                      label="Built-up Area (sq. ft.)"
-                      placeholder="e.g. 1450"
-                      type="number"
-                      control={control}
-                      rules={{
-                        validate: (v) => {
-                          if (!v) return true;
-                          const n = parseFloat(v);
-                          return (!isNaN(n) && n > 0) || "Built-up area must be greater than 0";
-                        },
-                      }}
-                    />
+                    <Grid container spacing={1}>
+                      <Grid size={{ xs: 7 }}>
+                        <FormInput
+                          name="area"
+                          label="Built-up Area"
+                          placeholder="e.g. 1450"
+                          type="number"
+                          control={control}
+                          rules={{
+                            validate: (v) => {
+                              if (!v) return true;
+                              const n = parseFloat(v);
+                              return (!isNaN(n) && n > 0) || "Must be greater than 0";
+                            },
+                          }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 5 }}>
+                        <SelectInput
+                          name="areaUnit"
+                          label="Unit"
+                          control={control}
+                          options={BUILTUP_AREA_UNITS}
+                        />
+                      </Grid>
+                    </Grid>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormInput
-                      name="landArea"
-                      label="Land / Plot Area (acres / cents / sq. ft.)"
-                      placeholder="e.g. 2.5"
-                      type="number"
-                      control={control}
-                      rules={{
-                        validate: (v) => {
-                          if (!v) return true;
-                          const n = parseFloat(v);
-                          return (!isNaN(n) && n > 0) || "Land area must be greater than 0";
-                        },
-                      }}
-                    />
+                    <Stack spacing={1}>
+                      <Grid container spacing={1}>
+                        <Grid size={{ xs: 7 }}>
+                          <FormInput
+                            name="landArea"
+                            label="Land / Plot Area"
+                            placeholder="e.g. 1 or 2.5"
+                            type="number"
+                            control={control}
+                            rules={{
+                              validate: (v) => {
+                                if (!v) return true;
+                                const n = parseFloat(v);
+                                return (!isNaN(n) && n > 0) || "Must be greater than 0";
+                              },
+                            }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 5 }}>
+                          <SelectInput
+                            name="landAreaUnit"
+                            label="Unit"
+                            control={control}
+                            options={LAND_AREA_UNITS}
+                          />
+                        </Grid>
+                      </Grid>
+
+                      {/* Live Equivalent Conversion Preview */}
+                      {(() => {
+                        const preview = getLandConversionsPreview(watchLandArea, watchLandUnit);
+                        if (!preview) return null;
+                        return (
+                          <Box
+                            sx={{
+                              px: 1.4,
+                              py: 0.8,
+                              borderRadius: "10px",
+                              background: "rgba(15,118,110,0.06)",
+                              border: "1px solid rgba(15,118,110,0.18)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.8,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", color: "#0F766E", fontWeight: 700 }}>
+                              💡 Equivalent:
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.74rem", color: "#0F766E", fontWeight: 600 }}>
+                              {preview}
+                            </Typography>
+                          </Box>
+                        );
+                      })()}
+                    </Stack>
                   </Grid>
 
                   {isResidential && (

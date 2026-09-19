@@ -775,6 +775,29 @@ export default function VehicleDetailPage() {
             flexWrap="wrap"
             sx={{ mb: 0.8, gap: 0.5 }}
           >
+            {(vehicle.category || vehicle.vehicle_type) && (
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <DirectionsCarRoundedIcon sx={{ fontSize: 15, color: "#7C3AED" }} />
+                <Typography
+                  sx={{
+                    fontSize: "0.87rem",
+                    color: "#7C3AED",
+                    fontWeight: 700,
+                  }}
+                >
+                  {vehicle.category || vehicle.vehicle_type}
+                </Typography>
+                <Box
+                  sx={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: "50%",
+                    bgcolor: "#cbd5e1",
+                  }}
+                />
+              </Stack>
+            )}
+
             {vehicle.km_driven && (
               <Stack direction="row" spacing={0.5} alignItems="center">
                 <SpeedRoundedIcon sx={{ fontSize: 15, color: "#475569" }} />

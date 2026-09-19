@@ -117,9 +117,9 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
           </Box>
         )}
 
-        {/* Brand + Model Chip */}
+        {/* Vehicle Category / Brand Chip */}
         <Chip
-          label={`${item.brand || ''} ${item.model || ''}`.trim() || 'Vehicle'}
+          label={item.category || item.vehicle_type || item.vehicleType || `${item.brand || ''} ${item.model || ''}`.trim() || 'Vehicle'}
           size="small"
           sx={{
             position: 'absolute',

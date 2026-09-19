@@ -237,10 +237,10 @@ export const propertyService = {
       finalPayload.bedrooms = parseInt(String(payload.bedrooms ?? "0"), 10) || 0;
     }
     if (payload.area !== undefined) {
-      finalPayload.area = parseFloat(String(payload.area ?? "0")) || 0;
+      finalPayload.area = String(payload.area ?? "").trim();
     }
     if (payload.land_area !== undefined) {
-      finalPayload.land_area = parseFloat(String(payload.land_area ?? "0")) || 0;
+      finalPayload.land_area = String(payload.land_area ?? "").trim();
     }
     if (payload.apartment_name !== undefined) {
       finalPayload.apartment_name = String(payload.apartment_name ?? "").trim();
@@ -276,8 +276,8 @@ export const propertyService = {
       price: price || 0,
       rooms: parseInt(String(payload.rooms ?? "0"), 10) || 0,
       bedrooms: parseInt(String(payload.bedrooms ?? "0"), 10) || 0,
-      area: parseFloat(String(payload.area ?? "0")) || 0,
-      land_area: parseFloat(String(payload.land_area ?? "0")) || 0,
+      area: String(payload.area ?? "").trim(),
+      land_area: String(payload.land_area ?? "").trim(),
       apartment_name: String(payload.apartment_name ?? "").trim(),
       floor: String(payload.floor ?? "").trim(),
       crops_grown: String(payload.crops_grown ?? "").trim(),
@@ -308,6 +308,8 @@ export const vehicleService = {
 
   add: async ({
     title,
+    category,
+    vehicleType,
     vehicleNumber,
     brand,
     model,
@@ -336,6 +338,7 @@ export const vehicleService = {
 
     const payload = {
       title: String(title ?? "").trim(),
+      category: String(category ?? vehicleType ?? "").trim(),
       expectedPrice: price || 0,
       contactNumber: String(contactNumber ?? "").trim(),
       vehicleNumber: String(vehicleNumber ?? "").trim(),

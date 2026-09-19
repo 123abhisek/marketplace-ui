@@ -70,10 +70,12 @@ export const mapProperty = normalizeProperty
  */
 export function normalizeVehicle(v) {
   const priceVal = v.price ?? v.expected_price ?? v.expectedPrice ?? null
+  const catVal = v.category || v.vehicle_type || v.vehicleType || ''
   return {
     id:            v.id,
     title:         v.title           || '',
-    vehicleType:   v.vehicle_type    || v.vehicleType   || '',
+    category:      catVal,
+    vehicleType:   catVal,
     brand:         v.brand           || '',
     model:         v.model           || '',
     year:          v.year            ?? null,

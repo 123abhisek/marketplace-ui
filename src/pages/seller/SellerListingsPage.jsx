@@ -37,6 +37,12 @@ import { useLocation } from "react-router-dom";
 import { propertyService, vehicleService } from "../../services/api";
 import api from "../../services/api";
 import { useAppState } from "../../hooks/useAppState";
+import {
+  LAND_AREA_UNITS,
+  BUILTUP_AREA_UNITS,
+  parseAreaAndUnit,
+  getLandConversionsPreview,
+} from "../../utils/landUnits";
 
 const PROPERTY_TYPES = [
   "Residential",
@@ -47,6 +53,17 @@ const PROPERTY_TYPES = [
   "Apartment",
   "Villa",
   "Land",
+];
+
+const VEHICLE_CATEGORIES = [
+  "Car",
+  "Bike",
+  "Scooter",
+  "Commercial",
+  "Tractor",
+  "Electric Vehicle",
+  "Auto Rickshaw",
+  "Other",
 ];
 
 const UI = {
@@ -205,6 +222,9 @@ function SectionHeader({ icon, title, description, action }) {
 }
 
 function mapItemToForm(item) {
+  const parsedArea = parseAreaAndUnit(item?.area, "Sq. Ft.");
+  const parsedLandArea = parseAreaAndUnit(item?.land_area || item?.landArea, "Acres");
+
   return {
     title: item?.title || "",
     location: item?.location || "",
@@ -215,11 +235,14 @@ function mapItemToForm(item) {
     floor: item?.floor || "",
     rooms: item?.rooms ?? "",
     bedrooms: item?.bedrooms ?? "",
-    area: item?.area ?? "",
-    landArea: item?.landArea || item?.land_area || "",
+    area: parsedArea.value,
+    areaUnit: parsedArea.unit || "Sq. Ft.",
+    landArea: parsedLandArea.value,
+    landAreaUnit: parsedLandArea.unit || "Acres",
     cropsGrown: item?.cropsGrown || item?.crops_grown || "",
     rentLease: item?.rentLease || item?.rent_lease || "",
     vehicleNumber: item?.vehicleNumber || item?.vehicle_number || "",
+    category: item?.category || item?.vehicleType || item?.vehicle_type || "",
     brand: item?.brand || "",
     model: item?.model || "",
     year: item?.year || "",
@@ -230,6 +253,9 @@ function mapItemToForm(item) {
 }
 
 function buildPropertyUpdatePayload(form) {
+  const combinedArea = form.area ? `${form.area} ${form.areaUnit || "Sq. Ft."}`.trim() : undefined;
+  const combinedLandArea = form.landArea ? `${form.landArea} ${form.landAreaUnit || "Acres"}`.trim() : undefined;
+
   return {
     title: form.title.trim(),
     location: form.location.trim(),
@@ -240,8 +266,8 @@ function buildPropertyUpdatePayload(form) {
     floor: form.floor || undefined,
     rooms: form.rooms === "" ? undefined : Number(form.rooms),
     bedrooms: form.bedrooms === "" ? undefined : Number(form.bedrooms),
-    area: form.area === "" ? undefined : Number(form.area),
-    land_area: form.landArea === "" ? undefined : Number(form.landArea),
+    area: combinedArea,
+    land_area: combinedLandArea,
     crops_grown: form.cropsGrown || undefined,
     rent_lease: form.rentLease || undefined,
   };
@@ -250,6 +276,7 @@ function buildPropertyUpdatePayload(form) {
 function buildVehicleUpdatePayload(form) {
   return {
     title: form.title.trim(),
+    category: form.category || undefined,
     vehicle_number: form.vehicleNumber || undefined,
     brand: form.brand || undefined,
     model: form.model || undefined,
@@ -676,22 +703,77 @@ function EditDialogContent({
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Built-up Area"
-                    value={editForm.area}
-                    onChange={(e) => setField("area", e.target.value)}
-                    sx={inputSx}
-                  />
+                  <Grid container spacing={1}>
+                    <Grid item xs={7}>
+                      <TextField
+                        fullWidth
+                        label="Built-up Area"
+                        value={editForm.area || ""}
+                        onChange={(e) => setField("area", e.target.value)}
+                        sx={inputSx}
+                      />
+                    </Grid>
+                    <Grid item xs={5}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Unit"
+                        value={editForm.areaUnit || "Sq. Ft."}
+                        onChange={(e) => setField("areaUnit", e.target.value)}
+                        sx={inputSx}
+                        SelectProps={{ native: true }}
+                      >
+                        {BUILTUP_AREA_UNITS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Land Area"
-                    value={editForm.landArea}
-                    onChange={(e) => setField("landArea", e.target.value)}
-                    sx={inputSx}
-                  />
+
+                <Grid item xs={12} sm={6} md={8}>
+                  <Stack spacing={1}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={6} sm={7}>
+                        <TextField
+                          fullWidth
+                          label="Land Area"
+                          value={editForm.landArea || ""}
+                          onChange={(e) => setField("landArea", e.target.value)}
+                          sx={inputSx}
+                        />
+                      </Grid>
+                      <Grid item xs={6} sm={5}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Unit"
+                          value={editForm.landAreaUnit || "Acres"}
+                          onChange={(e) => setField("landAreaUnit", e.target.value)}
+                          sx={inputSx}
+                          SelectProps={{ native: true }}
+                        >
+                          {LAND_AREA_UNITS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </Grid>
+
+                    {(() => {
+                      const preview = getLandConversionsPreview(editForm.landArea, editForm.landAreaUnit);
+                      if (!preview) return null;
+                      return (
+                        <Typography sx={{ fontSize: "0.74rem", color: "#0F766E", fontWeight: 600 }}>
+                          💡 Equivalent: {preview}
+                        </Typography>
+                      );
+                    })()}
+                  </Stack>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
@@ -756,6 +838,24 @@ function EditDialogContent({
                     onChange={(e) => setField("title", e.target.value)}
                     sx={inputSx}
                   />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Vehicle Category / Type"
+                    value={editForm.category || ""}
+                    onChange={(e) => setField("category", e.target.value)}
+                    sx={inputSx}
+                    SelectProps={{ native: true }}
+                  >
+                    <option value="" />
+                    {VEHICLE_CATEGORIES.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </TextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField

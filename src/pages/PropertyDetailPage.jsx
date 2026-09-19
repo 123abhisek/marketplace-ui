@@ -30,6 +30,12 @@ import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import { propertyService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
+import {
+  formatLandArea,
+  formatBuiltupArea,
+  parseAreaAndUnit,
+  getLandConversionsPreview,
+} from "../utils/landUnits";
 import BookNowButton from "../components/BookNowButton";
 
 const TEAL = "#0F766E";
@@ -108,6 +114,11 @@ export default function PropertyDetailPage() {
   const contactNumber = property.contact || property.owner?.phone || "8088185203";
   const whatsappLink = `https://wa.me/91${contactNumber.replace(/\D/g, "")}?text=${encodeURIComponent("Hi! I am interested in: " + property.title + " on EasyDeal.")}`;
 
+  const landParsed = parseAreaAndUnit(property.land_area);
+  const landEquivalent = property.land_area
+    ? getLandConversionsPreview(landParsed.value, landParsed.unit)
+    : null;
+
   const detailRows = [
     { label: "Property Type", value: property.property_type },
     { label: "Apartment / Project", value: property.apartment_name },
@@ -115,8 +126,9 @@ export default function PropertyDetailPage() {
     { label: "Floor", value: property.floor },
     { label: "Total Rooms", value: property.rooms },
     { label: "Bedrooms", value: property.bedrooms },
-    { label: "Built-up Area", value: property.area ? property.area + " sq.ft" : null },
-    { label: "Land Area", value: property.land_area ? property.land_area + " sq.ft" : null },
+    { label: "Built-up Area", value: formatBuiltupArea(property.area) },
+    { label: "Land Area", value: formatLandArea(property.land_area) },
+    { label: "Land Equivalents", value: landEquivalent },
     { label: "Crops Grown", value: property.crops_grown },
     { label: "Rent / Lease", value: property.rent_lease },
     { label: "Contact", value: isPremium ? contactNumber : "Premium Only" },
@@ -201,10 +213,10 @@ export default function PropertyDetailPage() {
                 </Paper>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
                   <SpecChip icon={<BedRoundedIcon />} label="Bedrooms" value={property.bedrooms} />
-                  <SpecChip icon={<SquareFootRoundedIcon />} label="Area" value={property.area ? property.area + " sq.ft" : null} />
+                  <SpecChip icon={<SquareFootRoundedIcon />} label="Built-up" value={formatBuiltupArea(property.area)} />
                   <SpecChip icon={<LayersRoundedIcon />} label="Floor" value={property.floor} />
                   <SpecChip icon={<MeetingRoomRoundedIcon />} label="Rooms" value={property.rooms} />
-                  <SpecChip icon={<AgricultureRoundedIcon />} label="Land" value={property.land_area ? property.land_area + " sq.ft" : null} />
+                  <SpecChip icon={<AgricultureRoundedIcon />} label="Land" value={formatLandArea(property.land_area)} />
                   <SpecChip icon={<HomeWorkRoundedIcon />} label="Type" value={property.property_type} />
                 </Box>
                 {isPremium ? (
