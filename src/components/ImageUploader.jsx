@@ -1,27 +1,41 @@
-
 // src/components/ImageUploader.jsx
 import { useRef, useState } from 'react'
-import { Alert, Box, CircularProgress, IconButton, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Typography,
+} from '@mui/material'
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded'
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { isSupportedImageFile, convertHeicIfNeeded, fileToBase64 } from '../utils/imageUtils'
 
 const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024 // 40MB
 
-// Props:
-//   value    : (string | { file: File, preview: string, existing?: boolean })[]
-//   onChange : (items) => void
-//   max      : number — max images (default 5)
-//   onSizeError : (msg: string) => void
+/**
+ * Mobile-optimized, touch-friendly Image Uploader.
+ * Works seamlessly in Mobile WebViews, Android/iOS browsers, and Desktop.
+ *
+ * Props:
+ *   value       : (string | { file: File, preview: string, existing?: boolean })[]
+ *   onChange    : (items) => void
+ *   max         : number — maximum images allowed (default 5)
+ *   label       : string — button label (default "Add Photos")
+ *   onSizeError : (msg: string) => void
+ */
 export default function ImageUploader({
   value = [],
   onChange,
   max = 5,
-  label = "Upload Photos",
+  label = 'Add Photos',
   onSizeError,
 }) {
-  const inputRef = useRef(null)
-  const [dragging, setDragging] = useState(false)
+  const fileInputRef = useRef(null)
   const [localError, setLocalError] = useState('')
   const [processing, setProcessing] = useState(false)
 
@@ -29,9 +43,15 @@ export default function ImageUploader({
     setLocalError('')
     if (onSizeError) onSizeError('')
 
+    if (!fileList || !fileList.length) return
     const rawList = Array.from(fileList)
+
+    // Filter for valid image formats
     const files = rawList.filter((f) => isSupportedImageFile(f))
-    if (!files.length) return
+    if (!files.length) {
+      setLocalError('Please select valid image files (JPG, PNG, WEBP, HEIC).')
+      return
+    }
 
     // ── 40MB File Size Validation ──────────────────────────────────
     const oversizedFiles = files.filter((f) => f.size > MAX_FILE_SIZE_BYTES)
@@ -45,14 +65,17 @@ export default function ImageUploader({
     const validFiles = files.filter((f) => f.size <= MAX_FILE_SIZE_BYTES)
     if (!validFiles.length) return
 
-    const remaining = max - value.length
-    if (remaining <= 0) return
+    const remainingSlots = max - value.length
+    if (remainingSlots <= 0) {
+      setLocalError(`You can upload a maximum of ${max} photos.`)
+      return
+    }
 
-    const toProcess = validFiles.slice(0, remaining)
+    const toProcess = validFiles.slice(0, remainingSlots)
     setProcessing(true)
 
     try {
-      // Convert iPhone HEIC/HEIF files to standard JPEG for immediate browser preview & upload
+      // Convert Apple HEIC/HEIF files to standard JPEG for immediate preview & upload
       const convertedFiles = await Promise.all(
         toProcess.map(async (file) => {
           return await convertHeicIfNeeded(file)
@@ -72,25 +95,26 @@ export default function ImageUploader({
         onChange([...value, ...base64s])
       }
     } catch (err) {
-      console.error('[ImageUploader] Processing error:', err)
+      console.error('[ImageUploader] Image processing error:', err)
+      setLocalError('Failed to process one or more images. Please try again.')
     } finally {
       setProcessing(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
   const handleInputChange = (e) => {
-    handleFiles(e.target.files)
-    e.target.value = ''
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files)
+    }
   }
 
-  const handleRemove = (idx) => {
-    onChange(value.filter((_, i) => i !== idx))
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragging(false)
-    handleFiles(e.dataTransfer.files)
+  const handleRemove = (indexToRemove) => {
+    setLocalError('')
+    const updated = value.filter((_, i) => i !== indexToRemove)
+    onChange(updated)
   }
 
   const getPreviewUrl = (item) => {
@@ -101,111 +125,249 @@ export default function ImageUploader({
     return ''
   }
 
+  const getFileName = (item, index) => {
+    if (item?.file?.name) return item.file.name
+    if (typeof item === 'string' && item.startsWith('http')) {
+      const parts = item.split('/')
+      return parts[parts.length - 1] || `Photo ${index + 1}`
+    }
+    return `Photo ${index + 1}`
+  }
+
+  const canAddMore = value.length < max
+
   return (
-    <Box>
-      {/* Drop zone */}
-      {value.length < max && (
-        <Box
-          onClick={() => !processing && inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          sx={{
-            border: `2px dashed ${dragging ? '#0f766e' : 'rgba(148,163,184,0.4)'}`,
-            borderRadius: '14px',
-            p: 3,
-            textAlign: 'center',
-            cursor: processing ? 'wait' : 'pointer',
-            background: dragging ? 'rgba(15,118,110,0.04)' : 'rgba(248,250,252,0.8)',
-            transition: 'all .18s ease',
-            '&:hover': { borderColor: '#0f766e', background: 'rgba(15,118,110,0.04)' },
-            mb: 2,
-            position: 'relative',
-          }}
+    <Box sx={{ width: '100%' }}>
+      {/* ── 1. Touch-Friendly Action Bar ── */}
+      <Box
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          borderRadius: '16px',
+          border: '1.5px solid #E2E8F0',
+          background: '#F8FAFC',
+          mb: 2.5,
+        }}
+      >
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
         >
-          {processing ? (
-            <Box sx={{ py: 1 }}>
-              <CircularProgress size={30} sx={{ color: '#0f766e', mb: 1 }} />
-              <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>
-                Optimizing photos...
+          {/* Instructions & Counter */}
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <PhotoLibraryRoundedIcon sx={{ fontSize: 20, color: '#0F766E' }} />
+              <Typography sx={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                {value.length === 0 ? 'No photos selected' : `${value.length} of ${max} photos selected`}
               </Typography>
-            </Box>
-          ) : (
-            <>
-              <AddPhotoAlternateRoundedIcon sx={{ fontSize: 32, color: '#94a3b8', mb: 1 }} />
-              <Typography sx={{ fontSize: '0.88rem', fontWeight: 700, color: '#475569' }}>
-                Click or drag images here
-              </Typography>
-              <Typography sx={{ fontSize: '0.76rem', color: '#94a3b8', mt: 0.5 }}>
-                {value.length}/{max} images · JPG, PNG, WEBP, iPhone (HEIC), DSLR/RAW (Max 40MB)
-              </Typography>
-            </>
+            </Stack>
+            <Typography sx={{ fontSize: '0.78rem', color: '#64748B', mt: 0.4 }}>
+              Supported formats: JPG, PNG, WEBP, HEIC · Max 40MB per photo
+            </Typography>
+          </Box>
+
+          {/* Touch-Friendly Upload Button */}
+          {canAddMore && (
+            <Button
+              component="label"
+              variant="contained"
+              disabled={processing}
+              startIcon={
+                processing ? (
+                  <CircularProgress size={18} sx={{ color: '#FFFFFF' }} />
+                ) : (
+                  <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} />
+                )
+              }
+              sx={{
+                background: '#0F766E',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '0.88rem',
+                textTransform: 'none',
+                borderRadius: '12px',
+                px: 2.5,
+                py: 1.2,
+                boxShadow: '0 2px 8px rgba(15,118,110,0.25)',
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': {
+                  background: '#0D9488',
+                },
+                '&.Mui-disabled': {
+                  background: '#94A3B8',
+                  color: '#FFFFFF',
+                },
+              }}
+            >
+              {processing ? 'Optimizing...' : `+ ${label}`}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
+                multiple
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer',
+                }}
+                onChange={handleInputChange}
+                onClick={(e) => {
+                  e.target.value = null
+                }}
+              />
+            </Button>
           )}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*,.heic,.heif,.HEIC,.HEIF,.dng,.DNG,.cr2,.CR2,.nef,.NEF,.arw,.ARW,.tiff,.TIFF,.bmp,.BMP"
-            multiple
-            style={{ display: 'none' }}
-            onChange={handleInputChange}
-          />
-        </Box>
-      )}
+        </Stack>
+      </Box>
 
-
-      {/* Local Error Alert */}
-
+      {/* ── 2. Error Message Alert ── */}
       {localError && (
         <Alert
           severity="warning"
           onClose={() => setLocalError('')}
-          sx={{ mb: 2, borderRadius: '12px', fontSize: '0.85rem' }}
+          sx={{
+            mb: 2.5,
+            borderRadius: '12px',
+            fontSize: '0.84rem',
+            fontWeight: 600,
+          }}
         >
           {localError}
         </Alert>
       )}
 
-      {/* Preview thumbnails */}
+      {/* ── 3. Selected Photos Responsive Grid ── */}
       {value.length > 0 && (
-        <Stack direction="row" flexWrap="wrap" gap={1}>
-          {value.map((item, i) => {
-            const previewUrl = getPreviewUrl(item)
-            return (
-              <Box
-                key={i}
-                sx={{
-                  position: 'relative',
-                  width: 80,
-                  height: 80,
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  border: '1.5px solid rgba(226,232,240,0.9)',
-                }}
-              >
+        <Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(4, 1fr)',
+                lg: 'repeat(5, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            {value.map((item, index) => {
+              const previewUrl = getPreviewUrl(item)
+              const fileName = getFileName(item, index)
+              const isCover = index === 0
+
+              return (
                 <Box
-                  component="img"
-                  src={previewUrl}
-                  alt={`preview-${i}`}
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => handleRemove(i)}
+                  key={index}
                   sx={{
-                    position: 'absolute', top: 2, right: 2,
-                    width: 20, height: 20,
-                    background: 'rgba(15,23,42,0.7)',
-                    color: '#fff',
-                    '&:hover': { background: 'rgba(239,68,68,0.85)' },
+                    position: 'relative',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: '#FFFFFF',
+                    border: isCover ? '2px solid #0F766E' : '1.5px solid #E2E8F0',
+                    boxShadow: isCover
+                      ? '0 4px 12px rgba(15,118,110,0.15)'
+                      : '0 2px 6px rgba(15,23,42,0.04)',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                   }}
                 >
-                  <CloseRoundedIcon sx={{ fontSize: 12 }} />
-                </IconButton>
-              </Box>
-            )
-          })}
-        </Stack>
+                  {/* Photo Thumbnail */}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '80%', // 4:3 ratio
+                      background: '#F1F5F9',
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={previewUrl}
+                      alt={`Photo ${index + 1}`}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Cover Badge on 1st Photo */}
+                  {isCover && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        background: '#0F766E',
+                        color: '#FFFFFF',
+                        px: 1,
+                        py: 0.3,
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.4,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      <CheckCircleRoundedIcon sx={{ fontSize: 12 }} />
+                      <Typography sx={{ fontSize: '0.68rem', fontWeight: 800, letterSpacing: 0.3 }}>
+                        COVER
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* High-Contrast Delete / Remove Button */}
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemove(index)}
+                    aria-label={`Remove photo ${index + 1}`}
+                    sx={{
+                      position: 'absolute',
+                      top: 6,
+                      right: 6,
+                      width: 28,
+                      height: 28,
+                      background: 'rgba(15,23,42,0.75)',
+                      color: '#FFFFFF',
+                      backdropFilter: 'blur(4px)',
+                      '&:hover': {
+                        background: '#EF4444',
+                        color: '#FFFFFF',
+                      },
+                    }}
+                  >
+                    <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+
+                  {/* File Label / Index Footer */}
+                  <Box sx={{ p: 1, background: '#FFFFFF' }}>
+                    <Typography
+                      noWrap
+                      sx={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#334155',
+                      }}
+                    >
+                      {fileName}
+                    </Typography>
+                  </Box>
+                </Box>
+              )
+            })}
+          </Box>
+        </Box>
       )}
     </Box>
   )
-}
+}

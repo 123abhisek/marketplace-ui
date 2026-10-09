@@ -17,6 +17,7 @@ import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import { isAppMode } from "../utils/appMode";
 
 const LINKS = {
   Marketplace: [
@@ -41,6 +42,10 @@ const LINKS = {
 };
 
 export default function Footer() {
+  if (isAppMode()) {
+    return null;
+  }
+
   return (
     <Box
       component="footer"

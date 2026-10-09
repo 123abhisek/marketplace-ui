@@ -5,6 +5,7 @@ import { Button, Grid } from '@mui/material'
 import FormInput from '../components/FormInput'
 import SelectInput from '../components/SelectInput'
 import ImageUploader from '../components/ImageUploader'
+import { filesToBase64, revokePreviewUrls } from '../utils/imageUtils'
 
 export default function PropertyForm({ onSubmit }) {
   const [files, setFiles] = useState([])
@@ -28,12 +29,16 @@ export default function PropertyForm({ onSubmit }) {
 
   return (
     <form
-      onSubmit={handleSubmit((data) =>
+      onSubmit={handleSubmit(async (data) => {
+        const rawFiles = files
+          .map((f) => (f && f.file instanceof File ? f.file : f))
+          .filter(Boolean)
+        const base64Images = await filesToBase64(rawFiles)
         onSubmit({
           ...data,
-          images: files.map((file) => file.preview),
-        }),
-      )}
+          images: base64Images,
+        })
+      })}
     >
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>

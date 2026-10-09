@@ -79,3 +79,14 @@ a {
     radial-gradient(circle at top left, rgba(108,99,255,0.16), transparent 22%),
     linear-gradient(180deg, #111827 0%, #0f172a 100%);
 }
+
+/* ── EasyDeal Mobile App Mode Overrides ── */
+.easydeal-app-mode footer,
+.easydeal-app-mode [component="footer"],
+.easydeal-app-mode .footer-surface {
+  display: none !important;
+}
+
+.easydeal-app-mode .mobile-app-hidden {
+  display: none !important;
+}
