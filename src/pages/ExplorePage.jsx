@@ -527,7 +527,10 @@ function matchesCategory(item, filterCategory) {
   const itemType = String(item.itemType || "").toLowerCase();
   const itemTitle = String(getTitle(item.raw) || "").toLowerCase();
   const rawType = String(
-    item.raw?.property_type || item.raw?.category || item.raw?.type || ""
+    item.raw?.property_type || item.raw?.propertyType || item.raw?.category || item.raw?.type || ""
+  ).toLowerCase();
+  const rawAptName = String(
+    item.raw?.apartment_name || item.raw?.apartmentName || ""
   ).toLowerCase();
   const rawModel = String(item.raw?.model || "").toLowerCase();
   const rawBrand = String(item.raw?.brand || "").toLowerCase();
@@ -554,7 +557,8 @@ function matchesCategory(item, filterCategory) {
         rawType.includes("apartment") ||
         rawType.includes("flat") ||
         itemTitle.includes("apartment") ||
-        itemTitle.includes("flat"))
+        itemTitle.includes("flat") ||
+        rawAptName.length > 0)
     );
   }
 
@@ -691,6 +695,128 @@ function matchesCategory(item, filterCategory) {
   );
 }
 
+const DEFAULT_PROPERTIES = [
+  {
+    id: "def-prop-1",
+    title: "2 BHK Luxury Apartment in Whitefield",
+    category: "Apartments",
+    property_type: "Flat",
+    apartment_name: "Skyline Residency",
+    location: "Whitefield, Bengaluru",
+    price: 6800000,
+    rooms: 4,
+    bedrooms: 2,
+    area: "1250 sqft",
+    images: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+  {
+    id: "def-prop-2",
+    title: "3 BHK Premium Independent Villa",
+    category: "Houses",
+    property_type: "Residential",
+    location: "Sarjapur Road, Bengaluru",
+    price: 12500000,
+    rooms: 5,
+    bedrooms: 3,
+    area: "2100 sqft",
+    images: [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+  {
+    id: "def-prop-3",
+    title: "Prime Commercial Retail Space & Office",
+    category: "Commercial",
+    property_type: "Commercial",
+    location: "Indiranagar, Bengaluru",
+    price: 8500000,
+    rooms: 3,
+    area: "1400 sqft",
+    images: [
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+  {
+    id: "def-prop-4",
+    title: "2 Acres Agricultural Land & Farm Plot",
+    category: "Land",
+    property_type: "Agricultural",
+    location: "Mysuru Highway, Karnataka",
+    price: 3500000,
+    land_area: "2 Acres",
+    crops_grown: "Sugarcane, Ragi",
+    images: [
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+];
+
+const DEFAULT_VEHICLES = [
+  {
+    id: "def-veh-1",
+    title: "Hyundai Creta SX Petrol (Automatic)",
+    category: "Cars",
+    vehicle_type: "Car",
+    brand: "Hyundai",
+    model: "Creta",
+    year: "2022",
+    location: "Indiranagar, Bengaluru",
+    price: 1250000,
+    km_driven: "28000",
+    images: [
+      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+  {
+    id: "def-veh-2",
+    title: "Royal Enfield Classic 350 Stealth Black",
+    category: "Bikes",
+    vehicle_type: "Bike",
+    brand: "Royal Enfield",
+    model: "Classic 350",
+    year: "2021",
+    location: "Jayanagar, Bengaluru",
+    price: 155000,
+    km_driven: "14000",
+    images: [
+      "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+  {
+    id: "def-veh-3",
+    title: "Tata Ace Gold Commercial Utility Vehicle",
+    category: "Trucks",
+    vehicle_type: "Truck",
+    brand: "Tata",
+    model: "Ace Gold",
+    year: "2020",
+    location: "Peenya, Bengaluru",
+    price: 420000,
+    km_driven: "45000",
+    images: [
+      "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80",
+    ],
+  },
+];
+
+function extractList(resVal) {
+  if (!resVal) return [];
+  const payload = resVal?.data ?? resVal;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.properties)) return payload.properties;
+  if (Array.isArray(payload?.vehicles)) return payload.vehicles;
+  const nested = payload?.data;
+  if (Array.isArray(nested?.items)) return nested.items;
+  if (Array.isArray(nested?.results)) return nested.results;
+  if (Array.isArray(nested?.data)) return nested.data;
+  return [];
+}
+
 export default function ExplorePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -709,7 +835,7 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState("latest");
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // Sync URL search params with state
+  // Sync URL search params with state and force scroll to top
   useEffect(() => {
     const catParam = searchParams.get("category");
     const typeParam = searchParams.get("type");
@@ -730,6 +856,10 @@ export default function ExplorePage() {
     if (searchParam) {
       setSearch(searchParam);
     }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
   }, [searchParams]);
 
   const fetchExploreListings = useCallback(async () => {
@@ -740,8 +870,8 @@ export default function ExplorePage() {
         vehicleService.getAll(),
       ]);
 
-      const pList = pRes.status === "fulfilled" && Array.isArray(pRes.value) ? pRes.value : [];
-      const vList = vRes.status === "fulfilled" && Array.isArray(vRes.value) ? vRes.value : [];
+      const pList = pRes.status === "fulfilled" ? extractList(pRes.value) : [];
+      const vList = vRes.status === "fulfilled" ? extractList(vRes.value) : [];
 
       setApiProps(pList);
       setApiVehs(vList);
@@ -770,7 +900,8 @@ export default function ExplorePage() {
     combined.forEach((p) => {
       if (p?.id && !map.has(p.id)) map.set(p.id, p);
     });
-    return Array.from(map.values());
+    const list = Array.from(map.values());
+    return list.length > 0 ? list : DEFAULT_PROPERTIES;
   }, [apiProps, contextProps]);
 
   const vehicles = useMemo(() => {
@@ -779,7 +910,8 @@ export default function ExplorePage() {
     combined.forEach((v) => {
       if (v?.id && !map.has(v.id)) map.set(v.id, v);
     });
-    return Array.from(map.values());
+    const list = Array.from(map.values());
+    return list.length > 0 ? list : DEFAULT_VEHICLES;
   }, [apiVehs, contextVehs]);
 
   const allItems = useMemo(() => {
@@ -900,10 +1032,31 @@ export default function ExplorePage() {
     const newParams = new URLSearchParams(searchParams);
     if (newCat === "all") {
       newParams.delete("category");
+      newParams.delete("type");
+      setTypeFilter("all");
     } else {
       newParams.set("category", newCat);
+      const catLower = newCat.toLowerCase();
+      if (
+        catLower === "property" ||
+        catLower === "apartments" ||
+        catLower === "houses" ||
+        catLower === "commercial" ||
+        catLower === "land"
+      ) {
+        setTypeFilter("property");
+        newParams.set("type", "property");
+      } else if (
+        catLower === "cars" ||
+        catLower === "bikes" ||
+        catLower === "trucks"
+      ) {
+        setTypeFilter("vehicle");
+        newParams.set("type", "vehicle");
+      }
     }
     setSearchParams(newParams);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   };
 
   const resetFilters = () => {
@@ -915,6 +1068,7 @@ export default function ExplorePage() {
     setMaxPrice("");
     setSortBy("latest");
     setSearchParams({});
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   };
 
   const activeSlide = carouselSlides[slideIndex];
@@ -958,7 +1112,7 @@ export default function ExplorePage() {
             <Box
               sx={{
                 position: "relative",
-                height: { xs: 300, sm: 360, md: 390 },
+                height: { xs: 340, sm: 370, md: 400 },
                 overflow: "hidden",
               }}
             >
@@ -994,7 +1148,7 @@ export default function ExplorePage() {
                       position: "absolute",
                       inset: 0,
                       background:
-                        "linear-gradient(90deg, rgba(15,23,42,0.76) 0%, rgba(15,23,42,0.52) 36%, rgba(15,23,42,0.14) 100%)",
+                        "linear-gradient(90deg, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.60) 45%, rgba(15,23,42,0.25) 100%)",
                     }}
                   />
                 </Box>
@@ -1005,7 +1159,7 @@ export default function ExplorePage() {
                   position: "absolute",
                   inset: 0,
                   zIndex: 2,
-                  p: { xs: 2.2, sm: 3.2, md: 4 },
+                  p: { xs: 2, sm: 3.2, md: 4 },
                   display: "flex",
                   alignItems: "flex-end",
                 }}
@@ -1015,7 +1169,7 @@ export default function ExplorePage() {
                     <Chip
                       label={activeSlide.chip}
                       sx={{
-                        height: 30,
+                        height: 28,
                         borderRadius: "999px",
                         fontWeight: 800,
                         fontSize: "0.72rem",
@@ -1027,8 +1181,8 @@ export default function ExplorePage() {
                     />
                     <Typography
                       sx={{
-                        mt: 1.5,
-                        fontSize: "0.78rem",
+                        mt: 1.2,
+                        fontSize: "0.74rem",
                         fontWeight: 800,
                         letterSpacing: "0.09em",
                         textTransform: "uppercase",
@@ -1039,11 +1193,11 @@ export default function ExplorePage() {
                     </Typography>
                     <Typography
                       sx={{
-                        mt: 1,
-                        fontSize: { xs: "1.55rem", sm: "2rem", md: "2.35rem" },
-                        lineHeight: 1.06,
+                        mt: 0.8,
+                        fontSize: { xs: "1.28rem", sm: "1.85rem", md: "2.35rem" },
+                        lineHeight: 1.15,
                         fontWeight: 900,
-                        letterSpacing: "-0.04em",
+                        letterSpacing: "-0.03em",
                         color: "#fff",
                         maxWidth: 680,
                       }}
@@ -1052,11 +1206,12 @@ export default function ExplorePage() {
                     </Typography>
                     <Typography
                       sx={{
-                        mt: 1.1,
-                        fontSize: "0.92rem",
-                        lineHeight: 1.75,
-                        color: "rgba(255,255,255,0.78)",
+                        mt: 0.8,
+                        fontSize: { xs: "0.82rem", sm: "0.92rem" },
+                        lineHeight: 1.6,
+                        color: "rgba(255,255,255,0.82)",
                         maxWidth: 560,
+                        display: { xs: "none", sm: "block" },
                       }}
                     >
                       {activeSlide.desc}
@@ -1064,19 +1219,19 @@ export default function ExplorePage() {
 
                     <Stack
                       direction="row"
-                      spacing={1.1}
-                      sx={{ mt: 2.2, flexWrap: "wrap" }}
+                      spacing={1}
+                      sx={{ mt: { xs: 1.5, sm: 2.2 }, flexWrap: "wrap", gap: 0.8 }}
                     >
                       <Button
                         onClick={() => setTypeFilter("property")}
                         startIcon={<VillaRoundedIcon sx={{ fontSize: 18 }} />}
                         sx={{
-                          minHeight: 46,
-                          px: 2,
-                          borderRadius: "15px",
+                          minHeight: 40,
+                          px: { xs: 1.5, sm: 2 },
+                          borderRadius: "14px",
                           textTransform: "none",
                           fontWeight: 800,
-                          fontSize: "0.88rem",
+                          fontSize: "0.82rem",
                           color: COLORS.text,
                           background: "#fff",
                           "&:hover": {
@@ -1092,18 +1247,18 @@ export default function ExplorePage() {
                           <DirectionsBikeRoundedIcon sx={{ fontSize: 18 }} />
                         }
                         sx={{
-                          minHeight: 46,
-                          px: 2,
-                          borderRadius: "15px",
+                          minHeight: 40,
+                          px: { xs: 1.5, sm: 2 },
+                          borderRadius: "14px",
                           textTransform: "none",
                           fontWeight: 800,
-                          fontSize: "0.88rem",
+                          fontSize: "0.82rem",
                           color: "#fff",
-                          background: "rgba(255,255,255,0.14)",
-                          border: "1px solid rgba(255,255,255,0.20)",
+                          background: "rgba(255,255,255,0.18)",
+                          border: "1px solid rgba(255,255,255,0.25)",
                           backdropFilter: "blur(8px)",
                           "&:hover": {
-                            background: "rgba(255,255,255,0.20)",
+                            background: "rgba(255,255,255,0.28)",
                           },
                         }}
                       >
@@ -1113,11 +1268,10 @@ export default function ExplorePage() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 4 }}>
-
                     <Stack
                       direction="row"
                       spacing={1}
-                      justifyContent={{ xs: "flex-start", md: "flex-end" }}
+                      justifyContent={{ xs: "flex-end", md: "flex-end" }}
                     >
                       <IconButton
                         onClick={() =>
@@ -1125,19 +1279,20 @@ export default function ExplorePage() {
                             prev === 0 ? carouselSlides.length - 1 : prev - 1,
                           )
                         }
+                        size="small"
                         sx={{
-                          width: 44,
-                          height: 44,
-                          background: "rgba(255,255,255,0.14)",
+                          width: 38,
+                          height: 38,
+                          background: "rgba(255,255,255,0.18)",
                           color: "#fff",
-                          border: "1px solid rgba(255,255,255,0.16)",
+                          border: "1px solid rgba(255,255,255,0.22)",
                           backdropFilter: "blur(8px)",
                           "&:hover": {
-                            background: "rgba(255,255,255,0.22)",
+                            background: "rgba(255,255,255,0.30)",
                           },
                         }}
                       >
-                        <ChevronLeftRoundedIcon />
+                        <ChevronLeftRoundedIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         onClick={() =>
@@ -1145,19 +1300,20 @@ export default function ExplorePage() {
                             (prev) => (prev + 1) % carouselSlides.length,
                           )
                         }
+                        size="small"
                         sx={{
-                          width: 44,
-                          height: 44,
-                          background: "rgba(255,255,255,0.14)",
+                          width: 38,
+                          height: 38,
+                          background: "rgba(255,255,255,0.18)",
                           color: "#fff",
-                          border: "1px solid rgba(255,255,255,0.16)",
+                          border: "1px solid rgba(255,255,255,0.22)",
                           backdropFilter: "blur(8px)",
                           "&:hover": {
-                            background: "rgba(255,255,255,0.22)",
+                            background: "rgba(255,255,255,0.30)",
                           },
                         }}
                       >
-                        <ChevronRightRoundedIcon />
+                        <ChevronRightRoundedIcon fontSize="small" />
                       </IconButton>
                     </Stack>
                   </Grid>
@@ -1169,8 +1325,8 @@ export default function ExplorePage() {
                 spacing={1}
                 sx={{
                   position: "absolute",
-                  left: { xs: 20, sm: 30, md: 34 },
-                  bottom: 20,
+                  left: { xs: 16, sm: 30, md: 34 },
+                  bottom: { xs: 14, sm: 20 },
                   zIndex: 3,
                 }}
               >
@@ -1179,8 +1335,8 @@ export default function ExplorePage() {
                     key={slide.id}
                     onClick={() => setSlideIndex(index)}
                     sx={{
-                      width: index === slideIndex ? 28 : 9,
-                      height: 9,
+                      width: index === slideIndex ? 26 : 8,
+                      height: 8,
                       borderRadius: "999px",
                       background:
                         index === slideIndex
@@ -1202,18 +1358,18 @@ export default function ExplorePage() {
               animation: "fadeUp .5s ease .08s both",
             }}
           >
-            <CardContent sx={{ p: { xs: 2, sm: 2.4 } }}>
+            <CardContent sx={{ p: { xs: 1.8, sm: 2.4 } }}>
               <Stack spacing={2}>
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   alignItems={{ xs: "flex-start", md: "center" }}
                   justifyContent="space-between"
-                  spacing={1.2}
+                  spacing={1}
                 >
                   <Box>
                     <Typography
                       sx={{
-                        fontSize: { xs: "1.35rem", sm: "1.6rem" },
+                        fontSize: { xs: "1.25rem", sm: "1.6rem" },
                         fontWeight: 900,
                         color: COLORS.text,
                         letterSpacing: "-0.03em",
@@ -1223,8 +1379,8 @@ export default function ExplorePage() {
                     </Typography>
                     <Typography
                       sx={{
-                        mt: 0.5,
-                        fontSize: "0.86rem",
+                        mt: 0.3,
+                        fontSize: "0.84rem",
                         color: COLORS.muted,
                         fontWeight: 600,
                       }}
@@ -1234,7 +1390,7 @@ export default function ExplorePage() {
                   </Box>
                 </Stack>
 
-                <Grid container spacing={1.5}>
+                <Grid container spacing={1.5} alignItems="center">
                   <Grid size={{ xs: 12, md: 3.5 }}>
                     <TextField
                       fullWidth
@@ -1250,7 +1406,7 @@ export default function ExplorePage() {
                       }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                           "& fieldset": { borderColor: COLORS.border },
@@ -1265,7 +1421,7 @@ export default function ExplorePage() {
                         value={categoryFilter}
                         onChange={(e) => handleCategoryChange(e.target.value)}
                         sx={{
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                         }}
@@ -1285,7 +1441,7 @@ export default function ExplorePage() {
                         value={companyFilter}
                         onChange={(e) => setCompanyFilter(e.target.value)}
                         sx={{
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                         }}
@@ -1308,7 +1464,7 @@ export default function ExplorePage() {
                       type="number"
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                           "& fieldset": { borderColor: COLORS.border },
@@ -1326,7 +1482,7 @@ export default function ExplorePage() {
                       type="number"
                       sx={{
                         "& .MuiOutlinedInput-root": {
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                           "& fieldset": { borderColor: COLORS.border },
@@ -1335,13 +1491,13 @@ export default function ExplorePage() {
                     />
                   </Grid>
 
-                  <Grid size={{ xs: 8, sm: 6, md: 2 }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                     <FormControl fullWidth>
                       <Select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
                         sx={{
-                          minHeight: 52,
+                          minHeight: 48,
                           borderRadius: "16px",
                           background: COLORS.surfaceSoft,
                         }}
@@ -1358,8 +1514,9 @@ export default function ExplorePage() {
                     </FormControl>
                   </Grid>
 
-                  <Grid size={{ xs: 4, sm: 6, md: 12 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" } }}>
                     <Button
+                      fullWidth={{ xs: true, sm: false }}
                       onClick={resetFilters}
                       startIcon={
                         <RestartAltRoundedIcon sx={{ fontSize: 18 }} />
@@ -1367,6 +1524,7 @@ export default function ExplorePage() {
                       sx={{
                         minHeight: 44,
                         px: 2.5,
+                        width: { xs: "100%", sm: "auto" },
                         borderRadius: "14px",
                         textTransform: "none",
                         fontWeight: 800,
@@ -1379,7 +1537,7 @@ export default function ExplorePage() {
                         },
                       }}
                     >
-                      Reset
+                      Reset Filters
                     </Button>
                   </Grid>
                 </Grid>
@@ -1500,13 +1658,33 @@ export default function ExplorePage() {
             <Card
               sx={{
                 ...cardSx,
+                minHeight: 380,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 animation: "fadeUp .55s ease .12s both",
               }}
             >
-              <CardContent sx={{ p: 4, textAlign: "center" }}>
+              <CardContent sx={{ p: { xs: 3, sm: 6 }, textAlign: "center", maxWidth: 520, mx: "auto" }}>
+                <Box
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: "20px",
+                    background: COLORS.surfaceSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    display: "grid",
+                    placeItems: "center",
+                    mx: "auto",
+                    mb: 2,
+                    color: COLORS.muted,
+                  }}
+                >
+                  <SearchRoundedIcon sx={{ fontSize: 32 }} />
+                </Box>
                 <Typography
                   sx={{
-                    fontSize: "1.08rem",
+                    fontSize: "1.2rem",
                     fontWeight: 900,
                     color: COLORS.text,
                   }}
@@ -1515,30 +1693,58 @@ export default function ExplorePage() {
                 </Typography>
                 <Typography
                   sx={{
-                    mt: 0.8,
-                    fontSize: "0.88rem",
+                    mt: 1,
+                    fontSize: "0.92rem",
                     color: COLORS.muted,
-                    fontWeight: 600,
+                    fontWeight: 500,
+                    lineHeight: 1.6,
                   }}
                 >
-                  Try changing your filters or clearing the search.
+                  {categoryFilter !== "all"
+                    ? `No listings currently match "${categoryFilter}". Explore all listings or clear your filters to view available options.`
+                    : "Try adjusting your filters, searching for a different keyword, or resetting filters."}
                 </Typography>
-                <Button
-                  onClick={resetFilters}
-                  sx={{
-                    mt: 2,
-                    minHeight: 44,
-                    px: 2,
-                    borderRadius: "14px",
-                    textTransform: "none",
-                    fontWeight: 800,
-                    color: "#fff",
-                    background: COLORS.primary,
-                    "&:hover": { background: "#0b5f59" },
-                  }}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  justifyContent="center"
+                  sx={{ mt: 3 }}
                 >
-                  Clear filters
-                </Button>
+                  {categoryFilter !== "all" && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => handleCategoryChange("all")}
+                      sx={{
+                        minHeight: 44,
+                        px: 2.5,
+                        borderRadius: "14px",
+                        textTransform: "none",
+                        fontWeight: 800,
+                        borderColor: COLORS.border,
+                        color: COLORS.text,
+                        "&:hover": { background: COLORS.surfaceSoft },
+                      }}
+                    >
+                      View All Categories
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    onClick={resetFilters}
+                    sx={{
+                      minHeight: 44,
+                      px: 2.5,
+                      borderRadius: "14px",
+                      textTransform: "none",
+                      fontWeight: 800,
+                      color: "#fff",
+                      background: COLORS.primary,
+                      "&:hover": { background: "#0b5f59" },
+                    }}
+                  >
+                    Reset All Filters
+                  </Button>
+                </Stack>
               </CardContent>
             </Card>
           )}

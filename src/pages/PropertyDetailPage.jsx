@@ -269,13 +269,13 @@ export default function PropertyDetailPage() {
                       </Stack>
                     </Box>
                   )}
-                  <TableContainer sx={{ filter: !isPremium ? "blur(3px)" : "none", userSelect: !isPremium ? "none" : "auto" }}>
-                    <Table>
+                  <TableContainer sx={{ filter: !isPremium ? "blur(3px)" : "none", userSelect: !isPremium ? "none" : "auto", overflowX: "auto" }}>
+                    <Table size="small">
                       <TableBody>
                         {detailRows.map((row, i) => (
                           <TableRow key={row.label} sx={{ background: i % 2 === 0 ? "#FAFBFF" : "#fff", "&:last-child td": { border: 0 } }}>
-                            <TableCell sx={{ fontWeight: 700, color: "#475569", fontSize: "0.82rem", width: "38%", py: 2, borderColor: "#F1F5F9" }}>{row.label}</TableCell>
-                            <TableCell sx={{ fontWeight: 600, color: "#1E293B", fontSize: "0.88rem", py: 2, borderColor: "#F1F5F9" }}>{row.value}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: "#475569", fontSize: "0.82rem", width: { xs: "48%", sm: "38%" }, py: 1.8, px: { xs: 1.5, sm: 2 }, borderColor: "#F1F5F9" }}>{row.label}</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: "#1E293B", fontSize: "0.88rem", py: 1.8, px: { xs: 1.5, sm: 2 }, borderColor: "#F1F5F9" }}>{row.value}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

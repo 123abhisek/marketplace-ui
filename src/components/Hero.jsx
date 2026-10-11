@@ -822,7 +822,7 @@ export default function Hero() {
                     <Stack
                       direction={{ xs: 'column', lg: 'row' }}
                       alignItems={{ xs: 'stretch', lg: 'center' }}
-                      spacing={{ xs: 1.3, lg: 0 }}
+                      spacing={{ xs: 1.5, lg: 0 }}
                       divider={
                         <Divider
                           orientation="vertical"
@@ -834,7 +834,7 @@ export default function Hero() {
                         />
                       }
                     >
-                      <Box sx={{ px: { lg: 1.5 }, py: 0.9, minWidth: { lg: 170 } }}>
+                      <Box sx={{ px: { xs: 0.5, lg: 1.5 }, py: { xs: 0.5, lg: 0.9 }, minWidth: { lg: 170 } }}>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
                           <TuneRoundedIcon sx={{ color: '#64748b', fontSize: 18 }} />
                           <Typography sx={{ fontSize: '0.77rem', fontWeight: 900, color: '#64748b' }}>
@@ -855,7 +855,7 @@ export default function Hero() {
                               fontWeight: 800,
                               fontSize: '0.92rem',
                               color: '#0f172a',
-                              '& .MuiSelect-select': { py: 0 },
+                              '& .MuiSelect-select': { py: 0.2 },
                             }}
                           >
                             {CATEGORY_OPTIONS.map((o) => (
@@ -867,7 +867,9 @@ export default function Hero() {
                         </FormControl>
                       </Box>
 
-                      <Box sx={{ flex: 1, px: { lg: 2 }, py: 0.9 }}>
+                      <Divider sx={{ display: { xs: 'block', lg: 'none' }, borderColor: '#f1f5f9' }} />
+
+                      <Box sx={{ flex: 1, px: { xs: 0.5, lg: 2 }, py: { xs: 0.5, lg: 0.9 } }}>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
                           <SearchRoundedIcon sx={{ color: '#64748b', fontSize: 18 }} />
                           <Typography sx={{ fontSize: '0.77rem', fontWeight: 900, color: '#64748b' }}>
@@ -917,7 +919,9 @@ export default function Hero() {
                         </Stack>
                       </Box>
 
-                      <Box sx={{ px: { lg: 1.5 }, py: 0.9, minWidth: { lg: 170 } }}>
+                      <Divider sx={{ display: { xs: 'block', lg: 'none' }, borderColor: '#f1f5f9' }} />
+
+                      <Box sx={{ px: { xs: 0.5, lg: 1.5 }, py: { xs: 0.5, lg: 0.9 }, minWidth: { lg: 170 } }}>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
                           <CurrencyRupeeRoundedIcon sx={{ color: '#64748b', fontSize: 18 }} />
                           <Typography sx={{ fontSize: '0.77rem', fontWeight: 900, color: '#64748b' }}>
@@ -939,7 +943,7 @@ export default function Hero() {
                               fontWeight: 800,
                               fontSize: '0.92rem',
                               color: '#0f172a',
-                              '& .MuiSelect-select': { py: 0 },
+                              '& .MuiSelect-select': { py: 0.2 },
                             }}
                           >
                             {BUDGET_OPTIONS.map((o) => (
@@ -951,15 +955,15 @@ export default function Hero() {
                         </FormControl>
                       </Box>
 
-                      <Box sx={{ px: { lg: 1 }, pt: { xs: 0.4, lg: 0 } }}>
+                      <Box sx={{ px: { xs: 0, lg: 1 }, pt: { xs: 0.8, lg: 0 } }}>
                         <Button
                           fullWidth
                           variant="contained"
                           startIcon={<SearchRoundedIcon />}
                           onClick={handleSearch}
                           sx={{
-                            height: 54,
-                            minWidth: 160,
+                            height: { xs: 48, lg: 54 },
+                            minWidth: { lg: 160 },
                             borderRadius: '16px',
                             textTransform: 'none',
                             fontWeight: 900,
@@ -982,9 +986,18 @@ export default function Hero() {
                   anchorEl={searchShellRef.current}
                   placement="bottom-start"
                   transition
+                  modifiers={[
+                    {
+                      name: 'preventOverflow',
+                      options: {
+                        boundary: 'viewport',
+                      },
+                    },
+                  ]}
                   sx={{
                     zIndex: 1400,
-                    width: searchShellRef.current?.clientWidth || 320,
+                    width: searchShellRef.current?.clientWidth || '100%',
+                    maxWidth: '100vw',
                   }}
                 >
                   {({ TransitionProps }) => (

@@ -270,32 +270,32 @@ export default function DashboardLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4 lg:px-8">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700 lg:hidden"
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-700 lg:hidden"
                     aria-label="Open sidebar"
                   >
                     <MenuRoundedIcon sx={{ fontSize: 20 }} />
                   </button>
 
-                  <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
                       {title}
                     </h1>
                     {sub ? (
-                      <p className="mt-1 text-sm text-slate-500">{sub}</p>
+                      <p className="hidden sm:block mt-1 text-sm text-slate-500">{sub}</p>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="hidden items-center gap-3 sm:flex">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <button
                     type="button"
-                    className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                    className="hidden sm:inline-flex relative h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
                     aria-label="Notifications"
                   >
                     <NotificationsNoneRoundedIcon sx={{ fontSize: 18 }} />
@@ -303,12 +303,12 @@ export default function DashboardLayout() {
 
                   <Link
                     to="/dashboard/profile"
-                    className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 sm:gap-3 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:bg-slate-50"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-700">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-200 text-slate-700">
                       <PersonRoundedIcon sx={{ fontSize: 18 }} />
                     </div>
-                    <div className="text-left">
+                    <div className="hidden sm:block text-left">
                       <p className="text-sm font-semibold text-slate-900">
                         My Account
                       </p>
@@ -322,8 +322,8 @@ export default function DashboardLayout() {
                 </div>
               </div>
 
-              {/* Quick actions in header */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {/* Quick actions in header — hidden on mobile to avoid wasting vertical space and duplicate buttons */}
+              <div className="hidden sm:flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full max-w-xl">
                   <SearchRoundedIcon
                     sx={{ fontSize: 18 }}
@@ -332,21 +332,21 @@ export default function DashboardLayout() {
                   <input
                     type="text"
                     placeholder="Search listings, bookings, or account details..."
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white"
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white"
                   />
                 </div>
 
-                {/* Add listing quick buttons — visible to ALL users */}
-                <div className="flex items-center gap-2 shrink-0">
+                {/* Add listing quick buttons — visible to ALL users on desktop */}
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:shrink-0">
                   <Link
                     to="/dashboard/add-property"
-                    className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                    className="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                   >
                     + Property
                   </Link>
                   <Link
                     to="/dashboard/add-vehicle"
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     + Vehicle
                   </Link>
@@ -355,7 +355,7 @@ export default function DashboardLayout() {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 pb-16 sm:pb-8">
             <Outlet />
           </main>
         </div>

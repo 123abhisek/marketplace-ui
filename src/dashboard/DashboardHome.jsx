@@ -356,8 +356,8 @@ export default function DashboardHome() {
       </Stack>
 
       {/* ── Stat Cards (Ref 1 — smmplanner top row) ── */}
-      <Grid container spacing={2}>
-        <Grid item xs={6} lg={3}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+        <Grid item xs={6} sm={6} lg={3}>
           <StatCard
             label="Total Properties"
             value={properties.length}
@@ -367,7 +367,7 @@ export default function DashboardHome() {
             trend="+12%"
           />
         </Grid>
-        <Grid item xs={6} lg={3}>
+        <Grid item xs={6} sm={6} lg={3}>
           <StatCard
             label="Total Vehicles"
             value={vehicles.length}
@@ -377,7 +377,7 @@ export default function DashboardHome() {
             trend="+8%"
           />
         </Grid>
-        <Grid item xs={6} lg={3}>
+        <Grid item xs={6} sm={6} lg={3}>
           <StatCard
             label="My Listings"
             value={myProperties.length + myVehicles.length}
@@ -386,7 +386,7 @@ export default function DashboardHome() {
             iconBg="#ECFDF5"
           />
         </Grid>
-        <Grid item xs={6} lg={3}>
+        <Grid item xs={6} sm={6} lg={3}>
           <StatCard
             label={user.isPremium ? "Premium Plan" : "Free Plan"}
             value={user.isPremium ? "PRO" : "FREE"}

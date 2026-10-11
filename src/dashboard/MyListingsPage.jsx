@@ -112,15 +112,16 @@ export default function MyListingsPage() {
   const totalListings = properties.length + vehicles.length;
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={{ xs: 2.5, sm: 3 }} sx={{ pb: { xs: 12, sm: 6 } }}>
       {/* ── Header ── */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems={{ sm: "center" }}
+        alignItems={{ xs: "stretch", sm: "center" }}
         spacing={2}
       >
-        <Box>
+        {/* Desktop Title */}
+        <Box sx={{ display: { xs: "none", sm: "block" } }}>
           <Typography
             variant="h5"
             fontWeight={900}
@@ -132,12 +133,50 @@ export default function MyListingsPage() {
             {loading ? "Loading…" : `${totalListings} listings posted under your account`}
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1.5}>
+
+        {/* Mobile Status Row (count + refresh) */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ display: { xs: "flex", sm: "none" } }}
+        >
+          <Typography sx={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 700 }}>
+            {loading ? "Loading listings…" : `${totalListings} listings posted`}
+          </Typography>
+          <Button
+            onClick={fetchMyListings}
+            disabled={loading}
+            size="small"
+            startIcon={<RefreshRoundedIcon sx={{ fontSize: "16px !important" }} />}
+            sx={{
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              color: "#64748B",
+              textTransform: "none",
+              px: 1,
+              py: 0.5,
+              borderRadius: "8px",
+              "&:hover": { background: "#F1F5F9" },
+            }}
+          >
+            Refresh
+          </Button>
+        </Stack>
+
+        {/* Action Buttons */}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           <Button
             onClick={fetchMyListings}
             disabled={loading}
             startIcon={<RefreshRoundedIcon />}
             sx={{
+              display: { xs: "none", sm: "inline-flex" },
               borderRadius: "12px",
               fontWeight: 700,
               color: "#64748B",
@@ -150,10 +189,15 @@ export default function MyListingsPage() {
             component={RouterLink}
             to="/dashboard/add-property"
             variant="contained"
-            startIcon={<AddCircleOutlineRoundedIcon />}
+            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: { xs: "16px !important", sm: "20px !important" } }} />}
             sx={{
+              flex: { xs: 1, sm: "initial" },
+              minHeight: 44,
+              px: { xs: 1.5, sm: 2.5 },
               borderRadius: "12px",
               fontWeight: 800,
+              fontSize: { xs: "0.78rem", sm: "0.875rem" },
+              whiteSpace: "nowrap",
               background: "#0F766E",
               "&:hover": { background: "#0D6B63" },
               boxShadow: "none",
@@ -165,10 +209,15 @@ export default function MyListingsPage() {
             component={RouterLink}
             to="/dashboard/add-vehicle"
             variant="outlined"
-            startIcon={<AddCircleOutlineRoundedIcon />}
+            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: { xs: "16px !important", sm: "20px !important" } }} />}
             sx={{
+              flex: { xs: 1, sm: "initial" },
+              minHeight: 44,
+              px: { xs: 1.5, sm: 2.5 },
               borderRadius: "12px",
               fontWeight: 800,
+              fontSize: { xs: "0.78rem", sm: "0.875rem" },
+              whiteSpace: "nowrap",
               borderColor: "#0F766E",
               color: "#0F766E",
               "&:hover": { background: "#F0FDFA", borderColor: "#0D6B63" },
@@ -180,8 +229,23 @@ export default function MyListingsPage() {
       </Stack>
 
       {/* ── Unified Account Info ── */}
-      <Card sx={{ borderRadius: "16px", background: "linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)", border: "1px solid #E2E8F0", p: 2 }}>
-        <Typography variant="body2" color="#334155" fontWeight={600}>
+      <Card
+        sx={{
+          borderRadius: "16px",
+          background: "linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)",
+          border: "1px solid #E2E8F0",
+          p: { xs: 1.5, sm: 2 },
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            color: "#334155",
+            fontWeight: 500,
+            fontSize: { xs: "0.78rem", sm: "0.85rem" },
+            lineHeight: 1.55,
+          }}
+        >
           💡 <strong>One Account Marketplace:</strong> You can create, edit, and manage both Property and Vehicle listings from the same user account. New listings enter <em>Pending Approval</em> before appearing publicly.
         </Typography>
       </Card>

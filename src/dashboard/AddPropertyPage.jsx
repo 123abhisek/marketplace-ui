@@ -679,10 +679,15 @@ export default function AddPropertyPage() {
                     : "Your property will be verified and published to prospective buyers."}
                 </Typography>
 
-                <Stack direction="row" spacing={1.5}>
+                <Stack
+                  direction={{ xs: "column-reverse", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
                   <Button
                     type="button"
                     variant="outlined"
+                    fullWidth={{ xs: true, sm: false }}
                     onClick={() => navigate(-1)}
                     sx={{
                       minHeight: 46,
@@ -700,6 +705,7 @@ export default function AddPropertyPage() {
                   <Button
                     type="submit"
                     variant="contained"
+                    fullWidth={{ xs: true, sm: false }}
                     disabled={submitting}
                     startIcon={
                       submitting ? <CircularProgress size={18} color="inherit" /> : <SaveRoundedIcon />

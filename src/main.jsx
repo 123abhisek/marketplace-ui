@@ -9,6 +9,7 @@ import theme from "./theme";
 import { AppProvider } from "./hooks/useAppState";
 import "./index.css";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ScrollToTop from "./components/ScrollToTop";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <CssBaseline />
         <ErrorBoundary>
           <BrowserRouter>
+            <ScrollToTop />
             <AppProvider>
               <App />
             </AppProvider>

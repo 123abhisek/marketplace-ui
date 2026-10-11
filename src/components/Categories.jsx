@@ -102,10 +102,25 @@ function CategoryCard({ item, index }) {
 
   const handleExplore = (e) => {
     e?.preventDefault?.();
-    if (item.title === "Property") {
-      navigate("/explore?type=property");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    const title = item.title;
+    if (title === "Property") {
+      navigate("/explore?category=Property&type=property");
+    } else if (
+      title === "Apartments" ||
+      title === "Houses" ||
+      title === "Commercial" ||
+      title === "Land"
+    ) {
+      navigate(`/explore?category=${encodeURIComponent(title)}&type=property`);
+    } else if (
+      title === "Cars" ||
+      title === "Bikes" ||
+      title === "Trucks"
+    ) {
+      navigate(`/explore?category=${encodeURIComponent(title)}&type=vehicle`);
     } else {
-      navigate(`/explore?category=${encodeURIComponent(item.title)}`);
+      navigate(`/explore?category=${encodeURIComponent(title)}`);
     }
   };
 

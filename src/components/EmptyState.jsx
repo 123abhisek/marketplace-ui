@@ -15,18 +15,19 @@ export default function EmptyState({
   return (
     <Box
       sx={{
-        py: { xs: 8, md: 12 },
+        py: { xs: 5, md: 10 },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        gap: 2,
+        gap: 1.5,
+        px: 2,
       }}
     >
       <Box
         sx={{
-          width: 72,
-          height: 72,
+          width: { xs: 64, sm: 72 },
+          height: { xs: 64, sm: 72 },
           borderRadius: '20px',
           background: iconBg,
           display: 'flex',
@@ -36,22 +37,21 @@ export default function EmptyState({
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
         }}
       >
-        {icon || <InboxRoundedIcon sx={{ fontSize: 34, color: iconColor }} />}
+        {icon || <InboxRoundedIcon sx={{ fontSize: { xs: 28, sm: 34 }, color: iconColor }} />}
       </Box>
 
-      <Stack spacing={0.75} alignItems="center">
+      <Stack spacing={0.75} alignItems="center" sx={{ maxWidth: { xs: 300, sm: 380 } }}>
         <Typography
           fontWeight={800}
-          sx={{ fontSize: '1.05rem', color: '#1E293B', letterSpacing: '-0.02em' }}
+          sx={{ fontSize: { xs: '1rem', sm: '1.05rem' }, color: '#1E293B', letterSpacing: '-0.02em' }}
         >
           {title}
         </Typography>
         <Typography
           sx={{
-            fontSize: '0.85rem',
+            fontSize: { xs: '0.82rem', sm: '0.85rem' },
             color: '#94A3B8',
-            maxWidth: 380,
-            lineHeight: 1.6,
+            lineHeight: 1.55,
           }}
         >
           {description}

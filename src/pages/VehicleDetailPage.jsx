@@ -178,14 +178,14 @@ function PhotoGrid({ images, title, onOpen }) {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: side.length ? "1.4fr 1fr" : "1fr",
+          gridTemplateColumns: { xs: "1fr", sm: side.length ? "1.4fr 1fr" : "1fr" },
           gap: "3px",
-          height: { xs: 240, sm: 360, md: 480 },
+          height: { xs: 260, sm: 360, md: 480 },
         }}
       >
         <Box
           sx={{
-            borderRadius: side.length ? "20px 0 0 20px" : "20px",
+            borderRadius: { xs: "20px", sm: side.length ? "20px 0 0 20px" : "20px" },
             overflow: "hidden",
             cursor: "pointer",
           }}
@@ -209,7 +209,7 @@ function PhotoGrid({ images, title, onOpen }) {
         {side.length > 0 && (
           <Box
             sx={{
-              display: "grid",
+              display: { xs: "none", sm: "grid" },
               gridTemplateRows:
                 side.length > 2 ? "1fr 1fr" : `repeat(${side.length},1fr)`,
               gridTemplateColumns: side.length > 1 ? "1fr 1fr" : "1fr",

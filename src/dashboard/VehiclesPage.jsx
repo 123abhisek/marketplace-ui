@@ -135,15 +135,15 @@ export default function VehiclesPage() {
   )
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ pb: { xs: 10, sm: 4 } }}>
       {/* ── Header ── */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
-        alignItems={{ sm: 'center' }}
-        spacing={2}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={1.5}
       >
-        <Box>
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
           <Typography variant="h5" fontWeight={900} sx={{ color: '#1E293B', letterSpacing: '-0.03em' }}>
             Vehicle Listings
           </Typography>
@@ -152,12 +152,18 @@ export default function VehiclesPage() {
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          justifyContent={{ xs: 'space-between', sm: 'flex-end' }}
+        >
           <Chip
-            label={hasFullAccess ? "👑 Premium Access Active" : "Free Plan — View Limited"}
+            label={hasFullAccess ? "👑 Premium Active" : "Free Plan"}
+            size="small"
             sx={{
               fontWeight: 800,
-              fontSize: "0.78rem",
+              fontSize: "0.74rem",
               background: hasFullAccess ? "#ECFDF5" : "#FEF3C7",
               color: hasFullAccess ? "#059669" : "#D97706",
               border: hasFullAccess ? "1px solid #A7F3D0" : "1px solid #FDE68A",
@@ -167,11 +173,13 @@ export default function VehiclesPage() {
           <Button
             onClick={handleRefresh}
             disabled={refreshing || loading}
-            startIcon={<RefreshRoundedIcon />}
+            size="small"
+            startIcon={<RefreshRoundedIcon sx={{ fontSize: "16px !important" }} />}
             sx={{
-              borderRadius: '12px',
+              borderRadius: '10px',
               fontWeight: 700,
               color: '#64748B',
+              textTransform: 'none',
               '&:hover': { background: '#F1F5F9' },
             }}
           >
