@@ -1,5 +1,4 @@
-// src/components/ImageUploader.jsx
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -10,10 +9,12 @@ import {
   Typography,
 } from '@mui/material'
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded'
+import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { isSupportedImageFile, convertHeicIfNeeded, fileToBase64 } from '../utils/imageUtils'
+import { isMobileOrApp } from '../utils/appMode'
 
 const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024 // 40MB
 
@@ -38,6 +39,20 @@ export default function ImageUploader({
   const fileInputRef = useRef(null)
   const [localError, setLocalError] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => isMobileOrApp())
+
+  useEffect(() => {
+    const checkEnvironment = () => {
+      const mobileStatus =
+        isMobileOrApp() ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      setIsMobile(mobileStatus)
+    }
+    checkEnvironment()
+    window.addEventListener('resize', checkEnvironment)
+    return () => window.removeEventListener('resize', checkEnvironment)
+  }, [])
 
   const handleFiles = async (fileList) => {
     setLocalError('')
@@ -134,96 +149,199 @@ export default function ImageUploader({
     return `Photo ${index + 1}`
   }
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!processing && canAddMore) {
+      setDragging(true)
+    }
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragging(false)
+    if (processing || !canAddMore) return
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files)
+    }
+  }
+
   const canAddMore = value.length < max
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* ── 1. Touch-Friendly Action Bar ── */}
-      <Box
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          borderRadius: '16px',
-          border: '1.5px solid #E2E8F0',
-          background: '#F8FAFC',
-          mb: 2.5,
-        }}
-      >
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          justifyContent="space-between"
+      {/* ── 1. Upload Trigger UI ── */}
+      {isMobile ? (
+        /* ────────────── ANDROID / MOBILE: ONLY UPLOAD BUTTON ────────────── */
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: '16px',
+            border: '1.5px solid #E2E8F0',
+            background: '#F8FAFC',
+            mb: 2.5,
+          }}
         >
-          {/* Instructions & Counter */}
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <PhotoLibraryRoundedIcon sx={{ fontSize: 20, color: '#0F766E' }} />
-              <Typography sx={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                {value.length === 0 ? 'No photos selected' : `${value.length} of ${max} photos selected`}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            justifyContent="space-between"
+          >
+            {/* Counter & Format Info */}
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <PhotoLibraryRoundedIcon sx={{ fontSize: 20, color: '#0F766E' }} />
+                <Typography sx={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                  {value.length === 0 ? 'No photos selected' : `${value.length} of ${max} photos selected`}
+                </Typography>
+              </Stack>
+              <Typography sx={{ fontSize: '0.78rem', color: '#64748B', mt: 0.4 }}>
+                Supported formats: JPG, PNG, WEBP, HEIC · Max 40MB per photo
               </Typography>
-            </Stack>
-            <Typography sx={{ fontSize: '0.78rem', color: '#64748B', mt: 0.4 }}>
-              Supported formats: JPG, PNG, WEBP, HEIC · Max 40MB per photo
-            </Typography>
-          </Box>
+            </Box>
 
-          {/* Touch-Friendly Upload Button */}
-          {canAddMore && (
-            <Button
-              component="label"
-              variant="contained"
-              disabled={processing}
-              startIcon={
-                processing ? (
-                  <CircularProgress size={18} sx={{ color: '#FFFFFF' }} />
-                ) : (
-                  <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} />
-                )
-              }
-              sx={{
-                background: '#0F766E',
-                color: '#FFFFFF',
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                textTransform: 'none',
-                borderRadius: '12px',
-                px: 2.5,
-                py: 1.2,
-                boxShadow: '0 2px 8px rgba(15,118,110,0.25)',
-                width: { xs: '100%', sm: 'auto' },
-                '&:hover': {
-                  background: '#0D9488',
-                },
-                '&.Mui-disabled': {
-                  background: '#94A3B8',
+            {/* Touch-Only Upload Button (No Drag UI) */}
+            {canAddMore && (
+              <Button
+                component="label"
+                variant="contained"
+                disabled={processing}
+                startIcon={
+                  processing ? (
+                    <CircularProgress size={18} sx={{ color: '#FFFFFF' }} />
+                  ) : (
+                    <AddPhotoAlternateRoundedIcon sx={{ fontSize: 20 }} />
+                  )
+                }
+                sx={{
+                  background: '#0F766E',
                   color: '#FFFFFF',
-                },
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  px: 2.5,
+                  py: 1.2,
+                  boxShadow: '0 2px 8px rgba(15,118,110,0.25)',
+                  width: { xs: '100%', sm: 'auto' },
+                  '&:hover': {
+                    background: '#0D9488',
+                  },
+                  '&.Mui-disabled': {
+                    background: '#94A3B8',
+                    color: '#FFFFFF',
+                  },
+                }}
+              >
+                {processing ? 'Optimizing...' : `+ ${label}`}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
+                  multiple
+                  style={{
+                    clip: 'rect(0 0 0 0)',
+                    clipPath: 'inset(50%)',
+                    height: 1,
+                    overflow: 'hidden',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    whiteSpace: 'nowrap',
+                    width: 1,
+                  }}
+                  onChange={handleInputChange}
+                  onClick={(e) => {
+                    e.target.value = null
+                  }}
+                />
+              </Button>
+            )}
+          </Stack>
+        </Box>
+      ) : (
+        /* ────────────── WEB: UPLOAD / DRAG & DROP ZONE ────────────── */
+        canAddMore && (
+          <Box
+            onClick={() => !processing && fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              border: `2px dashed ${dragging ? '#0F766E' : '#CBD5E1'}`,
+              borderRadius: '16px',
+              p: { xs: 2.5, sm: 4 },
+              textAlign: 'center',
+              cursor: processing ? 'wait' : 'pointer',
+              background: dragging ? 'rgba(15,118,110,0.06)' : '#F8FAFC',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                borderColor: '#0F766E',
+                background: 'rgba(15,118,110,0.03)',
+              },
+              mb: 2.5,
+              position: 'relative',
+            }}
+          >
+            {processing ? (
+              <Box sx={{ py: 1.5 }}>
+                <CircularProgress size={32} sx={{ color: '#0F766E', mb: 1.5 }} />
+                <Typography sx={{ fontSize: '0.92rem', fontWeight: 700, color: '#334155' }}>
+                  Optimizing photos...
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <CloudUploadRoundedIcon
+                  sx={{
+                    fontSize: 48,
+                    color: '#0F766E',
+                    mb: 1.2,
+                    opacity: dragging ? 1 : 0.85,
+                  }}
+                />
+                <Typography sx={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
+                  Click to upload or drag and drop photos here
+                </Typography>
+                <Typography sx={{ fontSize: '0.82rem', color: '#64748B', mt: 0.6 }}>
+                  {value.length === 0
+                    ? `Upload up to ${max} photos`
+                    : `${value.length} of ${max} photos added`} · Supports JPG, PNG, WEBP, HEIC (Max 40MB per photo)
+                </Typography>
+              </>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
+              multiple
+              style={{
+                clip: 'rect(0 0 0 0)',
+                clipPath: 'inset(50%)',
+                height: 1,
+                overflow: 'hidden',
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                whiteSpace: 'nowrap',
+                width: 1,
               }}
-            >
-              {processing ? 'Optimizing...' : `+ ${label}`}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
-                multiple
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer',
-                }}
-                onChange={handleInputChange}
-                onClick={(e) => {
-                  e.target.value = null
-                }}
-              />
-            </Button>
-          )}
-        </Stack>
-      </Box>
+              onChange={handleInputChange}
+              onClick={(e) => {
+                e.target.value = null
+              }}
+            />
+          </Box>
+        )
+      )}
 
       {/* ── 2. Error Message Alert ── */}
       {localError && (

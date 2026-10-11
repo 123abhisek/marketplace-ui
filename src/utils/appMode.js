@@ -52,3 +52,15 @@ export function isAppMode() {
 
   return false;
 }
+
+/**
+ * Determines whether the device is an Android/iOS mobile device or running inside the mobile app.
+ * @returns {boolean}
+ */
+export function isMobileOrApp() {
+  if (typeof window === 'undefined') return false;
+  if (isAppMode()) return true;
+  const ua = navigator.userAgent || '';
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+}
+
