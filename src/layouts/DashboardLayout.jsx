@@ -9,12 +9,11 @@ import {
 import { useAppState } from "../hooks/useAppState";
 import { routes } from "../router";
 
-import { Stack, Box, Chip } from "@mui/material";
+import { Stack, Box, Chip, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -287,19 +286,30 @@ export default function DashboardLayout() {
                       {title}
                     </h1>
                     {sub ? (
-                      <p className="hidden sm:block mt-1 text-sm text-slate-500">{sub}</p>
+                      <Typography
+                        sx={{
+                          display: { xs: "none", sm: "block" },
+                          mt: 0.5,
+                          fontSize: "0.875rem",
+                          color: "#64748B",
+                        }}
+                      >
+                        {sub}
+                      </Typography>
                     ) : null}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <button
-                    type="button"
-                    className="hidden sm:inline-flex relative h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
-                    aria-label="Notifications"
-                  >
-                    <NotificationsNoneRoundedIcon sx={{ fontSize: 18 }} />
-                  </button>
+                  <Box sx={{ display: { xs: "none", sm: "inline-flex" } }}>
+                    <button
+                      type="button"
+                      className="relative h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                      aria-label="Notifications"
+                    >
+                      <NotificationsNoneRoundedIcon sx={{ fontSize: 18 }} />
+                    </button>
+                  </Box>
 
                   <Link
                     to="/dashboard/profile"
@@ -308,7 +318,7 @@ export default function DashboardLayout() {
                     <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-200 text-slate-700">
                       <PersonRoundedIcon sx={{ fontSize: 18 }} />
                     </div>
-                    <div className="hidden sm:block text-left">
+                    <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left" }}>
                       <p className="text-sm font-semibold text-slate-900">
                         My Account
                       </p>
@@ -317,45 +327,14 @@ export default function DashboardLayout() {
                           ? "Premium Plan"
                           : "Free Plan"}
                       </p>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Quick actions in header — hidden on mobile to avoid wasting vertical space and duplicate buttons */}
-              <div className="hidden sm:flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="relative w-full max-w-xl">
-                  <SearchRoundedIcon
-                    sx={{ fontSize: 18 }}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search listings, bookings, or account details..."
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white"
-                  />
-                </div>
-
-                {/* Add listing quick buttons — visible to ALL users on desktop */}
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:shrink-0">
-                  <Link
-                    to="/dashboard/add-property"
-                    className="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                  >
-                    + Property
-                  </Link>
-                  <Link
-                    to="/dashboard/add-vehicle"
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    + Vehicle
+                    </Box>
                   </Link>
                 </div>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 pb-16 sm:pb-8">
+          <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 pb-24 sm:pb-10">
             <Outlet />
           </main>
         </div>

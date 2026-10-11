@@ -22,6 +22,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
+import InboxRoundedIcon from "@mui/icons-material/InboxRounded";
 import PropertyCard from "../components/PropertyCard";
 import VehicleCard from "../components/VehicleCard";
 import Loader from "../components/Loader";
@@ -118,20 +119,52 @@ export default function MyListingsPage() {
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
         alignItems={{ xs: "stretch", sm: "center" }}
-        spacing={2}
+        spacing={{ xs: 1.5, sm: 2 }}
       >
-        {/* Desktop Title */}
+        {/* Listing Stats Chips (Desktop & Tablet) */}
         <Box sx={{ display: { xs: "none", sm: "block" } }}>
-          <Typography
-            variant="h5"
-            fontWeight={900}
-            sx={{ color: "#1E293B", letterSpacing: "-0.03em" }}
-          >
-            My Listings
-          </Typography>
-          <Typography sx={{ fontSize: "0.82rem", color: "#94A3B8", mt: 0.25 }}>
-            {loading ? "Loading…" : `${totalListings} listings posted under your account`}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Chip
+              label={loading ? "Loading…" : `${totalListings} Listings Total`}
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.8rem",
+                background: "rgba(15, 118, 110, 0.08)",
+                color: "#0F766E",
+                border: "1px solid rgba(15, 118, 110, 0.2)",
+                borderRadius: "8px",
+                height: 32,
+              }}
+            />
+            {properties.length > 0 && (
+              <Chip
+                label={`${properties.length} Properties`}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                  background: "#F1F5F9",
+                  color: "#475569",
+                  borderRadius: "8px",
+                  height: 30,
+                }}
+              />
+            )}
+            {vehicles.length > 0 && (
+              <Chip
+                label={`${vehicles.length} Vehicles`}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                  background: "#F1F5F9",
+                  color: "#475569",
+                  borderRadius: "8px",
+                  height: 30,
+                }}
+              />
+            )}
+          </Stack>
         </Box>
 
         {/* Mobile Status Row (count + refresh) */}
@@ -141,9 +174,17 @@ export default function MyListingsPage() {
           justifyContent="space-between"
           sx={{ display: { xs: "flex", sm: "none" } }}
         >
-          <Typography sx={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 700 }}>
-            {loading ? "Loading listings…" : `${totalListings} listings posted`}
-          </Typography>
+          <Chip
+            label={loading ? "Loading…" : `${totalListings} Listings Total`}
+            size="small"
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.75rem",
+              background: "rgba(15, 118, 110, 0.08)",
+              color: "#0F766E",
+              borderRadius: "8px",
+            }}
+          />
           <Button
             onClick={fetchMyListings}
             disabled={loading}
@@ -154,9 +195,11 @@ export default function MyListingsPage() {
               fontWeight: 700,
               color: "#64748B",
               textTransform: "none",
-              px: 1,
+              px: 1.25,
               py: 0.5,
               borderRadius: "8px",
+              border: "1px solid #E2E8F0",
+              background: "#FFFFFF",
               "&:hover": { background: "#F1F5F9" },
             }}
           >
@@ -174,13 +217,21 @@ export default function MyListingsPage() {
           <Button
             onClick={fetchMyListings}
             disabled={loading}
-            startIcon={<RefreshRoundedIcon />}
+            variant="outlined"
+            startIcon={<RefreshRoundedIcon sx={{ fontSize: "18px !important" }} />}
             sx={{
               display: { xs: "none", sm: "inline-flex" },
               borderRadius: "12px",
               fontWeight: 700,
+              fontSize: "0.82rem",
               color: "#64748B",
-              "&:hover": { background: "#F1F5F9" },
+              borderColor: "#E2E8F0",
+              background: "#FFFFFF",
+              minHeight: 42,
+              px: 2,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              "&:hover": { background: "#F8FAFC", borderColor: "#CBD5E1" },
             }}
           >
             Refresh
@@ -189,41 +240,44 @@ export default function MyListingsPage() {
             component={RouterLink}
             to="/dashboard/add-property"
             variant="contained"
-            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: { xs: "16px !important", sm: "20px !important" } }} />}
+            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "18px !important" }} />}
             sx={{
               flex: { xs: 1, sm: "initial" },
-              minHeight: 44,
+              minHeight: 42,
               px: { xs: 1.5, sm: 2.5 },
               borderRadius: "12px",
               fontWeight: 800,
-              fontSize: { xs: "0.78rem", sm: "0.875rem" },
+              fontSize: { xs: "0.8rem", sm: "0.85rem" },
               whiteSpace: "nowrap",
+              textTransform: "none",
               background: "#0F766E",
               "&:hover": { background: "#0D6B63" },
               boxShadow: "none",
             }}
           >
-            + Add Property
+            Add Property
           </Button>
           <Button
             component={RouterLink}
             to="/dashboard/add-vehicle"
             variant="outlined"
-            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: { xs: "16px !important", sm: "20px !important" } }} />}
+            startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "18px !important" }} />}
             sx={{
               flex: { xs: 1, sm: "initial" },
-              minHeight: 44,
+              minHeight: 42,
               px: { xs: 1.5, sm: 2.5 },
               borderRadius: "12px",
               fontWeight: 800,
-              fontSize: { xs: "0.78rem", sm: "0.875rem" },
+              fontSize: { xs: "0.8rem", sm: "0.85rem" },
               whiteSpace: "nowrap",
+              textTransform: "none",
               borderColor: "#0F766E",
               color: "#0F766E",
+              background: "#FFFFFF",
               "&:hover": { background: "#F0FDFA", borderColor: "#0D6B63" },
             }}
           >
-            + Add Vehicle
+            Add Vehicle
           </Button>
         </Stack>
       </Stack>
@@ -269,10 +323,84 @@ export default function MyListingsPage() {
       {loading ? (
         <Loader count={3} />
       ) : totalListings === 0 && !error ? (
-        <EmptyState
-          title="No listings yet"
-          description="You haven't posted any property or vehicle listings yet. Click '+ Add Property' or '+ Add Vehicle' to list your item."
-        />
+        <Card
+          sx={{
+            borderRadius: "20px",
+            border: "1px dashed #CBD5E1",
+            background: "#F8FAFC",
+            p: { xs: 3, sm: 5 },
+            textAlign: "center",
+          }}
+        >
+          <Stack alignItems="center" spacing={1.5} sx={{ maxWidth: 360, mx: "auto" }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: "#E2E8F0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#64748B",
+                mb: 0.5,
+              }}
+            >
+              <InboxRoundedIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Typography variant="h6" fontWeight={800} sx={{ color: "#1E293B", fontSize: { xs: "1.05rem", sm: "1.2rem" } }}>
+              No listings yet
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "#64748B", fontSize: { xs: "0.82rem", sm: "0.875rem" }, lineHeight: 1.5 }}
+            >
+              You haven't posted any property or vehicle listings yet. Get started by adding your first listing below.
+            </Typography>
+            <Stack direction="row" spacing={1.5} sx={{ pt: 1, width: "100%", justifyContent: "center" }}>
+              <Button
+                component={RouterLink}
+                to="/dashboard/add-property"
+                variant="contained"
+                size="small"
+                startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                sx={{
+                  flex: { xs: 1, sm: "initial" },
+                  borderRadius: "10px",
+                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  background: "#0F766E",
+                  "&:hover": { background: "#0D6B63" },
+                  boxShadow: "none",
+                  py: 1,
+                  px: 2,
+                }}
+              >
+                Add Property
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/dashboard/add-vehicle"
+                variant="outlined"
+                size="small"
+                startIcon={<AddCircleOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+                sx={{
+                  flex: { xs: 1, sm: "initial" },
+                  borderRadius: "10px",
+                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  borderColor: "#0F766E",
+                  color: "#0F766E",
+                  "&:hover": { background: "#F0FDFA", borderColor: "#0D6B63" },
+                  py: 1,
+                  px: 2,
+                }}
+              >
+                Add Vehicle
+              </Button>
+            </Stack>
+          </Stack>
+        </Card>
       ) : (
         <Stack spacing={4}>
           {/* Properties Section */}
