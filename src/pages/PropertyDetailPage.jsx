@@ -124,6 +124,7 @@ export default function PropertyDetailPage() {
   const detailRows = [
     { label: "Property Type", value: property.property_type },
     { label: "Apartment / Project", value: property.apartment_name },
+    { label: "City", value: displayCity },
     { label: "Location", value: isPremium ? property.location : `${displayCity} (Upgrade to see full address)` },
     { label: "Floor", value: property.floor },
     { label: "Total Rooms", value: property.rooms },
@@ -347,22 +348,12 @@ export default function PropertyDetailPage() {
                     </Typography>
                   </Card>
                 )}
-                <Card elevation={0} sx={{ borderRadius: "20px", border: "1px solid #E2E8F0", overflow: "hidden", position: "relative" }}>
+                <Card elevation={0} sx={{ borderRadius: "20px", border: "1px solid #E2E8F0", overflow: "hidden" }}>
                   <Box sx={{ p: 3, borderBottom: "1px solid #F1F5F9" }}>
                     <Typography variant="h6" fontWeight={900} sx={{ color: "#1E293B" }}>Property Details</Typography>
                     <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8" }}>Full specifications and listing information</Typography>
                   </Box>
-                  {!isPremium && (
-                    <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.97) 45%, #fff 100%)", zIndex: 2, display: "flex", alignItems: "flex-end", justifyContent: "center", pb: 4 }}>
-                      <Stack alignItems="center" spacing={1.5}>
-                        <Box sx={{ width: 52, height: 52, borderRadius: "16px", background: TEAL_LIGHT, color: TEAL, display: "flex", alignItems: "center", justifyContent: "center" }}><LockRoundedIcon sx={{ fontSize: 26 }} /></Box>
-                        <Typography fontWeight={800} sx={{ color: "#1E293B" }}>Premium Members Only</Typography>
-                        <Typography sx={{ fontSize: "0.8rem", color: "#64748B", textAlign: "center", maxWidth: 300 }}>Unlock complete property details, contact information, and direct seller communication.</Typography>
-                        <Button variant="contained" component={RouterLink} to="/subscription" startIcon={<WorkspacePremiumRoundedIcon />} sx={{ borderRadius: "12px", px: 4, py: 1.25, fontWeight: 800, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 6px 20px rgba(15,118,110,0.3)" }}>Unlock for Rs.299</Button>
-                      </Stack>
-                    </Box>
-                  )}
-                  <TableContainer sx={{ filter: !isPremium ? "blur(3px)" : "none", userSelect: !isPremium ? "none" : "auto", overflowX: "auto" }}>
+                  <TableContainer sx={{ overflowX: "auto" }}>
                     <Table size="small">
                       <TableBody>
                         {detailRows.map((row, i) => (

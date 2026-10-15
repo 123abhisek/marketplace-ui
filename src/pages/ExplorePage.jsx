@@ -37,6 +37,7 @@ import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { propertyService, vehicleService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
+import { getDisplayCity } from "../utils/permissions";
 
 
 const COLORS = {
@@ -134,13 +135,13 @@ function getTitle(item) {
   );
 }
 
-function getLocation(item) {
+function getLocation(item, isPremium = false) {
+  if (!isPremium) {
+    return getDisplayCity(item);
+  }
   return (
     item.location ||
-    item.city ||
-    item.address ||
-    item.place ||
-    item.district ||
+    getDisplayCity(item) ||
     "Location not specified"
   );
 }
@@ -177,8 +178,14 @@ function ListingCard({ item, navigate, index, isPremium }) {
   const soft =
     item.itemType === "property" ? COLORS.primarySoft : COLORS.blueSoft;
 
+  const targetUrl =
+    item.itemType === "property"
+      ? `/properties/${item.id}`
+      : `/vehicles/${item.id}`;
+
   return (
     <Card
+      onClick={() => navigate(targetUrl)}
       sx={{
         ...cardSx,
         width: "100%",
@@ -186,6 +193,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        cursor: "pointer",
         transition:
           "transform .35s ease, box-shadow .35s ease, border-color .35s ease, opacity .45s ease",
         animation: `fadeUp .45s ease ${index * 0.05}s both`,
@@ -255,10 +263,10 @@ function ListingCard({ item, navigate, index, isPremium }) {
               <LockRoundedIcon sx={{ fontSize: 22, color: "#ffffff" }} />
             </Box>
             <Typography sx={{ fontWeight: 900, fontSize: "0.95rem", color: "#ffffff" }}>
-              Premium only
+              Photos Locked
             </Typography>
             <Typography sx={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.85)" }}>
-              Unlock full details and pricing
+              Click to view listing details
             </Typography>
           </Box>
         ) : (
@@ -355,7 +363,7 @@ function ListingCard({ item, navigate, index, isPremium }) {
               noWrap
               sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}
             >
-              {getLocation(item.raw)}
+              {getLocation(item.raw, isPremium)}
             </Typography>
           </Stack>
 
@@ -405,55 +413,29 @@ function ListingCard({ item, navigate, index, isPremium }) {
               </Typography>
             </Box>
 
-            {!isPremium ? (
-              <Button
-                onClick={() => navigate("/subscription")}
-                startIcon={<LockRoundedIcon sx={{ fontSize: 16 }} />}
-                sx={{
-                  minHeight: 40,
-                  px: 2.2,
-                  borderRadius: "12px",
-                  textTransform: "none",
-                  fontWeight: 800,
-                  fontSize: "0.85rem",
-                  color: "#ffffff",
-                  background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                  boxShadow: "0 6px 18px rgba(99,102,241,0.35)",
-                  "&:hover": {
-                    background: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
-                  },
-                }}
-              >
-                Unlock ₹299
-              </Button>
-            ) : (
-              <Button
-                onClick={() =>
-                  navigate(
-                    item.itemType === "property"
-                      ? "/properties/" + item.id
-                      : "/vehicles/" + item.id
-                  )
-                }
-                endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
-                sx={{
-                  minHeight: 42,
-                  px: 2.2,
-                  borderRadius: "14px",
-                  textTransform: "none",
-                  fontWeight: 800,
-                  fontSize: "0.84rem",
-                  color: "#ffffff",
-                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0b5d56 100%)`,
-                  boxShadow: "0 6px 18px rgba(15,118,110,0.25)",
-                  "&:hover": {
-                    background: "linear-gradient(135deg, #0b5d56 0%, #084842 100%)",
-                  },
-                }}
-              >
-                View Details
-              </Button>
-            )}
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(targetUrl);
+              }}
+              endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
+              sx={{
+                minHeight: 40,
+                px: 2.2,
+                borderRadius: "12px",
+                textTransform: "none",
+                fontWeight: 800,
+                fontSize: "0.85rem",
+                color: "#ffffff",
+                background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0b5d56 100%)`,
+                boxShadow: "0 6px 18px rgba(15,118,110,0.25)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #0b5d56 0%, #084842 100%)",
+                },
+              }}
+            >
+              View Details
+            </Button>
           </Stack>
 
         </Box>

@@ -16,6 +16,7 @@ import DeleteOutlineRoundedIcon  from '@mui/icons-material/DeleteOutlineRounded'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useAppState }           from '../hooks/useAppState'
 import { formatCurrency }        from '../utils/formatters'
+import { getDisplayCity }        from '../utils/permissions'
 
 export default function VehicleCard({ item, editUrl, onDelete }) {
   const { user } = useAppState()
@@ -33,6 +34,10 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
   )
   const locked = !hasFullAccess && !editUrl
   const detailUrl = `/vehicles/${item.id}`
+  const displayCity = getDisplayCity(item)
+  const locationLabel = hasFullAccess
+    ? (item.location || item.city || displayCity || 'Karnataka')
+    : (displayCity || 'Karnataka')
   const itemPrice = item.price ?? item.expectedPrice ?? item.expected_price
 
   // Format status badge if this is an owner/management view
@@ -84,7 +89,16 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
             component="img"
             src={item.images[0]}
             alt={item.title}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease', '&:hover': { transform: 'scale(1.04)' } }}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              filter: locked ? 'blur(6px)' : 'none',
+              transform: locked ? 'scale(1.08)' : 'scale(1)',
+              transition: 'transform 0.4s ease, filter 0.4s ease',
+              '&:hover': { transform: locked ? 'scale(1.1)' : 'scale(1.04)' },
+            }}
           />
         ) : (
           <Box
@@ -114,6 +128,27 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
             <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>
               No Image
             </Typography>
+          </Box>
+        )}
+
+        {locked && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(15,23,42,0.45)',
+              backdropFilter: 'blur(3px)',
+              color: '#fff',
+            }}
+          >
+            <LockRoundedIcon sx={{ fontSize: 24, mb: 0.5 }} />
+            <Typography sx={{ fontSize: '0.78rem', fontWeight: 800 }}>Photos Locked</Typography>
+            <Typography sx={{ fontSize: '0.68rem', opacity: 0.88 }}>Click to view details</Typography>
           </Box>
         )}
 
@@ -255,7 +290,7 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                 textOverflow: 'ellipsis',
               }}
             >
-              {item.location || 'Karnataka'}
+              {locationLabel}
             </Typography>
           </Stack>
 
@@ -317,23 +352,25 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
             </Box>
 
             {locked ? (
-              <Box
+              <Button
+                component={RouterLink}
+                to={detailUrl}
+                size="small"
+                startIcon={<VisibilityRoundedIcon sx={{ fontSize: '14px !important' }} />}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.4,
-                  py: 0.65,
                   borderRadius: '10px',
-                  background: '#FFFBEB',
-                  border: '1px solid #FDE68A',
+                  fontWeight: 800,
+                  fontSize: '0.74rem',
+                  bgcolor: '#7C3AED',
+                  color: '#FFFFFF',
+                  px: 1.5,
+                  py: 0.6,
+                  boxShadow: 'none',
+                  '&:hover': { bgcolor: '#6D28D9' },
                 }}
               >
-                <LockRoundedIcon sx={{ fontSize: 13, color: '#F59E0B' }} />
-                <Typography sx={{ fontSize: '0.7rem', color: '#D97706', fontWeight: 700 }}>
-                  Locked
-                </Typography>
-              </Box>
+                Details
+              </Button>
             ) : (editUrl || onDelete) ? (
               <Stack direction="row" spacing={1} alignItems="center">
                 {editUrl && (

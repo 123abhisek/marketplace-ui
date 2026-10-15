@@ -1,7 +1,8 @@
 // src/components/FeaturedListings.jsx
 
 import { useCallback, useEffect, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { getDisplayCity } from "../utils/permissions";
 import {
   Box,
   Button,
@@ -128,6 +129,7 @@ function getFirstImage(images) {
 
 function toCard(raw, kind, fallbackId) {
   const item = raw && typeof raw === "object" ? raw : {};
+  const city = getDisplayCity(item);
 
   if (kind === "Property") {
     const tag = PROP_TAG[item.propertyType] ?? PROP_TAG.Residential;
@@ -147,7 +149,7 @@ function toCard(raw, kind, fallbackId) {
       tag: tag.label,
       tagIcon: tag.icon,
       title: item.title || item.name || "Property listing",
-      location: item.location || item.city || "",
+      location: city || item.location || item.city || "",
       price: item.expectedPrice ?? item.expected_price ?? item.price,
       meta: meta || item.propertyType || "",
       metaIcon: "sqft",
@@ -175,7 +177,7 @@ function toCard(raw, kind, fallbackId) {
       item.title ||
       item.name ||
       `${item.brand || ""} ${item.model || "Vehicle"}`.trim(),
-    location: item.location || item.city || "",
+    location: city || item.location || item.city || "",
     price: item.expectedPrice ?? item.expected_price ?? item.price,
     meta,
     metaIcon: "km",
@@ -261,6 +263,8 @@ function ListingCard({ item, user, isLoggedIn }) {
   const safeItem = item && typeof item === "object" ? item : {};
   const cfg = TYPE[safeItem.type] ?? TYPE.Property;
 
+  const navigate = useNavigate();
+
   const isPremiumUser = Boolean(
     user?.isPremium || user?.is_premium || user?.ispremium,
   );
@@ -274,7 +278,7 @@ function ListingCard({ item, user, isLoggedIn }) {
   const locked =
     !isPremiumUser && !isAdminUser && Boolean(safeItem.isPremiumOnly);
 
-  const detailPath = `/dashboard/${
+  const detailPath = `/${
     safeItem.type === "Property" ? "properties" : "vehicles"
   }/${safeItem.id}`;
 
@@ -301,6 +305,7 @@ function ListingCard({ item, user, isLoggedIn }) {
 
   return (
     <Card
+      onClick={() => navigate(detailPath)}
       sx={{
         width: "100%",
         maxWidth: 340,
@@ -313,6 +318,7 @@ function ListingCard({ item, user, isLoggedIn }) {
         background: "#fff",
         border: "1px solid rgba(226,232,240,.95)",
         boxShadow: "0 10px 30px rgba(15,23,42,.055)",
+        cursor: "pointer",
         transition: "transform .22s, box-shadow .22s",
         "&:hover": {
           transform: "translateY(-5px)",
@@ -340,6 +346,9 @@ function ListingCard({ item, user, isLoggedIn }) {
               width: "100%",
               height: "100%",
               objectFit: "cover",
+              filter: locked ? "blur(6px)" : "none",
+              transform: locked ? "scale(1.08)" : "none",
+              transition: "transform .4s ease, filter .4s ease",
             }}
           />
         ) : (
@@ -413,7 +422,10 @@ function ListingCard({ item, user, isLoggedIn }) {
 
             <IconButton
               size="small"
-              onClick={() => setLiked((value) => !value)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLiked((value) => !value);
+              }}
               sx={{
                 width: 32,
                 height: 32,
@@ -457,7 +469,7 @@ function ListingCard({ item, user, isLoggedIn }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(15,23,42,.16)",
+              background: "rgba(15,23,42,.45)",
               backdropFilter: "blur(4px)",
             }}
           >
@@ -475,7 +487,7 @@ function ListingCard({ item, user, isLoggedIn }) {
               <Typography
                 sx={{ fontSize: ".82rem", fontWeight: 900, color: "#fff" }}
               >
-                Premium only
+                Photos Locked
               </Typography>
               <Typography
                 sx={{
@@ -484,7 +496,7 @@ function ListingCard({ item, user, isLoggedIn }) {
                   color: "rgba(255,255,255,.88)",
                 }}
               >
-                Unlock full details and pricing
+                Click to view listing details
               </Typography>
             </Box>
           </Box>
@@ -593,39 +605,22 @@ function ListingCard({ item, user, isLoggedIn }) {
                 </Typography>
               </Box>
 
-              {locked ? (
-                <Button
-                  component={RouterLink}
-                  to="/subscription"
-                  size="small"
-                  startIcon={<LockRoundedIcon />}
-                  sx={{
-                    borderRadius: "12px",
-                    fontWeight: 900,
-                    textTransform: "none",
-                    background: "linear-gradient(135deg,#7c6cff,#5e87ff)",
-                    color: "#fff",
-                  }}
-                >
-                  Unlock ₹299
-                </Button>
-              ) : (
-                <Button
-                  component={RouterLink}
-                  to={isLoggedIn ? detailPath : "/login"}
-                  endIcon={<ArrowOutwardRoundedIcon sx={{ fontSize: 16 }} />}
-                  sx={{
-                    borderRadius: "12px",
-                    fontWeight: 900,
-                    textTransform: "none",
-                    color: cfg.accent,
-                    background: cfg.accentLight,
-                    border: `1px solid ${cfg.accentBorder}`,
-                  }}
-                >
-                  {isLoggedIn ? "View details" : "Login to view"}
-                </Button>
-              )}
+              <Button
+                component={RouterLink}
+                to={detailPath}
+                onClick={(e) => e.stopPropagation()}
+                endIcon={<ArrowOutwardRoundedIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  borderRadius: "12px",
+                  fontWeight: 900,
+                  textTransform: "none",
+                  color: cfg.accent,
+                  background: cfg.accentLight,
+                  border: `1px solid ${cfg.accentBorder}`,
+                }}
+              >
+                View details
+              </Button>
             </Stack>
           </Box>
 
