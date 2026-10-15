@@ -1560,12 +1560,37 @@ export default function VehicleDetailPage() {
                 </Box>
 
                 <Box sx={{ px: 3, py: 2.5 }}>
-                  <BookNowButton
-                    vehicleId={vehicle.id || id}
-                    amount={100}
-                    label="Book This Vehicle"
-                    onSuccess={() => navigate("/dashboard/my-bookings")}
-                  />
+                  {canView ? (
+                    <BookNowButton
+                      vehicleId={vehicle.id || id}
+                      amount={100}
+                      label="Book This Vehicle"
+                      onSuccess={() => navigate("/dashboard/my-bookings")}
+                    />
+                  ) : (
+                    <Button
+                      fullWidth
+                      component={RouterLink}
+                      to="/subscription"
+                      variant="outlined"
+                      startIcon={<LockRoundedIcon sx={{ fontSize: 18 }} />}
+                      sx={{
+                        borderRadius: "13px",
+                        py: 1.4,
+                        fontWeight: 800,
+                        fontSize: "0.9rem",
+                        borderColor: "rgba(15,118,110,0.3)",
+                        color: "#0f766e",
+                        background: "rgba(15,118,110,0.04)",
+                        "&:hover": {
+                          borderColor: "#0f766e",
+                          background: "rgba(15,118,110,0.08)",
+                        },
+                      }}
+                    >
+                      Book This Vehicle (Premium Only)
+                    </Button>
+                  )}
 
                   {canView ? (
                     vehicle.contact && (

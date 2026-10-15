@@ -1,5 +1,5 @@
-// src/components/BookNowButton.jsx
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -8,7 +8,9 @@ import {
   Snackbar,
 } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import { initiateBooking } from "../services/bookingService";
+import { useAppState } from "../hooks/useAppState";
 
 export default function BookNowButton({
   propertyId,
@@ -22,6 +24,19 @@ export default function BookNowButton({
   onSuccess,
   onError,
 }) {
+  const navigate = useNavigate();
+  const { user } = useAppState();
+
+  const isPremium = Boolean(
+    user?.isPremium ||
+    user?.is_premium ||
+    user?.role === "premium" ||
+    user?.role === "admin" ||
+    user?.role === "seller" ||
+    user?.is_admin ||
+    user?.isAdmin
+  );
+
   const [loading, setLoading] = useState(false);
   const [lastBooked, setLastBooked] = useState(false);
 
@@ -54,6 +69,18 @@ export default function BookNowButton({
   };
 
   const handleBookNow = async () => {
+    if (!user) {
+      showToast("Please log in to book this listing.", "error");
+      setTimeout(() => navigate("/login"), 1000);
+      return;
+    }
+
+    if (!isPremium) {
+      showToast("Booking is reserved for Premium members. Please upgrade your plan.", "error");
+      setTimeout(() => navigate("/subscription"), 1000);
+      return;
+    }
+
     if (isInvalidProps) {
       showToast("Pass either propertyId or vehicleId", "error");
       return;
@@ -101,6 +128,33 @@ export default function BookNowButton({
           transform: "none",
         }}
       />
+    );
+  }
+
+  if (!isPremium) {
+    return (
+      <Button
+        fullWidth
+        variant="outlined"
+        onClick={() => navigate("/subscription")}
+        startIcon={<LockRoundedIcon sx={{ fontSize: 18 }} />}
+        sx={{
+          borderRadius: "12px",
+          py: 1.45,
+          fontWeight: 800,
+          fontSize: "0.95rem",
+          textTransform: "none",
+          borderColor: "rgba(15,118,110,0.35)",
+          color: "#0f766e",
+          background: "rgba(15,118,110,0.04)",
+          "&:hover": {
+            borderColor: "#0f766e",
+            background: "rgba(15,118,110,0.08)",
+          },
+        }}
+      >
+        {label} (Premium Only)
+      </Button>
     );
   }
 

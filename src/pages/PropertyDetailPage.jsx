@@ -313,14 +313,28 @@ export default function PropertyDetailPage() {
                 ) : (
                   <Stack spacing={1.5} sx={{ mb: 3 }}>
                     <Button fullWidth variant="contained" component={RouterLink} to="/subscription" startIcon={<LockRoundedIcon />} sx={{ borderRadius: "14px", py: 1.8, fontWeight: 900, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 8px 24px rgba(15,118,110,0.32)" }}>Unlock Seller Contact & Photos — ₹299</Button>
-                    <BookNowButton
-                      propertyId={id}
-                      property={property}
-                      amount={Number(property.price) || 1}
-                      label="Book a Site Visit"
-                      onSuccess={() => navigate("/dashboard/my-bookings")}
-                    />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", textAlign: "center" }}>Premium unlocks direct phone number, WhatsApp contact, exact address & photo gallery</Typography>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      component={RouterLink}
+                      to="/subscription"
+                      startIcon={<LockRoundedIcon sx={{ fontSize: 18 }} />}
+                      sx={{
+                        borderRadius: "14px",
+                        py: 1.4,
+                        fontWeight: 800,
+                        borderColor: "rgba(15,118,110,0.3)",
+                        color: TEAL,
+                        background: "rgba(15,118,110,0.04)",
+                        "&:hover": {
+                          borderColor: TEAL,
+                          background: "rgba(15,118,110,0.08)",
+                        },
+                      }}
+                    >
+                      Book a Site Visit (Premium Only)
+                    </Button>
+                    <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", textAlign: "center" }}>Upgrade to Premium to book site visits, view exact address, photos, and direct seller contacts</Typography>
                   </Stack>
                 )}
                 <Box sx={{ borderRadius: "16px", background: TEAL_LIGHT, border: "1px solid rgba(15,118,110,0.2)", p: 2.5 }}>
