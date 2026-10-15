@@ -30,6 +30,7 @@ import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import { propertyService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
+import { canViewPremiumDetails, getDisplayCity } from "../utils/permissions";
 import {
   formatLandArea,
   formatBuiltupArea,
@@ -73,10 +74,8 @@ export default function PropertyDetailPage() {
   const [error, setError] = useState("");
   const [activeImg, setActiveImg] = useState(0);
 
-  const isPremium = Boolean(
-    user?.isPremium || user?.is_premium || user?.role === "premium" ||
-    user?.role === "admin" || user?.role === "seller"
-  );
+  const ownerId = property?.user_id || property?.owner_id || property?.owner?.id;
+  const isPremium = canViewPremiumDetails(user, ownerId);
 
   const fetchProperty = useCallback(async () => {
     setLoading(true); setError("");
@@ -119,19 +118,25 @@ export default function PropertyDetailPage() {
     ? getLandConversionsPreview(landParsed.value, landParsed.unit)
     : null;
 
+  const displayCity = getDisplayCity(property);
+  const displayLocation = isPremium ? (property.location || displayCity) : displayCity;
+
   const detailRows = [
     { label: "Property Type", value: property.property_type },
     { label: "Apartment / Project", value: property.apartment_name },
-    { label: "Location", value: property.location },
+    { label: "Location", value: isPremium ? property.location : `${displayCity} (Upgrade to see full address)` },
     { label: "Floor", value: property.floor },
     { label: "Total Rooms", value: property.rooms },
     { label: "Bedrooms", value: property.bedrooms },
     { label: "Built-up Area", value: formatBuiltupArea(property.area) },
     { label: "Land Area", value: formatLandArea(property.land_area) },
     { label: "Land Equivalents", value: landEquivalent },
-    { label: "Crops Grown", value: property.crops_grown },
+    { label: "Additional Dimensions", value: property.additional_dimensions_details },
     { label: "Rent / Lease", value: property.rent_lease },
-    { label: "Contact", value: isPremium ? contactNumber : "Premium Only" },
+    { label: "Rent Advance Amount", value: property.rent_advance_amount ? formatCurrency(property.rent_advance_amount) : null },
+    { label: "Lease Duration", value: property.lease_duration_years ? `${property.lease_duration_years} Years` : null },
+    { label: "Crops Grown", value: property.crops_grown },
+    { label: "Contact", value: isPremium ? contactNumber : "Locked (Premium Members Only)" },
     { label: "Status", value: property.status || "Active" },
   ].filter(r => r.value);
 
@@ -166,23 +171,81 @@ export default function PropertyDetailPage() {
           <Grid container spacing={{ xs: 3, md: 4 }}>
             {/* LEFT: Gallery */}
             <Grid item xs={12} md={7}>
-              <Box sx={{ borderRadius: "20px", overflow: "hidden", position: "relative", background: "#1E293B", boxShadow: "0 8px 32px rgba(15,23,42,0.12)", aspectRatio: "16/9" }}>
-                <Box component="img" src={images[activeImg]} alt={property.title} onError={e => { e.target.src = PLACEHOLDER; }} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                {images.length > 1 && (
-                  <>
-                    <IconButton onClick={() => setActiveImg(p => (p - 1 + images.length) % images.length)} sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronLeftRoundedIcon /></IconButton>
-                    <IconButton onClick={() => setActiveImg(p => (p + 1) % images.length)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronRightRoundedIcon /></IconButton>
-                  </>
-                )}
-                <Box sx={{ position: "absolute", bottom: 12, left: 12, background: "rgba(15,23,42,0.65)", color: "#fff", borderRadius: "8px", px: 1.5, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}>{activeImg + 1} / {images.length}</Box>
-              </Box>
-              {images.length > 1 && (
-                <Stack direction="row" spacing={1.5} sx={{ mt: 2, overflowX: "auto", pb: 0.5 }}>
-                  {images.map((img, idx) => (
-                    <Box key={idx} component="img" src={img} alt={"thumb-" + (idx + 1)} onError={e => { e.target.src = PLACEHOLDER; }} onClick={() => setActiveImg(idx)}
-                      sx={{ width: 80, height: 60, minWidth: 80, borderRadius: "10px", objectFit: "cover", cursor: "pointer", border: activeImg === idx ? "3px solid " + TEAL : "3px solid transparent", opacity: activeImg === idx ? 1 : 0.65, transition: "all 0.15s ease" }} />
-                  ))}
-                </Stack>
+              {isPremium ? (
+                <>
+                  <Box sx={{ borderRadius: "20px", overflow: "hidden", position: "relative", background: "#1E293B", boxShadow: "0 8px 32px rgba(15,23,42,0.12)", aspectRatio: "16/9" }}>
+                    <Box component="img" src={images[activeImg]} alt={property.title} onError={e => { e.target.src = PLACEHOLDER; }} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    {images.length > 1 && (
+                      <>
+                        <IconButton onClick={() => setActiveImg(p => (p - 1 + images.length) % images.length)} sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronLeftRoundedIcon /></IconButton>
+                        <IconButton onClick={() => setActiveImg(p => (p + 1) % images.length)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}><ChevronRightRoundedIcon /></IconButton>
+                      </>
+                    )}
+                    <Box sx={{ position: "absolute", bottom: 12, left: 12, background: "rgba(15,23,42,0.65)", color: "#fff", borderRadius: "8px", px: 1.5, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}>{activeImg + 1} / {images.length}</Box>
+                  </Box>
+                  {images.length > 1 && (
+                    <Stack direction="row" spacing={1.5} sx={{ mt: 2, overflowX: "auto", pb: 0.5 }}>
+                      {images.map((img, idx) => (
+                        <Box key={idx} component="img" src={img} alt={"thumb-" + (idx + 1)} onError={e => { e.target.src = PLACEHOLDER; }} onClick={() => setActiveImg(idx)}
+                          sx={{ width: 80, height: 60, minWidth: 80, borderRadius: "10px", objectFit: "cover", cursor: "pointer", border: activeImg === idx ? "3px solid " + TEAL : "3px solid transparent", opacity: activeImg === idx ? 1 : 0.65, transition: "all 0.15s ease" }} />
+                      ))}
+                    </Stack>
+                  )}
+                </>
+              ) : (
+                <Box
+                  sx={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    position: "relative",
+                    background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
+                    aspectRatio: "16/9",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 4,
+                    textAlign: "center",
+                    boxShadow: "0 8px 32px rgba(15,23,42,0.12)",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "20px",
+                      background: "rgba(15,118,110,0.25)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 2,
+                    }}
+                  >
+                    <LockRoundedIcon sx={{ fontSize: 32, color: "#14B8A6" }} />
+                  </Box>
+                  <Typography variant="h6" fontWeight={900} sx={{ color: "#fff", mb: 0.8 }}>
+                    Listing Photos Locked
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", color: "#94A3B8", maxWidth: 380, mb: 2.5, lineHeight: 1.5 }}>
+                    Photos and detailed media are reserved for Premium members. Upgrade now to view full photos, floor plans, and seller contacts.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    component={RouterLink}
+                    to="/subscription"
+                    startIcon={<WorkspacePremiumRoundedIcon />}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 3.5,
+                      py: 1.2,
+                      fontWeight: 800,
+                      background: "linear-gradient(135deg, #0F766E, #0D6B63)",
+                      boxShadow: "0 4px 18px rgba(15,118,110,0.4)",
+                    }}
+                  >
+                    Unlock Photos — ₹299
+                  </Button>
+                </Box>
               )}
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 3 }}>
                 {[
@@ -202,14 +265,29 @@ export default function PropertyDetailPage() {
             <Grid item xs={12} md={5}>
               <Box sx={{ position: { md: "sticky" }, top: { md: 80 } }}>
                 <Typography variant="h4" fontWeight={900} sx={{ color: "#0F172A", letterSpacing: "-0.03em", lineHeight: 1.2, mb: 1.5, fontSize: { xs: "1.5rem", md: "2rem" } }}>{property.title}</Typography>
-                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 2.5 }}>
+                <Stack direction="row" alignItems="center" spacing={0.8} sx={{ mb: 2.5, flexWrap: "wrap", gap: 1 }}>
                   <PlaceRoundedIcon sx={{ fontSize: 20, color: "#EF4444" }} />
-                  <Typography sx={{ fontSize: "0.9rem", color: "#475569", fontWeight: 600 }}>{property.location || "Location not specified"}</Typography>
+                  <Typography sx={{ fontSize: "0.9rem", color: "#475569", fontWeight: 600 }}>{displayLocation}</Typography>
+                  {!isPremium && (
+                    <Chip
+                      size="small"
+                      icon={<LockRoundedIcon sx={{ fontSize: "13px !important" }} />}
+                      label="City visible • Full address locked"
+                      sx={{
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        background: "#FEF3C7",
+                        color: "#B45309",
+                        border: "1px solid #FDE68A",
+                        height: 22,
+                      }}
+                    />
+                  )}
                 </Stack>
                 <Paper elevation={0} sx={{ borderRadius: "20px", border: "2px solid " + TEAL, p: 3, mb: 3, background: "linear-gradient(135deg, " + TEAL_LIGHT + " 0%, #ECFEFF 100%)" }}>
                   <Typography sx={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600, mb: 0.5, textTransform: "uppercase", letterSpacing: "0.06em" }}>Listing Price</Typography>
-                  <Typography variant="h3" fontWeight={900} sx={{ color: TEAL, letterSpacing: "-0.04em", lineHeight: 1, mb: 0.75, fontSize: { xs: "2rem", md: "2.5rem" } }}>{isPremium ? priceStr : "Unlock to View"}</Typography>
-                  <Typography sx={{ fontSize: "0.76rem", color: "#64748B" }}>{isPremium ? "Inclusive of all applicable charges" : "Upgrade to Premium to see price and contact"}</Typography>
+                  <Typography variant="h3" fontWeight={900} sx={{ color: TEAL, letterSpacing: "-0.04em", lineHeight: 1, mb: 0.75, fontSize: { xs: "2rem", md: "2.5rem" } }}>{priceStr}</Typography>
+                  <Typography sx={{ fontSize: "0.76rem", color: "#64748B" }}>{property.rent_lease ? `${property.rent_lease} • ` : ""}Inclusive of all applicable charges</Typography>
                 </Paper>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
                   <SpecChip icon={<BedRoundedIcon />} label="Bedrooms" value={property.bedrooms} />
@@ -232,9 +310,16 @@ export default function PropertyDetailPage() {
                     <Button fullWidth variant="text" component="a" href={"tel:" + contactNumber} startIcon={<PhoneRoundedIcon />} sx={{ borderRadius: "14px", py: 1.2, fontWeight: 700, color: "#475569" }}>Call: {contactNumber}</Button>
                   </Stack>
                 ) : (
-                  <Stack spacing={1} sx={{ mb: 3 }}>
-                    <Button fullWidth variant="contained" component={RouterLink} to="/subscription" startIcon={<LockRoundedIcon />} sx={{ borderRadius: "14px", py: 1.8, fontWeight: 900, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 8px 24px rgba(15,118,110,0.32)" }}>Unlock Full Details - Rs.299</Button>
-                    <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", textAlign: "center" }}>Premium includes price, contact and full listing details</Typography>
+                  <Stack spacing={1.5} sx={{ mb: 3 }}>
+                    <Button fullWidth variant="contained" component={RouterLink} to="/subscription" startIcon={<LockRoundedIcon />} sx={{ borderRadius: "14px", py: 1.8, fontWeight: 900, background: "linear-gradient(135deg, " + TEAL + ", " + TEAL_DARK + ")", boxShadow: "0 8px 24px rgba(15,118,110,0.32)" }}>Unlock Seller Contact & Photos — ₹299</Button>
+                    <BookNowButton
+                      propertyId={id}
+                      property={property}
+                      amount={Number(property.price) || 1}
+                      label="Book a Site Visit"
+                      onSuccess={() => navigate("/dashboard/my-bookings")}
+                    />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", textAlign: "center" }}>Premium unlocks direct phone number, WhatsApp contact, exact address & photo gallery</Typography>
                   </Stack>
                 )}
                 <Box sx={{ borderRadius: "16px", background: TEAL_LIGHT, border: "1px solid rgba(15,118,110,0.2)", p: 2.5 }}>
@@ -254,6 +339,14 @@ export default function PropertyDetailPage() {
           <Box sx={{ mt: 5 }}>
             <Grid container spacing={4}>
               <Grid item xs={12} md={8}>
+                {property.description && (
+                  <Card elevation={0} sx={{ borderRadius: "20px", border: "1px solid #E2E8F0", p: 3, mb: 3, background: "#fff" }}>
+                    <Typography variant="h6" fontWeight={900} sx={{ color: "#1E293B", mb: 1 }}>About this Property</Typography>
+                    <Typography sx={{ fontSize: "0.92rem", color: "#475569", lineHeight: 1.8, whiteSpace: "pre-line" }}>
+                      {property.description}
+                    </Typography>
+                  </Card>
+                )}
                 <Card elevation={0} sx={{ borderRadius: "20px", border: "1px solid #E2E8F0", overflow: "hidden", position: "relative" }}>
                   <Box sx={{ p: 3, borderBottom: "1px solid #F1F5F9" }}>
                     <Typography variant="h6" fontWeight={900} sx={{ color: "#1E293B" }}>Property Details</Typography>

@@ -34,9 +34,11 @@ import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import { vehicleService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
+import { canViewPremiumDetails, getDisplayCity } from "../utils/permissions";
 import BookNowButton from "../components/BookNowButton";
 
 function SpecRow({ label, value, mono }) {
@@ -316,6 +318,73 @@ function PhotoGrid({ images, title, onOpen }) {
   );
 }
 
+function LockedPhotoBanner() {
+  return (
+    <Box
+      sx={{
+        mb: 4.5,
+        borderRadius: "20px",
+        overflow: "hidden",
+        position: "relative",
+        background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
+        height: { xs: 260, sm: 360, md: 420 },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 4,
+        textAlign: "center",
+        boxShadow: "0 8px 32px rgba(15,23,42,0.12)",
+      }}
+    >
+      <Box
+        sx={{
+          width: 64,
+          height: 64,
+          borderRadius: "20px",
+          background: "rgba(15,118,110,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 2,
+        }}
+      >
+        <LockRoundedIcon sx={{ fontSize: 32, color: "#14B8A6" }} />
+      </Box>
+      <Typography variant="h5" fontWeight={900} sx={{ color: "#fff", mb: 0.8 }}>
+        Vehicle Photos Locked
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.88rem",
+          color: "#94A3B8",
+          maxWidth: 420,
+          mb: 2.5,
+          lineHeight: 1.5,
+        }}
+      >
+        Exterior, interior, and inspection photos are available exclusively to Premium members.
+      </Typography>
+      <Button
+        variant="contained"
+        component={RouterLink}
+        to="/subscription"
+        startIcon={<WorkspacePremiumRoundedIcon />}
+        sx={{
+          borderRadius: "12px",
+          px: 3.5,
+          py: 1.2,
+          fontWeight: 800,
+          background: "linear-gradient(135deg, #0F766E, #0D6B63)",
+          boxShadow: "0 4px 18px rgba(15,118,110,0.4)",
+        }}
+      >
+        Unlock Photos with Premium — ₹299
+      </Button>
+    </Box>
+  );
+}
+
 function Lightbox({ images, active, onClose, onPrev, onNext }) {
   useEffect(() => {
     const h = (e) => {
@@ -551,6 +620,9 @@ export default function VehicleDetailPage() {
   const isNew = vehicle?.condition?.toLowerCase() === "new";
   const ownerId = vehicle?.owner_id ?? vehicle?.owner?.id ?? vehicle?.user_id;
   const isOwner = Boolean(user?.id && ownerId && user.id === ownerId);
+  const canView = canViewPremiumDetails(user, ownerId);
+  const displayCity = getDisplayCity(vehicle);
+  const displayLocation = canView ? (locationStr || displayCity) : displayCity;
 
   if (loading) {
     return (
@@ -887,23 +959,41 @@ export default function VehicleDetailPage() {
             )}
           </Stack>
 
-          {locationStr && (
-            <Stack direction="row" spacing={0.6} alignItems="center">
-              <PlaceRoundedIcon sx={{ fontSize: 15, color: "#94a3b8" }} />
+          {displayLocation && (
+            <Stack direction="row" spacing={0.8} alignItems="center" sx={{ flexWrap: "wrap", gap: 0.8 }}>
+              <PlaceRoundedIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
               <Typography
-                sx={{ fontSize: "0.87rem", color: "#64748b", fontWeight: 500 }}
+                sx={{ fontSize: "0.87rem", color: "#64748b", fontWeight: 600 }}
               >
-                {locationStr}
+                {displayLocation}
               </Typography>
+              {!canView && (
+                <Chip
+                  size="small"
+                  label="City visible • Full address locked"
+                  sx={{
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    background: "#FEF3C7",
+                    color: "#B45309",
+                    border: "1px solid #FDE68A",
+                    height: 20,
+                  }}
+                />
+              )}
             </Stack>
           )}
         </Box>
 
-        <PhotoGrid
-          images={images}
-          title={vehicle.title || vehicleName}
-          onOpen={openLightbox}
-        />
+        {canView ? (
+          <PhotoGrid
+            images={images}
+            title={vehicle.title || vehicleName}
+            onOpen={openLightbox}
+          />
+        ) : (
+          <LockedPhotoBanner />
+        )}
 
         <Grid container spacing={{ xs: 3, md: 5 }}>
           <Grid item xs={12} md={7}>
@@ -1018,8 +1108,8 @@ export default function VehicleDetailPage() {
                   }
                 />
                 <SpecRow label="Condition" value={vehicle.condition} />
-                <SpecRow label="Location" value={vehicle.location} />
-                <SpecRow label="City" value={vehicle.city} />
+                <SpecRow label="Location" value={canView ? vehicle.location : `${displayCity} (Upgrade for full address)`} />
+                <SpecRow label="City" value={vehicle.city || displayCity} />
                 <SpecRow label="State" value={vehicle.state} />
                 <SpecRow
                   label="Listed On"
@@ -1291,7 +1381,7 @@ export default function VehicleDetailPage() {
                   </Grid>
                 </Box>
 
-                {vehicle.contact && (
+                {vehicle.contact ? (
                   <Box
                     sx={{
                       px: 3,
@@ -1363,35 +1453,55 @@ export default function VehicleDetailPage() {
                             fontWeight: 500,
                           }}
                         >
-                          {vehicle.contact}
+                          {canView ? vehicle.contact : "•••••••••• (Premium Only)"}
                         </Typography>
                       </Box>
 
-                      <Button
-                        component="a"
-                        href={`tel:${vehicle.contact}`}
-                        variant="outlined"
-                        size="small"
-                        startIcon={<PhoneRoundedIcon sx={{ fontSize: 13 }} />}
-                        sx={{
-                          borderRadius: "9px",
-                          fontSize: "0.73rem",
-                          fontWeight: 700,
-                          py: 0.7,
-                          px: 1.4,
-                          borderColor: "rgba(15,118,110,0.3)",
-                          color: "#0f766e",
-                          "&:hover": {
-                            borderColor: "#0f766e",
-                            bgcolor: "rgba(15,118,110,0.04)",
-                          },
-                        }}
-                      >
-                        Call
-                      </Button>
+                      {canView ? (
+                        <Button
+                          component="a"
+                          href={`tel:${vehicle.contact}`}
+                          variant="outlined"
+                          size="small"
+                          startIcon={<PhoneRoundedIcon sx={{ fontSize: 13 }} />}
+                          sx={{
+                            borderRadius: "9px",
+                            fontSize: "0.73rem",
+                            fontWeight: 700,
+                            py: 0.7,
+                            px: 1.4,
+                            borderColor: "rgba(15,118,110,0.3)",
+                            color: "#0f766e",
+                            "&:hover": {
+                              borderColor: "#0f766e",
+                              bgcolor: "rgba(15,118,110,0.04)",
+                            },
+                          }}
+                        >
+                          Call
+                        </Button>
+                      ) : (
+                        <Button
+                          component={RouterLink}
+                          to="/subscription"
+                          variant="contained"
+                          size="small"
+                          sx={{
+                            borderRadius: "9px",
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            py: 0.7,
+                            px: 1.2,
+                            background: "linear-gradient(135deg, #0F766E, #0D6B63)",
+                            color: "#fff",
+                          }}
+                        >
+                          Unlock
+                        </Button>
+                      )}
                     </Stack>
                   </Box>
-                )}
+                ) : null}
 
                 <Box
                   sx={{
@@ -1457,32 +1567,53 @@ export default function VehicleDetailPage() {
                     onSuccess={() => navigate("/dashboard/my-bookings")}
                   />
 
-                  {vehicle.contact && (
+                  {canView ? (
+                    vehicle.contact && (
+                      <Button
+                        fullWidth
+                        component="a"
+                        href={`tel:${vehicle.contact}`}
+                        variant="outlined"
+                        startIcon={<PhoneRoundedIcon />}
+                        sx={{
+                          mt: 1.3,
+                          borderRadius: "13px",
+                          py: 1.4,
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          borderColor: "rgba(15,118,110,0.3)",
+                          color: "#0f766e",
+                          "&:hover": {
+                            borderColor: "#0f766e",
+                            bgcolor: "rgba(15,118,110,0.04)",
+                          },
+                        }}
+                      >
+                        Call Seller
+                      </Button>
+                    )
+                  ) : (
                     <Button
                       fullWidth
-                      component="a"
-                      href={`tel:${vehicle.contact}`}
-                      variant="outlined"
-                      startIcon={<PhoneRoundedIcon />}
+                      component={RouterLink}
+                      to="/subscription"
+                      variant="contained"
+                      startIcon={<LockRoundedIcon />}
                       sx={{
                         mt: 1.3,
                         borderRadius: "13px",
                         py: 1.4,
-                        fontWeight: 700,
+                        fontWeight: 800,
                         fontSize: "0.9rem",
-                        borderColor: "rgba(15,118,110,0.3)",
-                        color: "#0f766e",
-                        "&:hover": {
-                          borderColor: "#0f766e",
-                          bgcolor: "rgba(15,118,110,0.04)",
-                        },
+                        background: "linear-gradient(135deg, #0F766E, #0D6B63)",
+                        boxShadow: "0 4px 16px rgba(15,118,110,0.3)",
                       }}
                     >
-                      Call Seller
+                      Unlock Seller Contact — ₹299
                     </Button>
                   )}
 
-                  {!user?.isPremium && (
+                  {!canView && (
                     <Stack
                       direction="row"
                       spacing={0.7}

@@ -240,7 +240,21 @@ function mapItemToForm(item) {
     landArea: parsedLandArea.value,
     landAreaUnit: parsedLandArea.unit || "Acres",
     cropsGrown: item?.cropsGrown || item?.crops_grown || "",
-    rentLease: item?.rentLease || item?.rent_lease || "",
+    additionalDimensionsDetails: item?.additionalDimensionsDetails || item?.additional_dimensions_details || "",
+    description: item?.description || "",
+    rentLease: item?.rentLease || item?.rent_lease || "Sale",
+    rentAdvanceAmount:
+      item?.rentAdvanceAmount !== undefined && item?.rentAdvanceAmount !== null
+        ? String(item.rentAdvanceAmount)
+        : item?.rent_advance_amount !== undefined && item?.rent_advance_amount !== null
+        ? String(item.rent_advance_amount)
+        : "",
+    leaseDurationYears:
+      item?.leaseDurationYears !== undefined && item?.leaseDurationYears !== null
+        ? String(item.leaseDurationYears)
+        : item?.lease_duration_years !== undefined && item?.lease_duration_years !== null
+        ? String(item.lease_duration_years)
+        : "",
     vehicleNumber: item?.vehicleNumber || item?.vehicle_number || "",
     category: item?.category || item?.vehicleType || item?.vehicle_type || "",
     brand: item?.brand || "",
@@ -269,7 +283,17 @@ function buildPropertyUpdatePayload(form) {
     area: combinedArea,
     land_area: combinedLandArea,
     crops_grown: form.cropsGrown || undefined,
+    additional_dimensions_details: form.additionalDimensionsDetails?.trim() || undefined,
+    description: form.description?.trim() || undefined,
     rent_lease: form.rentLease || undefined,
+    rent_advance_amount:
+      form.rentLease === "Rent" && form.rentAdvanceAmount !== ""
+        ? Number(form.rentAdvanceAmount)
+        : undefined,
+    lease_duration_years:
+      form.rentLease === "Lease" && form.leaseDurationYears !== ""
+        ? Number(form.leaseDurationYears)
+        : undefined,
   };
 }
 
@@ -285,6 +309,7 @@ function buildVehicleUpdatePayload(form) {
     km_driven: form.kmDriven === "" ? undefined : Number(form.kmDriven),
     state: form.state || undefined,
     location: form.location || undefined,
+    description: form.description?.trim() || undefined,
     price: Number(form.price),
     contact: form.contactNumber || undefined,
   };
@@ -784,6 +809,28 @@ function EditDialogContent({
                     sx={inputSx}
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Additional Dimensions & Details"
+                    placeholder="e.g. 30 × 40 ft plot, east-facing entrance, carpet area details"
+                    value={editForm.additionalDimensionsDetails || ""}
+                    onChange={(e) => setField("additionalDimensionsDetails", e.target.value)}
+                    sx={inputSx}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Property Description"
+                    placeholder="Describe property features, condition, amenities, water supply..."
+                    value={editForm.description || ""}
+                    onChange={(e) => setField("description", e.target.value)}
+                    sx={inputSx}
+                  />
+                </Grid>
               </Grid>
             </CardContent>
           </Card>
@@ -809,13 +856,44 @@ function EditDialogContent({
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <TextField
+                    select
                     fullWidth
-                    label="Rent / Lease Details"
-                    value={editForm.rentLease}
+                    label="Transaction Type"
+                    value={editForm.rentLease || "Sale"}
                     onChange={(e) => setField("rentLease", e.target.value)}
                     sx={inputSx}
-                  />
+                    SelectProps={{ native: true }}
+                  >
+                    <option value="Sale">Sale</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Lease">Lease</option>
+                    <option value="Other">Other</option>
+                  </TextField>
                 </Grid>
+                {editForm.rentLease === "Rent" && (
+                  <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                      fullWidth
+                      label="Rent Advance Amount (₹)"
+                      placeholder="e.g. 50000"
+                      value={editForm.rentAdvanceAmount || ""}
+                      onChange={(e) => setField("rentAdvanceAmount", e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                )}
+                {editForm.rentLease === "Lease" && (
+                  <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                      fullWidth
+                      label="Lease Duration (Years)"
+                      placeholder="e.g. 3"
+                      value={editForm.leaseDurationYears || ""}
+                      onChange={(e) => setField("leaseDurationYears", e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                )}
               </Grid>
             </CardContent>
           </Card>
@@ -953,6 +1031,18 @@ function EditDialogContent({
                 description="Update asking price and contact number"
               />
               <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Vehicle Description"
+                    placeholder="Describe vehicle condition, features, service history, accessories..."
+                    value={editForm.description || ""}
+                    onChange={(e) => setField("description", e.target.value)}
+                    sx={inputSx}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth

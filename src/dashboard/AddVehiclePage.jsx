@@ -187,6 +187,7 @@ export default function AddVehiclePage() {
       rtoCode: "",
       kmDriven: "",
       location: "",
+      description: "",
       expectedPrice: "",
       contactNumber: user?.phone || user?.mobile || "",
     },
@@ -211,6 +212,7 @@ export default function AddVehiclePage() {
           rtoCode: v.rto_code || "",
           kmDriven: v.km_driven !== null && v.km_driven !== undefined ? String(v.km_driven) : "",
           location: v.location || "",
+          description: v.description || "",
           expectedPrice: v.price !== null && v.price !== undefined ? String(v.price) : "",
           contactNumber: v.contact || user?.phone || "",
         });
@@ -276,6 +278,7 @@ export default function AddVehiclePage() {
         rto_code: String(data.rtoCode ?? "").trim(),
         km_driven: String(data.kmDriven ?? "0").trim(),
         state: String(data.state ?? "").trim(),
+        description: String(data.description ?? "").trim(),
         images: allImages,
       };
 
@@ -517,6 +520,17 @@ export default function AddVehiclePage() {
                       placeholder="e.g. Indiranagar, Bengaluru"
                       control={control}
                       rules={{ required: "Location is required" }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <FormInput
+                      name="description"
+                      label="Vehicle Description"
+                      placeholder="Describe the vehicle condition, features, servicing history, accessories, insurance status (e.g. Well-maintained vehicle with clean interior, reverse camera, touchscreen system, recent servicing, valid insurance)..."
+                      control={control}
+                      multiline
+                      rows={3}
                     />
                   </Grid>
                 </Grid>

@@ -161,8 +161,12 @@ export default function AddPropertyPage() {
       landArea: "",
       landAreaUnit: "Acres",
       cropsGrown: "",
+      additionalDimensionsDetails: "",
+      description: "",
       expectedPrice: "",
       rentLease: "Sale",
+      rentAdvanceAmount: "",
+      leaseDurationYears: "",
       contactNumber: user?.phone || user?.mobile || "",
     },
   });
@@ -190,8 +194,12 @@ export default function AddPropertyPage() {
           landArea: parsedLandArea.value,
           landAreaUnit: parsedLandArea.unit || "Acres",
           cropsGrown: p.crops_grown || "",
+          additionalDimensionsDetails: p.additional_dimensions_details || "",
+          description: p.description || "",
           expectedPrice: p.price !== null && p.price !== undefined ? String(p.price) : "",
           rentLease: p.rent_lease || "Sale",
+          rentAdvanceAmount: p.rent_advance_amount !== null && p.rent_advance_amount !== undefined ? String(p.rent_advance_amount) : "",
+          leaseDurationYears: p.lease_duration_years !== null && p.lease_duration_years !== undefined ? String(p.lease_duration_years) : "",
           contactNumber: p.contact || user?.phone || "",
         });
 
@@ -216,8 +224,11 @@ export default function AddPropertyPage() {
   const propType = watch("propertyType");
   const watchLandArea = watch("landArea");
   const watchLandUnit = watch("landAreaUnit");
+  const watchRentLease = watch("rentLease");
   const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(propType);
   const isAgri = propType === "Agricultural";
+  const isRent = watchRentLease === "Rent";
+  const isLease = watchRentLease === "Lease";
 
   const onSubmit = async (data) => {
     setImageError("");
@@ -256,6 +267,9 @@ export default function AddPropertyPage() {
       const landAreaUnitVal = toStr(data.landAreaUnit) || "Acres";
       const combinedLandArea = landAreaVal ? `${landAreaVal} ${landAreaUnitVal}` : "";
 
+      const rentAdv = isRent && data.rentAdvanceAmount ? toFloatOrNull(data.rentAdvanceAmount) : null;
+      const leaseDur = isLease && data.leaseDurationYears ? toFloatOrNull(data.leaseDurationYears) : null;
+
       const payload = {
         title: toStr(data.title),
         property_type: toStr(data.propertyType),
@@ -267,7 +281,11 @@ export default function AddPropertyPage() {
         rooms: parseInt(String(data.rooms ?? "0"), 10) || 0,
         bedrooms: parseInt(String(data.bedrooms ?? "0"), 10) || 0,
         crops_grown: toStr(data.cropsGrown),
+        additional_dimensions_details: toStr(data.additionalDimensionsDetails),
+        description: toStr(data.description),
         rent_lease: toStr(data.rentLease),
+        rent_advance_amount: rentAdv,
+        lease_duration_years: leaseDur,
         area: combinedArea,
         land_area: combinedLandArea,
         images: [...existingUrls, ...base64Images],
@@ -434,6 +452,17 @@ export default function AddPropertyPage() {
                       }}
                     />
                   </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <FormInput
+                      name="description"
+                      label="Property Description"
+                      placeholder="Describe the property condition, key features, facilities, amenities (e.g. Spacious 2BHK with modular kitchen, lift, security, nearby bus stop)..."
+                      control={control}
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
                 </Grid>
               </CardContent>
             </Card>
@@ -444,7 +473,7 @@ export default function AddPropertyPage() {
                 <SectionHeader
                   icon={<FmdGoodRoundedIcon sx={{ fontSize: 20 }} />}
                   title="Property Details & Dimensions"
-                  description="Size, area, room counts, floor, and agricultural crops"
+                  description="Size, area, plot dimensions, room counts, floor, and agricultural crops"
                 />
                 <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
@@ -537,6 +566,15 @@ export default function AddPropertyPage() {
                     </Stack>
                   </Grid>
 
+                  <Grid size={{ xs: 12 }}>
+                    <FormInput
+                      name="additionalDimensionsDetails"
+                      label="Additional Dimensions / Property Details"
+                      placeholder="Enter additional property dimensions or details, such as 30 × 40 ft plot, east-facing entrance, or additional construction details."
+                      control={control}
+                    />
+                  </Grid>
+
                   {isResidential && (
                     <>
                       <Grid size={{ xs: 12, sm: 4 }}>
@@ -604,7 +642,7 @@ export default function AddPropertyPage() {
                 <SectionHeader
                   icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 20 }} />}
                   title="Pricing & Terms"
-                  description="Expected sale price or rental terms"
+                  description="Expected sale price, rent advance, or lease duration"
                 />
                 <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
@@ -612,12 +650,12 @@ export default function AddPropertyPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <FormInput
                       name="expectedPrice"
-                      label="Expected Price (₹) *"
-                      placeholder="e.g. 7500000"
+                      label={isRent ? "Monthly Rent (₹) *" : isLease ? "Lease Amount (₹) *" : "Expected Price (₹) *"}
+                      placeholder={isRent ? "e.g. 25000" : "e.g. 7500000"}
                       type="number"
                       control={control}
                       rules={{
-                        required: "Expected price is required",
+                        required: "Price is required",
                         validate: (v) => {
                           const n = parseFloat(v);
                           return (!isNaN(n) && n > 0) || "Price must be a valid amount greater than 0";
@@ -634,6 +672,46 @@ export default function AddPropertyPage() {
                       options={RENT_LEASE_OPTIONS}
                     />
                   </Grid>
+
+                  {/* Conditional: Rent Advance Amount */}
+                  {isRent && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <FormInput
+                        name="rentAdvanceAmount"
+                        label="Rent Advance Amount (₹)"
+                        placeholder="e.g. 50000"
+                        type="number"
+                        control={control}
+                        rules={{
+                          validate: (v) => {
+                            if (!v) return true;
+                            const n = parseFloat(v);
+                            return (!isNaN(n) && n >= 0) || "Advance amount cannot be negative";
+                          },
+                        }}
+                      />
+                    </Grid>
+                  )}
+
+                  {/* Conditional: Lease Duration */}
+                  {isLease && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <FormInput
+                        name="leaseDurationYears"
+                        label="Lease Duration (Years)"
+                        placeholder="e.g. 3 or 5"
+                        type="number"
+                        control={control}
+                        rules={{
+                          validate: (v) => {
+                            if (!v) return true;
+                            const n = parseFloat(v);
+                            return (!isNaN(n) && n > 0) || "Lease duration must be greater than 0";
+                          },
+                        }}
+                      />
+                    </Grid>
+                  )}
                 </Grid>
               </CardContent>
             </Card>
