@@ -7,6 +7,8 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   Collapse,
   Grid,
@@ -18,6 +20,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom'
 
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
@@ -32,9 +35,13 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 
 import { getMyBookings } from '../services/bookingService'
 import InvoiceDialog from '../components/InvoiceDialog'
+import { useAppState } from '../hooks/useAppState'
+import { isUserPremium } from '../utils/permissions'
 
 const FILTERS = ['All', 'Confirmed', 'Pending', 'Completed', 'Cancelled']
 
@@ -164,7 +171,7 @@ function DetailRow({ label, value, action, accent = false }) {
   )
 }
 
-function MetricCard({ label, value, bg, color, border }) {
+function MetricCard({ label, value, bg, color, border, loading }) {
   return (
     <Box
       sx={{
@@ -198,7 +205,11 @@ function MetricCard({ label, value, bg, color, border }) {
           lineHeight: 1,
         }}
       >
-        {value}
+        {loading ? (
+          <Skeleton variant="text" width={32} height={28} animation="wave" />
+        ) : (
+          value
+        )}
       </Typography>
     </Box>
   )
@@ -630,8 +641,9 @@ function BookingCardSkeleton() {
 }
 
 export default function MyBookingsPage() {
-
   const navigate = useNavigate()
+  const { user } = useAppState()
+  const isPremium = isUserPremium(user)
 
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -783,6 +795,74 @@ export default function MyBookingsPage() {
           </Alert>
         )}
 
+        {!isPremium && (
+          <Card
+            sx={{
+              mb: 3.5,
+              borderRadius: '24px',
+              background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F766E 100%)',
+              color: '#fff',
+              boxShadow: '0 12px 36px rgba(15,23,42,0.14)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems={{ md: 'center' }} justifyContent="space-between">
+                <Stack spacing={1.5} sx={{ maxWidth: 650 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip
+                      icon={<WorkspacePremiumRoundedIcon sx={{ fontSize: '16px !important', color: '#F59E0B !important' }} />}
+                      label="PREMIUM ONLY FEATURE"
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(245,158,11,0.2)',
+                        color: '#FCD34D',
+                        fontWeight: 800,
+                        fontSize: '0.72rem',
+                        border: '1px solid rgba(245,158,11,0.4)',
+                      }}
+                    />
+                    <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 600 }}>
+                      Direct Scheduling
+                    </Typography>
+                  </Stack>
+
+                  <Typography variant="h6" fontWeight={900} sx={{ color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+                    Booking Site Visits & Test Drives is Reserved for Premium Members
+                  </Typography>
+
+                  <Typography sx={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                    Non-premium members cannot book visits. Upgrade to EasyDeal Premium for ₹299 to schedule verified on-site visits with property owners, test drive vehicles, and receive dedicated on-ground agent support.
+                  </Typography>
+                </Stack>
+
+                <Button
+                  component={RouterLink}
+                  to="/subscription"
+                  variant="contained"
+                  size="medium"
+                  endIcon={<ArrowForwardRoundedIcon />}
+                  sx={{
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    px: 3,
+                    py: 1.25,
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 6px 20px rgba(245,158,11,0.35)',
+                    '&:hover': { background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)' },
+                  }}
+                >
+                  Upgrade to Premium — ₹299
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
+
         <Box
           sx={{
             mb: 3,
@@ -863,6 +943,7 @@ export default function MyBookingsPage() {
                 bg="#ffffff"
                 color="#0f172a"
                 border="#e2e8f0"
+                loading={loading}
               />
               <MetricCard
                 label="Confirmed"
@@ -870,6 +951,7 @@ export default function MyBookingsPage() {
                 bg="#f0fdf4"
                 color="#166534"
                 border="#bbf7d0"
+                loading={loading}
               />
               <MetricCard
                 label="Pending"
@@ -877,6 +959,7 @@ export default function MyBookingsPage() {
                 bg="#fffbeb"
                 color="#92400e"
                 border="#fde68a"
+                loading={loading}
               />
               <MetricCard
                 label="Completed"
@@ -884,6 +967,7 @@ export default function MyBookingsPage() {
                 bg="#ecfeff"
                 color="#155e75"
                 border="#a5f3fc"
+                loading={loading}
               />
               <MetricCard
                 label="Cancelled"
@@ -891,6 +975,7 @@ export default function MyBookingsPage() {
                 bg="#fef2f2"
                 color="#991b1b"
                 border="#fecaca"
+                loading={loading}
               />
             </Stack>
           </Stack>

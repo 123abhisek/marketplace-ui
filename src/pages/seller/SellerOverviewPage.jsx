@@ -1,4 +1,4 @@
-﻿// // src/pages/seller/SellerOverviewPage.jsx
+// // src/pages/seller/SellerOverviewPage.jsx
 // import React, { useCallback, useEffect, useMemo, useState } from "react";
 // import { Link as RouterLink } from "react-router-dom";
 // import {
@@ -575,10 +575,9 @@ export default function SellerOverviewPage() {
               {error}
             </Alert>
           )}
-          {loading && <LinearProgress sx={{ borderRadius: 4 }} />}
 
           {/* ── Executive Performance Summary Bar ── */}
-          <ExecutiveSummaryBar />
+          <ExecutiveSummaryBar loading={loading} />
 
           {/* ── 5 Seller Primary KPI Cards with Mini Sparklines ── */}
           <Grid container spacing={{ xs: 1.25, sm: 2 }}>
@@ -592,6 +591,7 @@ export default function SellerOverviewPage() {
                 sparkline={[{ v: 180 }, { v: 220 }, { v: 260 }, { v: 300 }, { v: 340 }]}
                 icon={<CurrencyRupeeRoundedIcon />}
                 color="#10B981"
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={2.4}>
@@ -604,6 +604,7 @@ export default function SellerOverviewPage() {
                 sparkline={[{ v: 80 }, { v: 95 }, { v: 110 }, { v: 125 }, { v: 142 }]}
                 icon={<ConfirmationNumberRoundedIcon />}
                 color="#2563EB"
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={2.4}>
@@ -616,6 +617,7 @@ export default function SellerOverviewPage() {
                 sparkline={[{ v: 120 }, { v: 140 }, { v: 160 }, { v: 175 }, { v: 185 }]}
                 icon={<StorefrontRoundedIcon />}
                 color="#0F766E"
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={2.4}>
@@ -628,6 +630,7 @@ export default function SellerOverviewPage() {
                 sparkline={[{ v: 26 }, { v: 28 }, { v: 29 }, { v: 31 }, { v: 32.5 }]}
                 icon={<TrendingUpRoundedIcon />}
                 color="#6366F1"
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={2.4}>
@@ -640,6 +643,7 @@ export default function SellerOverviewPage() {
                 sparkline={[{ v: 4 }, { v: 6 }, { v: 7 }, { v: 8 }, { v: 10 }]}
                 icon={<WorkspacePremiumRoundedIcon />}
                 color="#F59E0B"
+                loading={loading}
               />
             </Grid>
           </Grid>

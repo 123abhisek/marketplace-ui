@@ -1,51 +1,57 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
+  Badge,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   Divider,
+  Drawer,
   FormControl,
   Grid,
   IconButton,
   InputAdornment,
   MenuItem,
+  Pagination,
   Select,
   Skeleton,
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
-import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
-import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
-import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
-import CurrencyRupeeRoundedIcon from "@mui/icons-material/CurrencyRupeeRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import VillaRoundedIcon from "@mui/icons-material/VillaRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
-import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
-import LockRoundedIcon from "@mui/icons-material/LockRounded";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import AppsRoundedIcon from "@mui/icons-material/AppsRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
+
+import { useSearchParams } from "react-router-dom";
 import { propertyService, vehicleService } from "../services/api";
 import { useAppState } from "../hooks/useAppState";
-import { getDisplayCity } from "../utils/permissions";
-
+import { normalizeProperty, normalizeVehicle } from "../utils/mappers";
+import PropertyCard from "../components/PropertyCard";
+import VehicleCard from "../components/VehicleCard";
+import { SearchTrieIndex } from "../utils/searchTrie";
 
 const COLORS = {
-  pageBg: "#f5f7fb",
+  pageBg: "#f8fafc",
   surface: "#ffffff",
-  surfaceSoft: "#f8fafc",
+  surfaceSoft: "#f1f5f9",
   border: "rgba(15,23,42,0.08)",
-  borderStrong: "rgba(15,23,42,0.12)",
+  borderStrong: "rgba(15,23,42,0.14)",
   text: "#0f172a",
   muted: "#64748b",
   faint: "#94a3b8",
@@ -53,419 +59,142 @@ const COLORS = {
   primarySoft: "rgba(15,118,110,0.08)",
   blue: "#2563eb",
   blueSoft: "rgba(37,99,235,0.08)",
-  peach: "#ea7a4c",
-  peachSoft: "rgba(234,122,76,0.10)",
-  gold: "#c7921f",
-  goldSoft: "rgba(199,146,31,0.10)",
-  shadowSoft: "0 2px 10px rgba(15,23,42,0.04)",
-  shadow: "0 14px 36px rgba(15,23,42,0.08)",
+  purple: "#7c3aed",
+  purpleSoft: "rgba(124,58,237,0.08)",
+  shadowSoft: "0 2px 12px rgba(15,23,42,0.04)",
+  shadow: "0 12px 32px rgba(15,23,42,0.08)",
 };
 
-const cardSx = {
-  borderRadius: "22px",
-  background: COLORS.surface,
-  border: `1px solid ${COLORS.border}`,
-  boxShadow: COLORS.shadowSoft,
-};
+const POPULAR_CITIES = [
+  "All",
+  "Bengaluru",
+  "Dharwad",
+  "Hubballi",
+  "Mysuru",
+  "Belagavi",
+  "Mangaluru",
+  "Shivamogga",
+  "Davangere",
+  "Tumakuru",
+  "Ballari",
+  "Vijayapura",
+  "Kalaburagi",
+  "Udupi",
+];
+
+const PROPERTY_TYPES = [
+  { value: "all", label: "All Property Types" },
+  { value: "apartments", label: "Apartments & Flats" },
+  { value: "houses", label: "Houses & Villas" },
+  { value: "land", label: "Plots & Agricultural Land" },
+  { value: "commercial", label: "Commercial Properties" },
+];
+
+const TRANSACTION_TYPES = [
+  { value: "all", label: "All Transactions" },
+  { value: "sale", label: "For Sale / Buy" },
+  { value: "rent", label: "For Rent" },
+  { value: "lease", label: "For Lease" },
+];
+
+const BHK_OPTIONS = [
+  { value: "all", label: "Any BHK" },
+  { value: "1", label: "1 BHK" },
+  { value: "2", label: "2 BHK" },
+  { value: "3", label: "3 BHK" },
+  { value: "4+", label: "4+ BHK" },
+];
+
+const FURNISHING_OPTIONS = [
+  { value: "all", label: "All Furnishings" },
+  { value: "Furnished", label: "Furnished" },
+  { value: "Semi-Furnished", label: "Semi-Furnished" },
+  { value: "Unfurnished", label: "Unfurnished" },
+];
+
+const VEHICLE_CATEGORIES = [
+  { value: "all", label: "All Categories" },
+  { value: "cars", label: "Cars" },
+  { value: "bikes", label: "Bikes & Motorcycles" },
+  { value: "scooter", label: "Scooters" },
+  { value: "trucks", label: "Commercial & Trucks" },
+];
+
+const FUEL_TYPES = [
+  { value: "all", label: "All Fuel Types" },
+  { value: "Petrol", label: "Petrol" },
+  { value: "Diesel", label: "Diesel" },
+  { value: "Electric", label: "Electric / EV" },
+  { value: "CNG", label: "CNG" },
+];
+
+const TRANSMISSION_OPTIONS = [
+  { value: "all", label: "All Transmissions" },
+  { value: "Manual", label: "Manual" },
+  { value: "Automatic", label: "Automatic" },
+];
+
+const CONDITION_OPTIONS = [
+  { value: "all", label: "Any Condition" },
+  { value: "new", label: "New (1st Owner / Unused)" },
+  { value: "used", label: "Used / Pre-Owned" },
+];
 
 const carouselSlides = [
   {
     id: 1,
     image:
       "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80",
-    eyebrow: "Featured properties",
-    title: "Find modern homes, plots, and rentals in one place",
-    desc: "Browse curated property listings with clean filters and faster discovery.",
-    chip: "Property picks",
+    eyebrow: "Featured Properties",
+    title: "Find modern homes, plots, and rentals across Karnataka",
+    desc: "Browse verified property listings with complete specifications, verified amenities, and direct seller contact.",
+    chip: "Property Picks",
     accent: COLORS.primary,
   },
   {
     id: 2,
     image:
-      "data:image/jpeg;base64,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",
-    eyebrow: "Top vehicle deals",
-    title: "Explore cars, bikes, and commercial vehicles with ease",
-    desc: "Compare options across categories, brands, and price ranges instantly.",
-    chip: "Vehicle picks",
+      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1600&q=80",
+    eyebrow: "Top Vehicle Deals",
+    title: "Explore verified cars, bikes, and commercial vehicles with ease",
+    desc: "Compare specifications across categories, transmission, fuel types, and price ranges instantly.",
+    chip: "Vehicle Picks",
     accent: COLORS.blue,
   },
   {
     id: 3,
     image:
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
-    eyebrow: "Easydeal marketplace",
-    title: "Search smarter across everything you're looking for",
-    desc: "One Explore page for both properties and vehicles, designed for quick browsing.",
-    chip: "All in one",
+    eyebrow: "EasyDeal Marketplace",
+    title: "Search smarter across everything you need in one place",
+    desc: "One unified Explore page for both properties and vehicles, designed for quick discovery and transparent deals.",
+    chip: "All in One",
     accent: COLORS.peach,
   },
 ];
-
-function formatPrice(value) {
-  const num = Number(value || 0);
-  if (!num) return "Price on request";
-  return `₹${num.toLocaleString("en-IN")}`;
-}
-
-function normalizeText(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-}
-
-function getImage(item) {
-  return (
-    item.image ||
-    item.images?.[0] ||
-    item.photo ||
-    item.thumbnail ||
-    item.cover ||
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
-  );
-}
-
-function getTitle(item) {
-  return (
-    item.title ||
-    item.name ||
-    item.propertyTitle ||
-    item.vehicleTitle ||
-    item.model ||
-    "Untitled listing"
-  );
-}
-
-function getLocation(item, isPremium = false) {
-  if (!isPremium) {
-    return getDisplayCity(item);
-  }
-  return (
-    item.location ||
-    getDisplayCity(item) ||
-    "Location not specified"
-  );
-}
-
-function getCategory(item, type) {
-  return (
-    item.category ||
-    item.property_type ||
-    item.propertyType ||
-    item.vehicle_type ||
-    item.vehicleType ||
-    item.type ||
-    (type === "property" ? "Property" : "Vehicle")
-  );
-}
-
-function getCompany(item, type) {
-  return (
-    item.company ||
-    item.brand ||
-    item.make ||
-    item.builder ||
-    item.ownerCompany ||
-    (type === "property" ? "Independent" : "Unspecified")
-  );
-}
-
-function getPrice(item) {
-  return Number(item.price || item.amount || item.rent || item.salePrice || 0);
-}
-
-function ListingCard({ item, navigate, index, isPremium }) {
-  const tone = item.itemType === "property" ? COLORS.primary : COLORS.blue;
-  const soft =
-    item.itemType === "property" ? COLORS.primarySoft : COLORS.blueSoft;
-
-  const targetUrl =
-    item.itemType === "property"
-      ? `/properties/${item.id}`
-      : `/vehicles/${item.id}`;
-
-  return (
-    <Card
-      onClick={() => navigate(targetUrl)}
-      sx={{
-        ...cardSx,
-        width: "100%",
-        height: 480, // Fixed height for all cards
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        cursor: "pointer",
-        transition:
-          "transform .35s ease, box-shadow .35s ease, border-color .35s ease, opacity .45s ease",
-        animation: `fadeUp .45s ease ${index * 0.05}s both`,
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: COLORS.shadow,
-          borderColor: COLORS.borderStrong,
-        },
-      }}
-    >
-      {/* Image Container */}
-      <Box
-        sx={{
-          position: "relative",
-          height: 220,
-          width: "100%",
-          flexShrink: 0,
-          overflow: "hidden",
-          background: COLORS.surfaceSoft,
-        }}
-      >
-        <Box
-          component="img"
-          src={getImage(item.raw)}
-          alt={getTitle(item.raw)}
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            display: "block",
-            filter: !isPremium ? "blur(7px)" : "none",
-            transform: !isPremium ? "scale(1.08)" : "scale(1)",
-            transition: "transform .6s ease, filter .6s ease",
-          }}
-        />
-
-        {!isPremium ? (
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(15,23,42,0.48)",
-              backdropFilter: "blur(4px)",
-              color: "#ffffff",
-              p: 2,
-              textAlign: "center",
-              zIndex: 2,
-            }}
-          >
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "14px",
-                background: "rgba(255,255,255,0.22)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                display: "grid",
-                placeItems: "center",
-                mb: 1,
-              }}
-            >
-              <LockRoundedIcon sx={{ fontSize: 22, color: "#ffffff" }} />
-            </Box>
-            <Typography sx={{ fontWeight: 900, fontSize: "0.95rem", color: "#ffffff" }}>
-              Photos Locked
-            </Typography>
-            <Typography sx={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.85)" }}>
-              Click to view listing details
-            </Typography>
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(180deg, rgba(15,23,42,0.00) 25%, rgba(15,23,42,0.52) 100%)",
-            }}
-          />
-        )}
-
-
-        <Chip
-          label={item.itemType === "property" ? "Property" : "Vehicle"}
-          icon={
-            item.itemType === "property" ? (
-              <HomeWorkRoundedIcon sx={{ fontSize: "16px !important" }} />
-            ) : (
-              <DirectionsCarRoundedIcon sx={{ fontSize: "16px !important" }} />
-            )
-          }
-          sx={{
-            position: "absolute",
-            top: 14,
-            left: 14,
-            height: 30,
-            borderRadius: "999px",
-            fontWeight: 800,
-            fontSize: "0.72rem",
-            color: "#fff",
-            background: "rgba(255,255,255,0.22)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.25)",
-            zIndex: 3,
-          }}
-        />
-      </Box>
-
-      {/* Content */}
-      <CardContent
-        sx={{
-          p: 2.2,
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          overflow: "hidden",
-        }}
-      >
-        <Stack spacing={1} sx={{ overflow: "hidden" }}>
-          <Stack
-            direction="row"
-            alignItems="flex-start"
-            justifyContent="space-between"
-            spacing={1}
-          >
-            <Typography
-              sx={{
-                fontSize: "1rem",
-                fontWeight: 900,
-                color: COLORS.text,
-                lineHeight: 1.3,
-                letterSpacing: "-0.02em",
-                height: 42,
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {getTitle(item.raw)}
-            </Typography>
-            <Chip
-              label={getCategory(item.raw, item.itemType)}
-              size="small"
-              sx={{
-                flexShrink: 0,
-                height: 24,
-                borderRadius: "999px",
-                fontWeight: 800,
-                fontSize: "0.68rem",
-                color: tone,
-                background: soft,
-                border: `1px solid ${soft}`,
-              }}
-            />
-          </Stack>
-
-          <Stack direction="row" spacing={0.8} alignItems="center">
-            <PlaceRoundedIcon sx={{ fontSize: 16, color: COLORS.faint, flexShrink: 0 }} />
-            <Typography
-              noWrap
-              sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}
-            >
-              {getLocation(item.raw, isPremium)}
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={0.8} alignItems="center">
-            <BusinessRoundedIcon sx={{ fontSize: 16, color: COLORS.faint, flexShrink: 0 }} />
-            <Typography
-              noWrap
-              sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600 }}
-            >
-              {getCompany(item.raw, item.itemType)}
-            </Typography>
-          </Stack>
-        </Stack>
-
-
-        {/* Footer */}
-        <Box sx={{ mt: "auto", pt: 1.5 }}>
-          <Divider sx={{ borderColor: COLORS.border, mb: 1.5 }} />
-
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            spacing={1.2}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: "0.72rem",
-                  color: COLORS.faint,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Price
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.3,
-                  fontSize: "1.05rem",
-                  fontWeight: 900,
-                  color: COLORS.text,
-                }}
-              >
-                {formatPrice(getPrice(item.raw))}
-              </Typography>
-            </Box>
-
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(targetUrl);
-              }}
-              endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />}
-              sx={{
-                minHeight: 40,
-                px: 2.2,
-                borderRadius: "12px",
-                textTransform: "none",
-                fontWeight: 800,
-                fontSize: "0.85rem",
-                color: "#ffffff",
-                background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0b5d56 100%)`,
-                boxShadow: "0 6px 18px rgba(15,118,110,0.25)",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #0b5d56 0%, #084842 100%)",
-                },
-              }}
-            >
-              View Details
-            </Button>
-          </Stack>
-
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
 
 function ListingCardSkeleton() {
   return (
     <Card
       sx={{
-        ...cardSx,
+        borderRadius: "20px",
+        boxShadow: "0 2px 16px rgba(15,23,42,0.06)",
+        border: "1px solid #E2E8F0",
+        overflow: "hidden",
         width: "100%",
-        height: 480,
+        minHeight: 480,
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        bgcolor: "#FFFFFF",
       }}
     >
-      {/* Image Skeleton */}
       <Skeleton
         variant="rectangular"
         width="100%"
-        height={220}
+        height={200}
         animation="wave"
         sx={{ bgcolor: "rgba(226,232,240,0.6)" }}
       />
-
-      {/* Content Skeleton */}
       <CardContent
         sx={{
           p: 2.2,
@@ -475,313 +204,25 @@ function ListingCardSkeleton() {
           justifyContent: "space-between",
         }}
       >
-        <Stack spacing={1.2}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-            <Skeleton variant="text" width="65%" height={26} animation="wave" />
-            <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "999px" }} animation="wave" />
-          </Stack>
-
-          <Skeleton variant="text" width="45%" height={20} animation="wave" />
-          <Skeleton variant="text" width="55%" height={20} animation="wave" />
+        <Stack spacing={1.5}>
+          <Skeleton variant="text" width="75%" height={26} animation="wave" />
+          <Skeleton variant="text" width="45%" height={18} animation="wave" />
+          <Skeleton variant="rounded" width="100%" height={68} sx={{ borderRadius: "12px" }} animation="wave" />
         </Stack>
-
-        {/* Footer Skeleton */}
         <Box sx={{ mt: "auto", pt: 1.5 }}>
-          <Divider sx={{ borderColor: COLORS.border, mb: 1.5 }} />
+          <Divider sx={{ borderColor: "rgba(15,23,42,0.08)", mb: 1.5 }} />
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Box>
               <Skeleton variant="text" width={40} height={14} animation="wave" />
               <Skeleton variant="text" width={90} height={24} animation="wave" />
             </Box>
-            <Skeleton variant="rounded" width={110} height={42} sx={{ borderRadius: "14px" }} animation="wave" />
+            <Skeleton variant="rounded" width={110} height={36} sx={{ borderRadius: "10px" }} animation="wave" />
           </Stack>
         </Box>
       </CardContent>
     </Card>
   );
 }
-
-function matchesCategory(item, filterCategory) {
-  if (!filterCategory || filterCategory === "all") return true;
-
-  const target = filterCategory.toLowerCase().trim();
-  const itemCat = String(getCategory(item.raw, item.itemType) || "").toLowerCase();
-  const itemType = String(item.itemType || "").toLowerCase();
-  const itemTitle = String(getTitle(item.raw) || "").toLowerCase();
-  const rawType = String(
-    item.raw?.property_type || item.raw?.propertyType || item.raw?.category || item.raw?.type || ""
-  ).toLowerCase();
-  const rawAptName = String(
-    item.raw?.apartment_name || item.raw?.apartmentName || ""
-  ).toLowerCase();
-  const rawModel = String(item.raw?.model || "").toLowerCase();
-  const rawBrand = String(item.raw?.brand || "").toLowerCase();
-  const rawDesc = String(item.raw?.description || "").toLowerCase();
-
-  // 1. Direct or exact match
-  if (itemCat === target || rawType === target) return true;
-
-  // 2. Preset category groups
-  if (target === "property" || target === "properties") {
-    return itemType === "property";
-  }
-
-  if (
-    target === "apartments" ||
-    target === "apartment" ||
-    target === "flat" ||
-    target === "flats"
-  ) {
-    return (
-      itemType === "property" &&
-      (itemCat.includes("apartment") ||
-        itemCat.includes("flat") ||
-        rawType.includes("apartment") ||
-        rawType.includes("flat") ||
-        itemTitle.includes("apartment") ||
-        itemTitle.includes("flat") ||
-        rawAptName.length > 0)
-    );
-  }
-
-  if (
-    target === "houses" ||
-    target === "house" ||
-    target === "villa" ||
-    target === "villas" ||
-    target === "residential"
-  ) {
-    return (
-      itemType === "property" &&
-      (itemCat.includes("house") ||
-        itemCat.includes("villa") ||
-        itemCat.includes("residential") ||
-        rawType.includes("house") ||
-        rawType.includes("villa") ||
-        rawType.includes("residential") ||
-        itemTitle.includes("house") ||
-        itemTitle.includes("villa") ||
-        itemTitle.includes("home"))
-    );
-  }
-
-  if (target === "commercial" || target === "office" || target === "shop") {
-    return (
-      itemCat.includes("commercial") ||
-      rawType.includes("commercial") ||
-      itemTitle.includes("commercial") ||
-      itemTitle.includes("office") ||
-      itemTitle.includes("shop")
-    );
-  }
-
-  if (
-    target === "land" ||
-    target === "plots" ||
-    target === "plot" ||
-    target === "site" ||
-    target === "agricultural" ||
-    target === "farm"
-  ) {
-    return (
-      itemType === "property" &&
-      (itemCat.includes("land") ||
-        itemCat.includes("plot") ||
-        itemCat.includes("site") ||
-        itemCat.includes("agricultural") ||
-        rawType.includes("land") ||
-        rawType.includes("plot") ||
-        rawType.includes("site") ||
-        rawType.includes("agricultural") ||
-        itemTitle.includes("land") ||
-        itemTitle.includes("plot") ||
-        itemTitle.includes("site") ||
-        itemTitle.includes("acre"))
-    );
-  }
-
-  if (target === "cars" || target === "car") {
-    return (
-      itemType === "vehicle" &&
-      (itemCat.includes("car") ||
-        rawType.includes("car") ||
-        (!itemCat.includes("bike") &&
-          !itemCat.includes("scooter") &&
-          !itemCat.includes("truck") &&
-          !rawType.includes("bike") &&
-          !rawType.includes("scooter") &&
-          !rawType.includes("truck")))
-    );
-  }
-
-  if (
-    target === "bikes" ||
-    target === "bike" ||
-    target === "motorcycle" ||
-    target === "scooter" ||
-    target === "two wheeler"
-  ) {
-    return (
-      itemType === "vehicle" &&
-      (itemCat.includes("bike") ||
-        itemCat.includes("scooter") ||
-        itemCat.includes("motorcycle") ||
-        itemCat.includes("two wheeler") ||
-        rawType.includes("bike") ||
-        rawType.includes("scooter") ||
-        itemTitle.includes("bike") ||
-        itemTitle.includes("scooter") ||
-        itemTitle.includes("royal enfield") ||
-        itemTitle.includes("bullet") ||
-        itemTitle.includes("activa") ||
-        itemTitle.includes("jupiter") ||
-        rawBrand.includes("royal enfield") ||
-        rawBrand.includes("hero") ||
-        rawBrand.includes("bajaj") ||
-        rawBrand.includes("tvs") ||
-        rawBrand.includes("yamaha"))
-    );
-  }
-
-  if (
-    target === "trucks" ||
-    target === "truck" ||
-    target === "utility" ||
-    target === "commercial vehicle" ||
-    target === "tractor"
-  ) {
-    return (
-      itemType === "vehicle" &&
-      (itemCat.includes("truck") ||
-        itemCat.includes("commercial") ||
-        itemCat.includes("utility") ||
-        itemCat.includes("tractor") ||
-        itemCat.includes("pickup") ||
-        rawType.includes("truck") ||
-        rawType.includes("commercial") ||
-        rawType.includes("tractor") ||
-        itemTitle.includes("truck") ||
-        itemTitle.includes("tractor") ||
-        itemTitle.includes("pickup") ||
-        itemTitle.includes("lorry"))
-    );
-  }
-
-  return (
-    itemCat.includes(target) ||
-    rawType.includes(target) ||
-    itemTitle.includes(target) ||
-    rawModel.includes(target) ||
-    rawBrand.includes(target) ||
-    rawDesc.includes(target)
-  );
-}
-
-const DEFAULT_PROPERTIES = [
-  {
-    id: "def-prop-1",
-    title: "2 BHK Luxury Apartment in Whitefield",
-    category: "Apartments",
-    property_type: "Flat",
-    apartment_name: "Skyline Residency",
-    location: "Whitefield, Bengaluru",
-    price: 6800000,
-    rooms: 4,
-    bedrooms: 2,
-    area: "1250 sqft",
-    images: [
-      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-  {
-    id: "def-prop-2",
-    title: "3 BHK Premium Independent Villa",
-    category: "Houses",
-    property_type: "Residential",
-    location: "Sarjapur Road, Bengaluru",
-    price: 12500000,
-    rooms: 5,
-    bedrooms: 3,
-    area: "2100 sqft",
-    images: [
-      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-  {
-    id: "def-prop-3",
-    title: "Prime Commercial Retail Space & Office",
-    category: "Commercial",
-    property_type: "Commercial",
-    location: "Indiranagar, Bengaluru",
-    price: 8500000,
-    rooms: 3,
-    area: "1400 sqft",
-    images: [
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-  {
-    id: "def-prop-4",
-    title: "2 Acres Agricultural Land & Farm Plot",
-    category: "Land",
-    property_type: "Agricultural",
-    location: "Mysuru Highway, Karnataka",
-    price: 3500000,
-    land_area: "2 Acres",
-    crops_grown: "Sugarcane, Ragi",
-    images: [
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-];
-
-const DEFAULT_VEHICLES = [
-  {
-    id: "def-veh-1",
-    title: "Hyundai Creta SX Petrol (Automatic)",
-    category: "Cars",
-    vehicle_type: "Car",
-    brand: "Hyundai",
-    model: "Creta",
-    year: "2022",
-    location: "Indiranagar, Bengaluru",
-    price: 1250000,
-    km_driven: "28000",
-    images: [
-      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-  {
-    id: "def-veh-2",
-    title: "Royal Enfield Classic 350 Stealth Black",
-    category: "Bikes",
-    vehicle_type: "Bike",
-    brand: "Royal Enfield",
-    model: "Classic 350",
-    year: "2021",
-    location: "Jayanagar, Bengaluru",
-    price: 155000,
-    km_driven: "14000",
-    images: [
-      "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-  {
-    id: "def-veh-3",
-    title: "Tata Ace Gold Commercial Utility Vehicle",
-    category: "Trucks",
-    vehicle_type: "Truck",
-    brand: "Tata",
-    model: "Ace Gold",
-    year: "2020",
-    location: "Peenya, Bengaluru",
-    price: 420000,
-    km_driven: "45000",
-    images: [
-      "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80",
-    ],
-  },
-];
 
 function extractList(resVal) {
   if (!resVal) return [];
@@ -799,305 +240,992 @@ function extractList(resVal) {
   return [];
 }
 
+const ITEMS_PER_PAGE = 9;
+
 export default function ExplorePage() {
-  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, properties: contextProps = [], vehicles: contextVehs = [], refreshListings } = useAppState();
-  const isPremium = Boolean(user?.isPremium || user?.is_premium || user?.role === "admin" || user?.role === "premium");
+  const { refreshListings } = useAppState();
 
-  const [loading, setLoading] = useState(true);
-  const [apiProps, setApiProps] = useState([]);
-  const [apiVehs, setApiVehs] = useState([]);
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  // Navigation & URL state
   const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "all");
-  const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
-  const [companyFilter, setCompanyFilter] = useState("all");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [sortBy, setSortBy] = useState("latest");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [cityFilter, setCityFilter] = useState(searchParams.get("city") || "all");
+  const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "latest");
+  const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
+
+  // Property-specific filters
+  const [transactionType, setTransactionType] = useState(searchParams.get("transaction") || "all");
+  const [propertyType, setPropertyType] = useState(searchParams.get("propertyType") || "all");
+  const [bedrooms, setBedrooms] = useState(searchParams.get("bedrooms") || "all");
+  const [furnishing, setFurnishing] = useState(searchParams.get("furnishing") || "all");
+  const [minArea, setMinArea] = useState(searchParams.get("minArea") || "");
+  const [maxArea, setMaxArea] = useState(searchParams.get("maxArea") || "");
+
+  // Vehicle-specific filters
+  const [vehicleCategory, setVehicleCategory] = useState(searchParams.get("vehicleCategory") || "all");
+  const [brand, setBrand] = useState(searchParams.get("brand") || "all");
+  const [model, setModel] = useState(searchParams.get("model") || "");
+  const [condition, setCondition] = useState(searchParams.get("condition") || "all");
+  const [fuelType, setFuelType] = useState(searchParams.get("fuelType") || "all");
+  const [transmission, setTransmission] = useState(searchParams.get("transmission") || "all");
+  const [minYear, setMinYear] = useState(searchParams.get("minYear") || "");
+  const [maxYear, setMaxYear] = useState(searchParams.get("maxYear") || "");
+  const [minKm, setMinKm] = useState(searchParams.get("minKm") || "");
+  const [maxKm, setMaxKm] = useState(searchParams.get("maxKm") || "");
+
+  // UI state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [availableBrands, setAvailableBrands] = useState([]);
+  const [availableCities, setAvailableCities] = useState(POPULAR_CITIES);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Sync URL search params with state and force scroll to top
+  // Sync state to URL searchParams
+  const updateUrlParams = useCallback((updates) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "" || value === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, String(value));
+      }
+    });
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Instant DSA Search Input Handler (0ms UI latency + debounced URL sync)
+  const searchTimeoutRef = useRef(null);
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setCurrentPage(1);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      updateUrlParams({ search: val });
+    }, 300);
+  };
+
+  // Sync state from URL params on load / back-forward
   useEffect(() => {
-    const catParam = searchParams.get("category");
-    const typeParam = searchParams.get("type");
-    const searchParam = searchParams.get("search");
-
-    if (catParam) {
-      setCategoryFilter(catParam);
-    } else {
-      setCategoryFilter("all");
-    }
-
-    if (typeParam) {
-      setTypeFilter(typeParam);
-    } else {
-      setTypeFilter("all");
-    }
-
-    if (searchParam) {
-      setSearch(searchParam);
-    }
-
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
+    setTypeFilter(searchParams.get("type") || "all");
+    setSearch(searchParams.get("search") || "");
+    setCityFilter(searchParams.get("city") || "all");
+    setSortBy(searchParams.get("sortBy") || "latest");
+    setMinPrice(searchParams.get("minPrice") || "");
+    setMaxPrice(searchParams.get("maxPrice") || "");
+    setTransactionType(searchParams.get("transaction") || "all");
+    setPropertyType(searchParams.get("propertyType") || "all");
+    setBedrooms(searchParams.get("bedrooms") || "all");
+    setFurnishing(searchParams.get("furnishing") || "all");
+    setMinArea(searchParams.get("minArea") || "");
+    setMaxArea(searchParams.get("maxArea") || "");
+    setVehicleCategory(searchParams.get("vehicleCategory") || "all");
+    setBrand(searchParams.get("brand") || "all");
+    setModel(searchParams.get("model") || "");
+    setCondition(searchParams.get("condition") || "all");
+    setFuelType(searchParams.get("fuelType") || "all");
+    setTransmission(searchParams.get("transmission") || "all");
+    setMinYear(searchParams.get("minYear") || "");
+    setMaxYear(searchParams.get("maxYear") || "");
+    setMinKm(searchParams.get("minKm") || "");
+    setMaxKm(searchParams.get("maxKm") || "");
   }, [searchParams]);
 
-  const fetchExploreListings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [pRes, vRes] = await Promise.allSettled([
-        propertyService.getAll(),
-        vehicleService.getAll(),
-      ]);
-
-      const pList = pRes.status === "fulfilled" ? extractList(pRes.value) : [];
-      const vList = vRes.status === "fulfilled" ? extractList(vRes.value) : [];
-
-      setApiProps(pList);
-      setApiVehs(vList);
-    } catch (err) {
-      console.error("Failed to load explore listings:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchExploreListings();
-    refreshListings?.();
-  }, [fetchExploreListings, refreshListings]);
-
+  // Hero carousel auto-scroll
   useEffect(() => {
     const timer = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % carouselSlides.length);
-    }, 4500);
+    }, 5500);
     return () => clearInterval(timer);
   }, []);
 
-  const properties = useMemo(() => {
-    const combined = [...apiProps, ...contextProps];
-    const map = new Map();
-    combined.forEach((p) => {
-      if (p?.id && !map.has(p.id)) map.set(p.id, p);
+  // ── Initial & Master Listings Data Fetching ─────────────────────────────────
+  const fetchListings = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
+    try {
+      const [pRes, vRes] = await Promise.allSettled([
+        propertyService.getAll({ limit: 200 }),
+        vehicleService.getAll({ limit: 200 }),
+      ]);
+      const pRaw = pRes.status === "fulfilled" ? extractList(pRes.value) : [];
+      const vRaw = vRes.status === "fulfilled" ? extractList(vRes.value) : [];
+
+      const normalizedP = pRaw.map(normalizeProperty);
+      const normalizedV = vRaw.map(normalizeVehicle);
+
+      setProperties(normalizedP);
+      setVehicles(normalizedV);
+
+      // Collect distinct brands and cities for filter dropdowns
+      const brandsSet = new Set();
+      normalizedV.forEach((v) => {
+        if (v.brand) brandsSet.add(v.brand.trim());
+      });
+      if (brandsSet.size > 0) {
+        setAvailableBrands(["all", ...Array.from(brandsSet).sort()]);
+      }
+
+      const citiesSet = new Set(POPULAR_CITIES);
+      [...normalizedP, ...normalizedV].forEach((item) => {
+        if (item.city) citiesSet.add(item.city.trim());
+      });
+      setAvailableCities(Array.from(citiesSet));
+    } catch (err) {
+      console.error("Failed to load listings:", err);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchListings(true);
+    refreshListings?.();
+  }, [fetchListings, refreshListings]);
+
+  // ── DSA: Build Prefix Trie & Inverted Search Index ───────────────────────────
+  const searchIndex = useMemo(() => {
+    const index = new SearchTrieIndex();
+
+    properties.forEach((p) => {
+      index.insert(p.id, "property", p, {
+        title: p.title || "",
+        brandModel: [p.apartmentName, p.propertyType, p.property_type].filter(Boolean).join(" "),
+        location: [p.city, p.location, p.localAddress, p.local_address, p.state].filter(Boolean).join(" "),
+        specs: [
+          p.bedrooms ? `${p.bedrooms} bhk` : "",
+          p.bedrooms ? `${p.bedrooms} bedroom` : "",
+          p.bathrooms ? `${p.bathrooms} bath` : "",
+          p.furnishing,
+          p.facing ? `${p.facing} facing` : "",
+          p.rentLease,
+          p.propertyType,
+          p.area ? `${p.area} sqft` : "",
+        ].filter(Boolean).join(" "),
+        desc: p.description || "",
+      });
     });
-    const list = Array.from(map.values());
-    return list.length > 0 ? list : DEFAULT_PROPERTIES;
-  }, [apiProps, contextProps]);
 
-  const vehicles = useMemo(() => {
-    const combined = [...apiVehs, ...contextVehs];
-    const map = new Map();
-    combined.forEach((v) => {
-      if (v?.id && !map.has(v.id)) map.set(v.id, v);
+    vehicles.forEach((v) => {
+      index.insert(v.id, "vehicle", v, {
+        title: v.title || "",
+        brandModel: [v.brand, v.model].filter(Boolean).join(" "),
+        location: [v.city, v.location, v.localAddress, v.local_address, v.state].filter(Boolean).join(" "),
+        specs: [
+          v.category,
+          v.fuelType,
+          v.fuel_type,
+          v.transmission,
+          v.condition,
+          v.year ? String(v.year) : "",
+          v.kmDriven ? `${v.kmDriven} km` : "",
+          v.rtoCode,
+          v.ownership,
+          v.color,
+        ].filter(Boolean).join(" "),
+        desc: v.description || "",
+      });
     });
-    const list = Array.from(map.values());
-    return list.length > 0 ? list : DEFAULT_VEHICLES;
-  }, [apiVehs, contextVehs]);
 
-  const allItems = useMemo(() => {
-    const mappedProperties = (properties || []).map((item, index) => ({
-      id: item.id || item._id || `property-${index}`,
-      itemType: "property",
-      raw: item,
-      createdAt: item.createdAt || item.created_at || item.date || item.postedAt || 0,
-    }));
-
-    const mappedVehicles = (vehicles || []).map((item, index) => ({
-      id: item.id || item._id || `vehicle-${index}`,
-      itemType: "vehicle",
-      raw: item,
-      createdAt: item.createdAt || item.created_at || item.date || item.postedAt || 0,
-    }));
-
-    return [...mappedProperties, ...mappedVehicles];
+    return index;
   }, [properties, vehicles]);
 
-  const categoryOptions = useMemo(() => {
-    const popularCategories = [
-      "Property",
-      "Apartments",
-      "Houses",
-      "Commercial",
-      "Land",
-      "Cars",
-      "Bikes",
-      "Trucks",
-    ];
-    const set = new Set(popularCategories);
-    allItems.forEach((item) => {
-      const value = getCategory(item.raw, item.itemType);
-      if (value && value !== "Property" && value !== "Vehicle") {
-        set.add(value);
+  // ── DSA-Powered Instant Search & Facet Filter Engine ────────────────────────
+  const allListings = useMemo(() => {
+    // 1. Instant Trie Prefix Lookup & Set Intersection: O(P + min(|S|))
+    const trimmedQuery = search.trim();
+    const searchScoreMap = trimmedQuery ? searchIndex.search(trimmedQuery) : null;
+
+    // Fast-path: if query has 0 matches in Trie, exit immediately
+    if (searchScoreMap && searchScoreMap.size === 0) {
+      return [];
+    }
+
+    // 2. Filter Properties
+    const pItems = [];
+    if (typeFilter === "all" || typeFilter === "property") {
+      for (let i = 0; i < properties.length; i++) {
+        const p = properties[i];
+        const id = p.id;
+
+        // Trie match check
+        if (searchScoreMap && !searchScoreMap.has(id)) continue;
+
+        // City filter
+        if (cityFilter !== "all") {
+          const itemCity = (p.city || "").toLowerCase();
+          const itemLoc = (p.location || "").toLowerCase();
+          const target = cityFilter.toLowerCase();
+          if (!itemCity.includes(target) && !itemLoc.includes(target)) continue;
+        }
+
+        // Price bounds
+        const price = Number(p.price ?? p.expectedPrice ?? p.expected_price ?? 0);
+        if (minPrice && price < Number(minPrice)) continue;
+        if (maxPrice && price > Number(maxPrice)) continue;
+
+        // Property-specific filters
+        if (transactionType !== "all") {
+          const trans = (p.rentLease || p.rent_lease || "").toLowerCase();
+          if (!trans.includes(transactionType.toLowerCase())) continue;
+        }
+
+        if (propertyType !== "all") {
+          const pType = (p.propertyType || p.property_type || "").toLowerCase();
+          if (!pType.includes(propertyType.toLowerCase())) continue;
+        }
+
+        if (bedrooms !== "all") {
+          const bedCount = Number(p.bedrooms ?? p.rooms ?? 0);
+          if (bedrooms === "4+") {
+            if (bedCount < 4) continue;
+          } else if (bedCount !== Number(bedrooms)) {
+            continue;
+          }
+        }
+
+        if (furnishing !== "all") {
+          const furn = (p.furnishing || "").toLowerCase();
+          if (!furn.includes(furnishing.toLowerCase())) continue;
+        }
+
+        if (minArea || maxArea) {
+          const areaNum = Number(String(p.area || "").replace(/[^\d.]/g, "")) || 0;
+          if (minArea && areaNum < Number(minArea)) continue;
+          if (maxArea && areaNum > Number(maxArea)) continue;
+        }
+
+        pItems.push({
+          id: p.id,
+          itemType: "property",
+          raw: p,
+          createdAt: p.createdAt || p.created_at || 0,
+          price,
+          title: p.title || "",
+          searchScore: searchScoreMap ? searchScoreMap.get(id) || 0 : 0,
+        });
       }
-    });
-    return ["all", ...Array.from(set)];
-  }, [allItems]);
+    }
 
-  const companyOptions = useMemo(() => {
-    const set = new Set();
-    allItems.forEach((item) => {
-      const value = getCompany(item.raw, item.itemType);
-      if (value) set.add(value);
-    });
-    return ["all", ...Array.from(set)];
-  }, [allItems]);
+    // 3. Filter Vehicles
+    const vItems = [];
+    if (typeFilter === "all" || typeFilter === "vehicle") {
+      for (let i = 0; i < vehicles.length; i++) {
+        const v = vehicles[i];
+        const id = v.id;
 
-  const filteredItems = useMemo(() => {
-    let result = [...allItems];
-    const searchTerm = normalizeText(search);
+        // Trie match check
+        if (searchScoreMap && !searchScoreMap.has(id)) continue;
 
-    if (searchTerm) {
-      result = result.filter((item) => {
-        const haystack = [
-          getTitle(item.raw),
-          getLocation(item.raw),
-          getCategory(item.raw, item.itemType),
-          getCompany(item.raw, item.itemType),
-          item.itemType,
-          item.raw.description,
-        ]
-          .join(" ")
-          .toLowerCase();
+        // City filter
+        if (cityFilter !== "all") {
+          const itemCity = (v.city || "").toLowerCase();
+          const itemLoc = (v.location || "").toLowerCase();
+          const target = cityFilter.toLowerCase();
+          if (!itemCity.includes(target) && !itemLoc.includes(target)) continue;
+        }
 
-        return haystack.includes(searchTerm);
+        // Price bounds
+        const price = Number(v.price ?? v.expectedPrice ?? v.expected_price ?? 0);
+        if (minPrice && price < Number(minPrice)) continue;
+        if (maxPrice && price > Number(maxPrice)) continue;
+
+        // Vehicle-specific filters
+        if (vehicleCategory !== "all") {
+          const cat = (v.category || v.vehicleType || v.vehicle_type || "").toLowerCase();
+          if (!cat.includes(vehicleCategory.toLowerCase())) continue;
+        }
+
+        if (brand !== "all") {
+          const vBrand = (v.brand || "").toLowerCase();
+          if (!vBrand.includes(brand.toLowerCase())) continue;
+        }
+
+        if (model) {
+          const vModel = (v.model || "").toLowerCase();
+          if (!vModel.includes(model.toLowerCase())) continue;
+        }
+
+        if (condition !== "all") {
+          const cond = (v.condition || v.ownership || "").toLowerCase();
+          if (!cond.includes(condition.toLowerCase())) continue;
+        }
+
+        if (fuelType !== "all") {
+          const fType = (v.fuelType || v.fuel_type || "").toLowerCase();
+          if (!fType.includes(fuelType.toLowerCase())) continue;
+        }
+
+        if (transmission !== "all") {
+          const trans = (v.transmission || "").toLowerCase();
+          if (!trans.includes(transmission.toLowerCase())) continue;
+        }
+
+        if (minYear || maxYear) {
+          const yearNum = Number(v.year) || 0;
+          if (minYear && yearNum < Number(minYear)) continue;
+          if (maxYear && yearNum > Number(maxYear)) continue;
+        }
+
+        if (minKm || maxKm) {
+          const kmNum = Number(String(v.kmDriven || v.km_driven || "").replace(/[^\d.]/g, "")) || 0;
+          if (minKm && kmNum < Number(minKm)) continue;
+          if (maxKm && kmNum > Number(maxKm)) continue;
+        }
+
+        vItems.push({
+          id: v.id,
+          itemType: "vehicle",
+          raw: v,
+          createdAt: v.createdAt || v.created_at || 0,
+          price,
+          title: v.title || "",
+          searchScore: searchScoreMap ? searchScoreMap.get(id) || 0 : 0,
+        });
+      }
+    }
+
+    const items = [...pItems, ...vItems];
+
+    // 4. Multi-level Ranking & Sorting (Relevance Score > Price/Date)
+    if (searchScoreMap) {
+      items.sort((a, b) => {
+        if (b.searchScore !== a.searchScore) {
+          return b.searchScore - a.searchScore; // Higher relevance first
+        }
+        if (sortBy === "price_asc" || sortBy === "priceLowHigh") return a.price - b.price;
+        if (sortBy === "price_desc" || sortBy === "priceHighLow") return b.price - a.price;
+        if (sortBy === "nameAZ") return a.title.localeCompare(b.title);
+        return new Date(b.createdAt) - new Date(a.createdAt);
       });
-    }
-
-    if (typeFilter !== "all") {
-      result = result.filter((item) => item.itemType === typeFilter);
-    }
-
-    if (categoryFilter !== "all") {
-      result = result.filter((item) => matchesCategory(item, categoryFilter));
-    }
-
-    if (companyFilter !== "all") {
-      result = result.filter(
-        (item) => getCompany(item.raw, item.itemType) === companyFilter,
-      );
-    }
-
-    if (minPrice !== "") {
-      result = result.filter((item) => getPrice(item.raw) >= Number(minPrice));
-    }
-
-    if (maxPrice !== "") {
-      result = result.filter((item) => getPrice(item.raw) <= Number(maxPrice));
-    }
-
-    if (sortBy === "priceLowHigh") {
-      result.sort((a, b) => getPrice(a.raw) - getPrice(b.raw));
-    } else if (sortBy === "priceHighLow") {
-      result.sort((a, b) => getPrice(b.raw) - getPrice(a.raw));
-    } else if (sortBy === "nameAZ") {
-      result.sort((a, b) => getTitle(a.raw).localeCompare(getTitle(b.raw)));
     } else {
-      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (sortBy === "price_asc" || sortBy === "priceLowHigh") {
+        items.sort((a, b) => a.price - b.price);
+      } else if (sortBy === "price_desc" || sortBy === "priceHighLow") {
+        items.sort((a, b) => b.price - a.price);
+      } else if (sortBy === "nameAZ") {
+        items.sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
     }
 
-    return result;
+    return items;
   }, [
-    allItems,
+    properties,
+    vehicles,
+    searchIndex,
     search,
     typeFilter,
-    categoryFilter,
-    companyFilter,
+    cityFilter,
     minPrice,
     maxPrice,
     sortBy,
+    transactionType,
+    propertyType,
+    bedrooms,
+    furnishing,
+    minArea,
+    maxArea,
+    vehicleCategory,
+    brand,
+    model,
+    condition,
+    fuelType,
+    transmission,
+    minYear,
+    maxYear,
+    minKm,
+    maxKm,
   ]);
 
-  const handleCategoryChange = (newCat) => {
-    setCategoryFilter(newCat);
-    const newParams = new URLSearchParams(searchParams);
-    if (newCat === "all") {
-      newParams.delete("category");
-      newParams.delete("type");
-      setTypeFilter("all");
-    } else {
-      newParams.set("category", newCat);
-      const catLower = newCat.toLowerCase();
-      if (
-        catLower === "property" ||
-        catLower === "apartments" ||
-        catLower === "houses" ||
-        catLower === "commercial" ||
-        catLower === "land"
-      ) {
-        setTypeFilter("property");
-        newParams.set("type", "property");
-      } else if (
-        catLower === "cars" ||
-        catLower === "bikes" ||
-        catLower === "trucks"
-      ) {
-        setTypeFilter("vehicle");
-        newParams.set("type", "vehicle");
-      }
+  // Paginated listings
+  const totalPages = Math.ceil(allListings.length / ITEMS_PER_PAGE) || 1;
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return allListings.slice(start, start + ITEMS_PER_PAGE);
+  }, [allListings, currentPage]);
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (search.trim()) count++;
+    if (cityFilter !== "all") count++;
+    if (minPrice || maxPrice) count++;
+    if (typeFilter === "property" || typeFilter === "all") {
+      if (transactionType !== "all") count++;
+      if (propertyType !== "all") count++;
+      if (bedrooms !== "all") count++;
+      if (furnishing !== "all") count++;
+      if (minArea || maxArea) count++;
     }
-    setSearchParams(newParams);
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (typeFilter === "vehicle" || typeFilter === "all") {
+      if (vehicleCategory !== "all") count++;
+      if (brand !== "all") count++;
+      if (model) count++;
+      if (condition !== "all") count++;
+      if (fuelType !== "all") count++;
+      if (transmission !== "all") count++;
+      if (minYear || maxYear) count++;
+      if (minKm || maxKm) count++;
+    }
+    return count;
+  }, [
+    search,
+    cityFilter,
+    minPrice,
+    maxPrice,
+    typeFilter,
+    transactionType,
+    propertyType,
+    bedrooms,
+    furnishing,
+    minArea,
+    maxArea,
+    vehicleCategory,
+    brand,
+    model,
+    condition,
+    fuelType,
+    transmission,
+    minYear,
+    maxYear,
+    minKm,
+    maxKm,
+  ]);
+
+  // Handle Type Switch
+  const handleTypeChange = (newType) => {
+    setTypeFilter(newType);
+    setCurrentPage(1);
+    updateUrlParams({ type: newType });
   };
 
-  const resetFilters = () => {
+  // Clear all filters
+  const resetAllFilters = () => {
     setSearch("");
-    setTypeFilter("all");
-    setCategoryFilter("all");
-    setCompanyFilter("all");
+    setCityFilter("all");
     setMinPrice("");
     setMaxPrice("");
     setSortBy("latest");
-    setSearchParams({});
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    setTransactionType("all");
+    setPropertyType("all");
+    setBedrooms("all");
+    setFurnishing("all");
+    setMinArea("");
+    setMaxArea("");
+    setVehicleCategory("all");
+    setBrand("all");
+    setModel("");
+    setCondition("all");
+    setFuelType("all");
+    setTransmission("all");
+    setMinYear("");
+    setMaxYear("");
+    setMinKm("");
+    setMaxKm("");
+    setCurrentPage(1);
+    setSearchParams(typeFilter !== "all" ? { type: typeFilter } : {}, { replace: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   const activeSlide = carouselSlides[slideIndex];
 
+  // ── Render Filter Sidebar Content (shared between Desktop & Mobile Drawer) ──
+  const renderFilterControls = () => (
+    <Stack spacing={2.4}>
+      {/* City / Location */}
+      <Box>
+        <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+          City / Location
+        </Typography>
+        <FormControl fullWidth size="small">
+          <Select
+            value={cityFilter}
+            onChange={(e) => {
+              setCityFilter(e.target.value);
+              setCurrentPage(1);
+              updateUrlParams({ city: e.target.value });
+            }}
+            startAdornment={
+              <InputAdornment position="start">
+                <PlaceRoundedIcon sx={{ fontSize: 18, color: COLORS.faint }} />
+              </InputAdornment>
+            }
+            sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+          >
+            {availableCities.map((c) => (
+              <MenuItem key={c} value={c === "All" ? "all" : c}>
+                {c === "All" ? "All Karnataka Cities" : c}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Price Range */}
+      <Box>
+        <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+          Price Range (₹)
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            placeholder="Min ₹"
+            type="number"
+            value={minPrice}
+            onChange={(e) => {
+              setMinPrice(e.target.value);
+              setCurrentPage(1);
+              updateUrlParams({ minPrice: e.target.value });
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+          />
+          <TextField
+            size="small"
+            placeholder="Max ₹"
+            type="number"
+            value={maxPrice}
+            onChange={(e) => {
+              setMaxPrice(e.target.value);
+              setCurrentPage(1);
+              updateUrlParams({ maxPrice: e.target.value });
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+          />
+        </Stack>
+      </Box>
+
+      {/* ── PROPERTY-SPECIFIC FILTERS ── */}
+      {(typeFilter === "property" || typeFilter === "all") && (
+        <>
+          <Divider sx={{ borderColor: COLORS.border }} />
+          <Typography
+            sx={{
+              fontSize: "0.74rem",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: COLORS.primary,
+            }}
+          >
+            Property Specifications
+          </Typography>
+
+          {/* Transaction Type */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Transaction Type
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={transactionType}
+                onChange={(e) => {
+                  setTransactionType(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ transaction: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {TRANSACTION_TYPES.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Property Type */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Property Category
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={propertyType}
+                onChange={(e) => {
+                  setPropertyType(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ propertyType: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {PROPERTY_TYPES.map((pt) => (
+                  <MenuItem key={pt.value} value={pt.value}>
+                    {pt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Bedrooms / BHK */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Bedrooms (BHK)
+            </Typography>
+            <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
+              {BHK_OPTIONS.map((bhk) => (
+                <Chip
+                  key={bhk.value}
+                  label={bhk.label}
+                  size="small"
+                  clickable
+                  onClick={() => {
+                    setBedrooms(bhk.value);
+                    setCurrentPage(1);
+                    updateUrlParams({ bedrooms: bhk.value });
+                  }}
+                  sx={{
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    bgcolor: bedrooms === bhk.value ? COLORS.primary : COLORS.surfaceSoft,
+                    color: bedrooms === bhk.value ? "#fff" : COLORS.text,
+                    border: `1px solid ${bedrooms === bhk.value ? COLORS.primary : COLORS.border}`,
+                    "&:hover": {
+                      bgcolor: bedrooms === bhk.value ? "#0b5d56" : "#e2e8f0",
+                    },
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
+
+          {/* Furnishing */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Furnishing
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={furnishing}
+                onChange={(e) => {
+                  setFurnishing(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ furnishing: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {FURNISHING_OPTIONS.map((f) => (
+                  <MenuItem key={f.value} value={f.value}>
+                    {f.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Builtup / Land Area */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Area Range (Sq Ft)
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                size="small"
+                placeholder="Min sqft"
+                type="number"
+                value={minArea}
+                onChange={(e) => {
+                  setMinArea(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ minArea: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+              <TextField
+                size="small"
+                placeholder="Max sqft"
+                type="number"
+                value={maxArea}
+                onChange={(e) => {
+                  setMaxArea(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ maxArea: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+            </Stack>
+          </Box>
+        </>
+      )}
+
+      {/* ── VEHICLE-SPECIFIC FILTERS ── */}
+      {(typeFilter === "vehicle" || typeFilter === "all") && (
+        <>
+          <Divider sx={{ borderColor: COLORS.border }} />
+          <Typography
+            sx={{
+              fontSize: "0.74rem",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: COLORS.purple,
+            }}
+          >
+            Vehicle Specifications
+          </Typography>
+
+          {/* Vehicle Category */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Vehicle Category
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={vehicleCategory}
+                onChange={(e) => {
+                  setVehicleCategory(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ vehicleCategory: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {VEHICLE_CATEGORIES.map((vc) => (
+                  <MenuItem key={vc.value} value={vc.value}>
+                    {vc.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Make / Brand */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Brand / Make
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={brand}
+                onChange={(e) => {
+                  setBrand(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ brand: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                <MenuItem value="all">All Brands</MenuItem>
+                {availableBrands.filter((b) => b !== "all").map((b) => (
+                  <MenuItem key={b} value={b}>
+                    {b}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Model Search */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Vehicle Model
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="e.g. Creta, Swift, Classic 350"
+              value={model}
+              onChange={(e) => {
+                setModel(e.target.value);
+                setCurrentPage(1);
+                updateUrlParams({ model: e.target.value });
+              }}
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+            />
+          </Box>
+
+          {/* Fuel Type */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Fuel Type
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={fuelType}
+                onChange={(e) => {
+                  setFuelType(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ fuelType: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {FUEL_TYPES.map((ft) => (
+                  <MenuItem key={ft.value} value={ft.value}>
+                    {ft.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Transmission */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Transmission
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={transmission}
+                onChange={(e) => {
+                  setTransmission(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ transmission: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {TRANSMISSION_OPTIONS.map((tr) => (
+                  <MenuItem key={tr.value} value={tr.value}>
+                    {tr.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Condition */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Condition
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={condition}
+                onChange={(e) => {
+                  setCondition(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ condition: e.target.value });
+                }}
+                sx={{ borderRadius: "12px", bgcolor: COLORS.surfaceSoft }}
+              >
+                {CONDITION_OPTIONS.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Manufacturing Year Range */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Manufacturing Year
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                size="small"
+                placeholder="Min year"
+                type="number"
+                value={minYear}
+                onChange={(e) => {
+                  setMinYear(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ minYear: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+              <TextField
+                size="small"
+                placeholder="Max year"
+                type="number"
+                value={maxYear}
+                onChange={(e) => {
+                  setMaxYear(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ maxYear: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+            </Stack>
+          </Box>
+
+          {/* Kilometres Driven Range */}
+          <Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: COLORS.text, mb: 0.8 }}>
+              Kilometres Driven
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                size="small"
+                placeholder="Min km"
+                type="number"
+                value={minKm}
+                onChange={(e) => {
+                  setMinKm(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ minKm: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+              <TextField
+                size="small"
+                placeholder="Max km"
+                type="number"
+                value={maxKm}
+                onChange={(e) => {
+                  setMaxKm(e.target.value);
+                  setCurrentPage(1);
+                  updateUrlParams({ maxKm: e.target.value });
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: COLORS.surfaceSoft } }}
+              />
+            </Stack>
+          </Box>
+        </>
+      )}
+
+      {/* Clear All Button */}
+      <Button
+        fullWidth
+        onClick={resetAllFilters}
+        startIcon={<RestartAltRoundedIcon />}
+        sx={{
+          borderRadius: "12px",
+          minHeight: 40,
+          textTransform: "none",
+          fontWeight: 800,
+          fontSize: "0.84rem",
+          color: COLORS.muted,
+          bgcolor: COLORS.surfaceSoft,
+          border: `1px solid ${COLORS.border}`,
+          "&:hover": { bgcolor: "#e2e8f0", color: COLORS.text },
+        }}
+      >
+        Clear All Filters
+      </Button>
+    </Stack>
+  );
 
   return (
     <>
       <Helmet>
-        <title>Explore Listings — Properties & Vehicles | EasyDeal</title>
-        <meta name="description" content="Browse verified property and vehicle listings across Karnataka. Find apartments, plots, farm land, cars, and bikes. Filter by location and price on EasyDeal." />
-        <meta name="keywords" content="explore properties Karnataka, buy vehicles India, apartments for sale, plots for sale, cars for sale, EasyDeal listings" />
-        <meta property="og:title" content="Explore Properties & Vehicles | EasyDeal" />
-        <meta name="robots" content="index, follow" />
+        <title>Explore Verified Properties & Vehicles | EasyDeal</title>
+        <meta
+          name="description"
+          content="Search and filter verified property and vehicle listings across Karnataka with custom price, category, BHK, year, and location filters."
+        />
         <link rel="canonical" href="https://easydealworld.com/explore" />
       </Helmet>
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: COLORS.pageBg,
-        p: { xs: 2, md: 3 },
-        "@keyframes fadeUp": {
-          from: { opacity: 0, transform: "translateY(20px)" },
-          to: { opacity: 1, transform: "translateY(0)" },
-        },
-        "@keyframes softZoom": {
-          from: { transform: "scale(1)" },
-          to: { transform: "scale(1.05)" },
-        },
-      }}
-    >
-      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
-        <Stack spacing={2.2}>
-          {/* Carousel */}
+
+      <Box sx={{ minHeight: "100vh", bgcolor: COLORS.pageBg, pb: 8 }}>
+        {/* ── Top Hero Carousel Banner ── */}
+        <Box sx={{ maxWidth: 1380, mx: "auto", p: { xs: 2, md: 3 } }}>
           <Card
             sx={{
-              ...cardSx,
+              borderRadius: "24px",
+              boxShadow: COLORS.shadowSoft,
+              border: `1px solid ${COLORS.border}`,
               overflow: "hidden",
-              animation: "fadeUp .45s ease both",
+              position: "relative",
             }}
           >
-            <Box
-              sx={{
-                position: "relative",
-                height: { xs: 340, sm: 370, md: 400 },
-                overflow: "hidden",
-              }}
-            >
+            <Box sx={{ position: "relative", height: { xs: 320, sm: 350, md: 380 }, overflow: "hidden" }}>
               {carouselSlides.map((slide, index) => (
                 <Box
                   key={slide.id}
@@ -1105,8 +1233,7 @@ export default function ExplorePage() {
                     position: "absolute",
                     inset: 0,
                     opacity: index === slideIndex ? 1 : 0,
-                    transform:
-                      index === slideIndex ? "scale(1)" : "scale(1.02)",
+                    transform: index === slideIndex ? "scale(1)" : "scale(1.02)",
                     transition: "opacity .6s ease, transform .6s ease",
                     pointerEvents: index === slideIndex ? "auto" : "none",
                   }}
@@ -1115,22 +1242,14 @@ export default function ExplorePage() {
                     component="img"
                     src={slide.image}
                     alt={slide.title}
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      animation:
-                        index === slideIndex
-                          ? "softZoom 4.5s linear both"
-                          : "none",
-                    }}
+                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                   <Box
                     sx={{
                       position: "absolute",
                       inset: 0,
                       background:
-                        "linear-gradient(90deg, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.60) 45%, rgba(15,23,42,0.25) 100%)",
+                        "linear-gradient(90deg, rgba(15,23,42,0.90) 0%, rgba(15,23,42,0.65) 45%, rgba(15,23,42,0.25) 100%)",
                     }}
                   />
                 </Box>
@@ -1141,7 +1260,7 @@ export default function ExplorePage() {
                   position: "absolute",
                   inset: 0,
                   zIndex: 2,
-                  p: { xs: 2, sm: 3.2, md: 4 },
+                  p: { xs: 2.5, sm: 4, md: 5 },
                   display: "flex",
                   alignItems: "flex-end",
                 }}
@@ -1156,9 +1275,9 @@ export default function ExplorePage() {
                         fontWeight: 800,
                         fontSize: "0.72rem",
                         color: "#fff",
-                        background: "rgba(255,255,255,0.14)",
+                        background: "rgba(255,255,255,0.18)",
                         backdropFilter: "blur(10px)",
-                        border: "1px solid rgba(255,255,255,0.16)",
+                        border: "1px solid rgba(255,255,255,0.22)",
                       }}
                     />
                     <Typography
@@ -1168,7 +1287,7 @@ export default function ExplorePage() {
                         fontWeight: 800,
                         letterSpacing: "0.09em",
                         textTransform: "uppercase",
-                        color: "rgba(255,255,255,0.74)",
+                        color: "rgba(255,255,255,0.76)",
                       }}
                     >
                       {activeSlide.eyebrow}
@@ -1176,7 +1295,7 @@ export default function ExplorePage() {
                     <Typography
                       sx={{
                         mt: 0.8,
-                        fontSize: { xs: "1.28rem", sm: "1.85rem", md: "2.35rem" },
+                        fontSize: { xs: "1.3rem", sm: "1.85rem", md: "2.35rem" },
                         lineHeight: 1.15,
                         fontWeight: 900,
                         letterSpacing: "-0.03em",
@@ -1191,7 +1310,7 @@ export default function ExplorePage() {
                         mt: 0.8,
                         fontSize: { xs: "0.82rem", sm: "0.92rem" },
                         lineHeight: 1.6,
-                        color: "rgba(255,255,255,0.82)",
+                        color: "rgba(255,255,255,0.85)",
                         maxWidth: 560,
                         display: { xs: "none", sm: "block" },
                       }}
@@ -1202,35 +1321,31 @@ export default function ExplorePage() {
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{ mt: { xs: 1.5, sm: 2.2 }, flexWrap: "wrap", gap: 0.8 }}
+                      sx={{ mt: { xs: 1.8, sm: 2.4 }, flexWrap: "wrap", gap: 0.8 }}
                     >
                       <Button
-                        onClick={() => setTypeFilter("property")}
+                        onClick={() => handleTypeChange("property")}
                         startIcon={<VillaRoundedIcon sx={{ fontSize: 18 }} />}
                         sx={{
                           minHeight: 40,
-                          px: { xs: 1.5, sm: 2 },
+                          px: 2.2,
                           borderRadius: "14px",
                           textTransform: "none",
                           fontWeight: 800,
                           fontSize: "0.82rem",
                           color: COLORS.text,
                           background: "#fff",
-                          "&:hover": {
-                            background: "#f8fafc",
-                          },
+                          "&:hover": { background: "#f8fafc" },
                         }}
                       >
-                        Explore properties
+                        Explore Properties
                       </Button>
                       <Button
-                        onClick={() => setTypeFilter("vehicle")}
-                        startIcon={
-                          <DirectionsBikeRoundedIcon sx={{ fontSize: 18 }} />
-                        }
+                        onClick={() => handleTypeChange("vehicle")}
+                        startIcon={<DirectionsBikeRoundedIcon sx={{ fontSize: 18 }} />}
                         sx={{
                           minHeight: 40,
-                          px: { xs: 1.5, sm: 2 },
+                          px: 2.2,
                           borderRadius: "14px",
                           textTransform: "none",
                           fontWeight: 800,
@@ -1239,27 +1354,19 @@ export default function ExplorePage() {
                           background: "rgba(255,255,255,0.18)",
                           border: "1px solid rgba(255,255,255,0.25)",
                           backdropFilter: "blur(8px)",
-                          "&:hover": {
-                            background: "rgba(255,255,255,0.28)",
-                          },
+                          "&:hover": { background: "rgba(255,255,255,0.28)" },
                         }}
                       >
-                        Explore vehicles
+                        Explore Vehicles
                       </Button>
                     </Stack>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      justifyContent={{ xs: "flex-end", md: "flex-end" }}
-                    >
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
                       <IconButton
                         onClick={() =>
-                          setSlideIndex((prev) =>
-                            prev === 0 ? carouselSlides.length - 1 : prev - 1,
-                          )
+                          setSlideIndex((prev) => (prev === 0 ? carouselSlides.length - 1 : prev - 1))
                         }
                         size="small"
                         sx={{
@@ -1269,18 +1376,14 @@ export default function ExplorePage() {
                           color: "#fff",
                           border: "1px solid rgba(255,255,255,0.22)",
                           backdropFilter: "blur(8px)",
-                          "&:hover": {
-                            background: "rgba(255,255,255,0.30)",
-                          },
+                          "&:hover": { background: "rgba(255,255,255,0.30)" },
                         }}
                       >
                         <ChevronLeftRoundedIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         onClick={() =>
-                          setSlideIndex(
-                            (prev) => (prev + 1) % carouselSlides.length,
-                          )
+                          setSlideIndex((prev) => (prev + 1) % carouselSlides.length)
                         }
                         size="small"
                         sx={{
@@ -1290,9 +1393,7 @@ export default function ExplorePage() {
                           color: "#fff",
                           border: "1px solid rgba(255,255,255,0.22)",
                           backdropFilter: "blur(8px)",
-                          "&:hover": {
-                            background: "rgba(255,255,255,0.30)",
-                          },
+                          "&:hover": { background: "rgba(255,255,255,0.30)" },
                         }}
                       >
                         <ChevronRightRoundedIcon fontSize="small" />
@@ -1301,438 +1402,568 @@ export default function ExplorePage() {
                   </Grid>
                 </Grid>
               </Box>
-
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  position: "absolute",
-                  left: { xs: 16, sm: 30, md: 34 },
-                  bottom: { xs: 14, sm: 20 },
-                  zIndex: 3,
-                }}
-              >
-                {carouselSlides.map((slide, index) => (
-                  <Box
-                    key={slide.id}
-                    onClick={() => setSlideIndex(index)}
-                    sx={{
-                      width: index === slideIndex ? 26 : 8,
-                      height: 8,
-                      borderRadius: "999px",
-                      background:
-                        index === slideIndex
-                          ? "#fff"
-                          : "rgba(255,255,255,0.44)",
-                      transition: "all .25s ease",
-                      cursor: "pointer",
-                    }}
-                  />
-                ))}
-              </Stack>
             </Box>
           </Card>
+        </Box>
 
-          {/* Search + filters */}
+        {/* ── Main Explore Interface (Search + Sidebar + Results) ── */}
+        <Box sx={{ maxWidth: 1380, mx: "auto", px: { xs: 2, md: 3 } }}>
+          {/* Top Bar: Keyword Search, Category Switcher, Sort, and Mobile Filter Toggle */}
           <Card
             sx={{
-              ...cardSx,
-              animation: "fadeUp .5s ease .08s both",
+              borderRadius: "20px",
+              boxShadow: COLORS.shadowSoft,
+              border: `1px solid ${COLORS.border}`,
+              p: { xs: 2, sm: 2.5 },
+              mb: 3,
             }}
           >
-            <CardContent sx={{ p: { xs: 1.8, sm: 2.4 } }}>
-              <Stack spacing={2}>
-                <Stack
-                  direction={{ xs: "column", md: "row" }}
-                  alignItems={{ xs: "flex-start", md: "center" }}
-                  justifyContent="space-between"
-                  spacing={1}
-                >
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: "1.25rem", sm: "1.6rem" },
-                        fontWeight: 900,
-                        color: COLORS.text,
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      Explore all listings
-                    </Typography>
-                    <Typography
-                      sx={{
-                        mt: 0.3,
-                        fontSize: "0.84rem",
-                        color: COLORS.muted,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Search across both properties and vehicles with filters.
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                <Grid container spacing={1.5} alignItems="center">
-                  <Grid size={{ xs: 12, md: 3.5 }}>
-                    <TextField
-                      fullWidth
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search title, location, brand..."
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchRoundedIcon sx={{ color: COLORS.faint }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                          "& fieldset": { borderColor: COLORS.border },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={categoryFilter}
-                        onChange={(e) => handleCategoryChange(e.target.value)}
-                        sx={{
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                        }}
-                      >
-                        {categoryOptions.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option === "all" ? "All Categories" : option}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={companyFilter}
-                        onChange={(e) => setCompanyFilter(e.target.value)}
-                        sx={{
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                        }}
-                      >
-                        {companyOptions.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option === "all" ? "All Brands / Builders" : option}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid size={{ xs: 6, sm: 3, md: 1 }}>
-                    <TextField
-                      fullWidth
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
-                      placeholder="Min ₹"
-                      type="number"
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                          "& fieldset": { borderColor: COLORS.border },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 6, sm: 3, md: 1 }}>
-                    <TextField
-                      fullWidth
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
-                      placeholder="Max ₹"
-                      type="number"
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                          "& fieldset": { borderColor: COLORS.border },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        sx={{
-                          minHeight: 48,
-                          borderRadius: "16px",
-                          background: COLORS.surfaceSoft,
-                        }}
-                      >
-                        <MenuItem value="latest">Sort: Latest</MenuItem>
-                        <MenuItem value="priceLowHigh">
-                          Price: Low to high
-                        </MenuItem>
-                        <MenuItem value="priceHighLow">
-                          Price: High to low
-                        </MenuItem>
-                        <MenuItem value="nameAZ">Name: A to Z</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" } }}>
-                    <Button
-                      fullWidth={{ xs: true, sm: false }}
-                      onClick={resetFilters}
-                      startIcon={
-                        <RestartAltRoundedIcon sx={{ fontSize: 18 }} />
-                      }
-                      sx={{
-                        minHeight: 44,
-                        px: 2.5,
-                        width: { xs: "100%", sm: "auto" },
-                        borderRadius: "14px",
-                        textTransform: "none",
-                        fontWeight: 800,
-                        fontSize: "0.86rem",
-                        color: COLORS.text,
-                        background: COLORS.surfaceSoft,
-                        border: `1px solid ${COLORS.border}`,
-                        "&:hover": {
-                          background: "#f1f5f9",
-                        },
-                      }}
-                    >
-                      Reset Filters
-                    </Button>
-                  </Grid>
-                </Grid>
-
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
-                  <Typography sx={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 700, mr: 0.5 }}>
-                    Showing {filteredItems.length} of {allItems.length} listings:
-                  </Typography>
-
-                  <Chip
-                    icon={
-                      <CategoryRoundedIcon
-                        sx={{ fontSize: "16px !important" }}
-                      />
-                    }
-                    label={
-                      categoryFilter === "all"
-                        ? "All categories"
-                        : `Category: ${categoryFilter}`
-                    }
-                    onDelete={
-                      categoryFilter !== "all"
-                        ? () => handleCategoryChange("all")
-                        : undefined
-                    }
-                    sx={{
-                      borderRadius: "999px",
-                      fontWeight: 700,
-                      background: categoryFilter !== "all" ? COLORS.primarySoft : COLORS.surfaceSoft,
-                      color: categoryFilter !== "all" ? COLORS.primary : COLORS.text,
-                      border: `1px solid ${categoryFilter !== "all" ? COLORS.primary : COLORS.border}`,
-                    }}
-                  />
-                  <Chip
-                    icon={
-                      <BusinessRoundedIcon
-                        sx={{ fontSize: "16px !important" }}
-                      />
-                    }
-                    label={
-                      companyFilter === "all"
-                        ? "All companies"
-                        : `Company: ${companyFilter}`
-                    }
-                    onDelete={
-                      companyFilter !== "all"
-                        ? () => setCompanyFilter("all")
-                        : undefined
-                    }
-                    sx={{
-                      borderRadius: "999px",
-                      fontWeight: 700,
-                      background: companyFilter !== "all" ? COLORS.blueSoft : COLORS.surfaceSoft,
-                      color: companyFilter !== "all" ? COLORS.blue : COLORS.text,
-                      border: `1px solid ${companyFilter !== "all" ? COLORS.blue : COLORS.border}`,
-                    }}
-                  />
-                  <Chip
-                    icon={
-                      <CurrencyRupeeRoundedIcon
-                        sx={{ fontSize: "16px !important" }}
-                      />
-                    }
-                    label={
-                      minPrice || maxPrice
-                        ? `Price: ${minPrice || 0} - ${maxPrice || "Any"}`
-                        : "Any price"
-                    }
-                    onDelete={
-                      minPrice || maxPrice
-                        ? () => {
-                            setMinPrice("");
-                            setMaxPrice("");
-                          }
-                        : undefined
-                    }
-                    sx={{
-                      borderRadius: "999px",
-                      fontWeight: 700,
-                      background: COLORS.surfaceSoft,
-                      border: `1px solid ${COLORS.border}`,
-                    }}
-                  />
-                </Stack>
-
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Grid */}
-          {loading ? (
-            <Grid container spacing={2.5} alignItems="stretch">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Grid
-                  size={{ xs: 12, sm: 6, lg: 4 }}
-                  key={`skeleton-${index}`}
-                  sx={{ display: "flex" }}
-                >
-                  <ListingCardSkeleton />
-                </Grid>
-              ))}
-            </Grid>
-          ) : filteredItems.length > 0 ? (
-            <Grid container spacing={2.5} alignItems="stretch">
-              {filteredItems.map((item, index) => (
-                <Grid
-                  size={{ xs: 12, sm: 6, lg: 4 }}
-                  key={item.id}
-                  sx={{ display: "flex" }}
-                >
-                  <ListingCard item={item} navigate={navigate} index={index} isPremium={isPremium} />
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-
-
-            <Card
-              sx={{
-                ...cardSx,
-                minHeight: 380,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                animation: "fadeUp .55s ease .12s both",
-              }}
-            >
-              <CardContent sx={{ p: { xs: 3, sm: 6 }, textAlign: "center", maxWidth: 520, mx: "auto" }}>
-                <Box
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: "20px",
-                    background: COLORS.surfaceSoft,
-                    border: `1px solid ${COLORS.border}`,
-                    display: "grid",
-                    placeItems: "center",
-                    mx: "auto",
-                    mb: 2,
-                    color: COLORS.muted,
+            <Stack spacing={2}>
+              <Stack
+                direction={{ xs: "column", lg: "row" }}
+                alignItems={{ xs: "stretch", lg: "center" }}
+                justifyContent="space-between"
+                spacing={1.8}
+              >
+                {/* Search input */}
+                <TextField
+                  fullWidth
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search listings by title, location, model, or keywords..."
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRoundedIcon sx={{ color: COLORS.faint }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: search ? (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => handleSearchChange("")}>
+                          <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
                   }}
-                >
-                  <SearchRoundedIcon sx={{ fontSize: 32 }} />
-                </Box>
-                <Typography
                   sx={{
-                    fontSize: "1.2rem",
-                    fontWeight: 900,
-                    color: COLORS.text,
-                  }}
-                >
-                  No matching listings found
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 1,
-                    fontSize: "0.92rem",
-                    color: COLORS.muted,
-                    fontWeight: 500,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {categoryFilter !== "all"
-                    ? `No listings currently match "${categoryFilter}". Explore all listings or clear your filters to view available options.`
-                    : "Try adjusting your filters, searching for a different keyword, or resetting filters."}
-                </Typography>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1.5}
-                  justifyContent="center"
-                  sx={{ mt: 3 }}
-                >
-                  {categoryFilter !== "all" && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleCategoryChange("all")}
-                      sx={{
-                        minHeight: 44,
-                        px: 2.5,
-                        borderRadius: "14px",
-                        textTransform: "none",
-                        fontWeight: 800,
-                        borderColor: COLORS.border,
-                        color: COLORS.text,
-                        "&:hover": { background: COLORS.surfaceSoft },
-                      }}
-                    >
-                      View All Categories
-                    </Button>
-                  )}
-                  <Button
-                    variant="contained"
-                    onClick={resetFilters}
-                    sx={{
-                      minHeight: 44,
-                      px: 2.5,
+                    flex: { lg: 1 },
+                    "& .MuiOutlinedInput-root": {
+                      minHeight: 46,
                       borderRadius: "14px",
+                      bgcolor: COLORS.surfaceSoft,
+                      "& fieldset": { borderColor: COLORS.border },
+                    },
+                  }}
+                />
+
+                {/* Category Switcher Pills */}
+                <Stack
+                  direction="row"
+                  spacing={0.8}
+                  sx={{
+                    p: 0.5,
+                    borderRadius: "16px",
+                    bgcolor: COLORS.surfaceSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    width: { xs: "100%", sm: "auto" },
+                  }}
+                >
+                  <Button
+                    size="small"
+                    onClick={() => handleTypeChange("all")}
+                    startIcon={<AppsRoundedIcon sx={{ fontSize: 16 }} />}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 2,
+                      py: 0.8,
                       textTransform: "none",
                       fontWeight: 800,
-                      color: "#fff",
-                      background: COLORS.primary,
-                      "&:hover": { background: "#0b5f59" },
+                      fontSize: "0.82rem",
+                      flex: { xs: 1, sm: "initial" },
+                      bgcolor: typeFilter === "all" ? COLORS.surface : "transparent",
+                      color: typeFilter === "all" ? COLORS.text : COLORS.muted,
+                      boxShadow: typeFilter === "all" ? "0 2px 8px rgba(15,23,42,0.06)" : "none",
+                      "&:hover": { bgcolor: COLORS.surface },
+                    }}
+                  >
+                    All
+                  </Button>
+
+                  <Button
+                    size="small"
+                    onClick={() => handleTypeChange("property")}
+                    startIcon={<HomeWorkRoundedIcon sx={{ fontSize: 16 }} />}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 2,
+                      py: 0.8,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                      flex: { xs: 1, sm: "initial" },
+                      bgcolor: typeFilter === "property" ? COLORS.primary : "transparent",
+                      color: typeFilter === "property" ? "#fff" : COLORS.muted,
+                      boxShadow: typeFilter === "property" ? "0 2px 8px rgba(15,118,110,0.25)" : "none",
+                      "&:hover": {
+                        bgcolor: typeFilter === "property" ? "#0b5d56" : COLORS.surface,
+                      },
+                    }}
+                  >
+                    Properties
+                  </Button>
+
+                  <Button
+                    size="small"
+                    onClick={() => handleTypeChange("vehicle")}
+                    startIcon={<DirectionsCarRoundedIcon sx={{ fontSize: 16 }} />}
+                    sx={{
+                      borderRadius: "12px",
+                      px: 2,
+                      py: 0.8,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                      flex: { xs: 1, sm: "initial" },
+                      bgcolor: typeFilter === "vehicle" ? COLORS.purple : "transparent",
+                      color: typeFilter === "vehicle" ? "#fff" : COLORS.muted,
+                      boxShadow: typeFilter === "vehicle" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                      "&:hover": {
+                        bgcolor: typeFilter === "vehicle" ? "#6d28d9" : COLORS.surface,
+                      },
+                    }}
+                  >
+                    Vehicles
+                  </Button>
+                </Stack>
+
+                {/* Mobile Filter Toggle & Sort selector */}
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: "100%", sm: "auto" } }}>
+                  {isMobile && (
+                    <Badge badgeContent={activeFiltersCount} color="primary" sx={{ flex: 1 }}>
+                      <Button
+                        fullWidth
+                        onClick={() => setMobileDrawerOpen(true)}
+                        startIcon={<FilterListRoundedIcon />}
+                        sx={{
+                          borderRadius: "14px",
+                          minHeight: 46,
+                          textTransform: "none",
+                          fontWeight: 800,
+                          fontSize: "0.84rem",
+                          color: COLORS.text,
+                          bgcolor: COLORS.surfaceSoft,
+                          border: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        Filters
+                      </Button>
+                    </Badge>
+                  )}
+
+                  <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 180 }, flex: { xs: 1, sm: "initial" } }}>
+                    <Select
+                      value={sortBy}
+                      onChange={(e) => {
+                        setSortBy(e.target.value);
+                        updateUrlParams({ sortBy: e.target.value });
+                      }}
+                      sx={{ borderRadius: "14px", minHeight: 46, bgcolor: COLORS.surfaceSoft }}
+                    >
+                      <MenuItem value="latest">Sort: Newest First</MenuItem>
+                      <MenuItem value="price_asc">Price: Low to High</MenuItem>
+                      <MenuItem value="price_desc">Price: High to Low</MenuItem>
+                      <MenuItem value="nameAZ">Name: A to Z</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Stack>
+
+              {/* Active Filter Chips Bar */}
+              {activeFiltersCount > 0 && (
+                <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap alignItems="center">
+                  <Typography sx={{ fontSize: "0.78rem", fontWeight: 800, color: COLORS.muted, mr: 0.5 }}>
+                    Active Filters:
+                  </Typography>
+
+                  {search && (
+                    <Chip
+                      size="small"
+                      label={`Search: "${search}"`}
+                      onDelete={() => handleSearchChange("")}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {cityFilter !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`City: ${cityFilter}`}
+                      onDelete={() => {
+                        setCityFilter("all");
+                        updateUrlParams({ city: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {(minPrice || maxPrice) && (
+                    <Chip
+                      size="small"
+                      label={`Price: ₹${minPrice || 0} - ₹${maxPrice || "Any"}`}
+                      onDelete={() => {
+                        setMinPrice("");
+                        setMaxPrice("");
+                        updateUrlParams({ minPrice: "", maxPrice: "" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {transactionType !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Transaction: ${transactionType}`}
+                      onDelete={() => {
+                        setTransactionType("all");
+                        updateUrlParams({ transaction: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {propertyType !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Property: ${propertyType}`}
+                      onDelete={() => {
+                        setPropertyType("all");
+                        updateUrlParams({ propertyType: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {bedrooms !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`BHK: ${bedrooms}`}
+                      onDelete={() => {
+                        setBedrooms("all");
+                        updateUrlParams({ bedrooms: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {furnishing !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Furnishing: ${furnishing}`}
+                      onDelete={() => {
+                        setFurnishing("all");
+                        updateUrlParams({ furnishing: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {vehicleCategory !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Category: ${vehicleCategory}`}
+                      onDelete={() => {
+                        setVehicleCategory("all");
+                        updateUrlParams({ vehicleCategory: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {brand !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Brand: ${brand}`}
+                      onDelete={() => {
+                        setBrand("all");
+                        updateUrlParams({ brand: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {fuelType !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Fuel: ${fuelType}`}
+                      onDelete={() => {
+                        setFuelType("all");
+                        updateUrlParams({ fuelType: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  {transmission !== "all" && (
+                    <Chip
+                      size="small"
+                      label={`Transmission: ${transmission}`}
+                      onDelete={() => {
+                        setTransmission("all");
+                        updateUrlParams({ transmission: "all" });
+                      }}
+                      sx={{ borderRadius: "8px", fontWeight: 700, fontSize: "0.74rem" }}
+                    />
+                  )}
+
+                  <Button
+                    size="small"
+                    onClick={resetAllFilters}
+                    sx={{
+                      fontSize: "0.74rem",
+                      fontWeight: 800,
+                      color: COLORS.primary,
+                      textTransform: "none",
+                      p: 0,
+                      minWidth: "auto",
+                      ml: 0.5,
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          </Card>
+
+          {/* ── Main Content Grid: Sidebar (Desktop) + Results Grid ── */}
+          <Grid container spacing={3} alignItems="flex-start">
+            {/* Desktop Filter Sidebar */}
+            {!isMobile && (
+              <Grid size={{ xs: 12, md: 3.8, lg: 3 }}>
+                <Card
+                  sx={{
+                    borderRadius: "20px",
+                    boxShadow: COLORS.shadowSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    p: 2.5,
+                    position: "sticky",
+                    top: 24,
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TuneRoundedIcon sx={{ fontSize: 20, color: COLORS.primary }} />
+                      <Typography sx={{ fontSize: "1rem", fontWeight: 900, color: COLORS.text }}>
+                        Refine Search
+                      </Typography>
+                    </Stack>
+                    {activeFiltersCount > 0 && (
+                      <Chip
+                        label={`${activeFiltersCount} active`}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          bgcolor: COLORS.primarySoft,
+                          color: COLORS.primary,
+                        }}
+                      />
+                    )}
+                  </Stack>
+                  <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
+                  {renderFilterControls()}
+                </Card>
+              </Grid>
+            )}
+
+            {/* Listings Grid */}
+            <Grid size={{ xs: 12, md: 8.2, lg: 9 }}>
+              {/* Results Heading */}
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: COLORS.muted }}>
+                  Showing{" "}
+                  <Typography component="span" sx={{ color: COLORS.text, fontWeight: 900 }}>
+                    {allListings.length}
+                  </Typography>{" "}
+                  verified {typeFilter === "property" ? "properties" : typeFilter === "vehicle" ? "vehicles" : "listings"}
+                </Typography>
+              </Stack>
+
+              {/* Grid content */}
+              {loading ? (
+                <Grid container spacing={2.5}>
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`skel-${idx}`}>
+                      <ListingCardSkeleton />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : paginatedListings.length > 0 ? (
+                <>
+                  <Grid container spacing={2.5} alignItems="stretch">
+                    {paginatedListings.map((item) => (
+                      <Grid
+                        size={{ xs: 12, sm: 6, lg: 4 }}
+                        key={`${item.itemType}-${item.id}`}
+                        sx={{ display: "flex" }}
+                      >
+                        {item.itemType === "property" ? (
+                          <PropertyCard item={item.raw} />
+                        ) : (
+                          <VehicleCard item={item.raw} />
+                        )}
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+                      <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={(_, page) => {
+                          setCurrentPage(page);
+                          window.scrollTo({ top: 380, left: 0, behavior: "smooth" });
+                        }}
+                        color="primary"
+                        size={isMobile ? "medium" : "large"}
+                        sx={{
+                          "& .MuiPaginationItem-root": {
+                            fontWeight: 800,
+                            borderRadius: "10px",
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Card
+                  sx={{
+                    borderRadius: "20px",
+                    boxShadow: COLORS.shadowSoft,
+                    border: `1px solid ${COLORS.border}`,
+                    p: { xs: 4, sm: 6 },
+                    textAlign: "center",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "20px",
+                      background: COLORS.surfaceSoft,
+                      border: `1px solid ${COLORS.border}`,
+                      display: "grid",
+                      placeItems: "center",
+                      mx: "auto",
+                      mb: 2,
+                      color: COLORS.muted,
+                    }}
+                  >
+                    <SearchRoundedIcon sx={{ fontSize: 32 }} />
+                  </Box>
+                  <Typography sx={{ fontSize: "1.2rem", fontWeight: 900, color: COLORS.text }}>
+                    No matching listings found
+                  </Typography>
+                  <Typography sx={{ mt: 1, fontSize: "0.92rem", color: COLORS.muted, maxWidth: 480, mx: "auto" }}>
+                    We couldn't find any listings matching your selected filters. Try broadening your search or resetting filters to see more results.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={resetAllFilters}
+                    startIcon={<RestartAltRoundedIcon />}
+                    sx={{
+                      mt: 3,
+                      borderRadius: "14px",
+                      px: 3,
+                      py: 1.2,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      bgcolor: COLORS.primary,
+                      "&:hover": { bgcolor: "#0b5d56" },
                     }}
                   >
                     Reset All Filters
                   </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          )}
-        </Stack>
+                </Card>
+              )}
+            </Grid>
+          </Grid>
+        </Box>
       </Box>
-    </Box>
+
+      {/* ── Mobile Filter Drawer ── */}
+      <Drawer
+        anchor="bottom"
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            borderTopLeftRadius: "24px",
+            borderTopRightRadius: "24px",
+            maxHeight: "85vh",
+            p: 3,
+            bgcolor: COLORS.surface,
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TuneRoundedIcon sx={{ fontSize: 22, color: COLORS.primary }} />
+            <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: COLORS.text }}>
+              Filter Listings
+            </Typography>
+          </Stack>
+          <IconButton size="small" onClick={() => setMobileDrawerOpen(false)}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </Stack>
+
+        <Divider sx={{ mb: 2.5, borderColor: COLORS.border }} />
+
+        <Box sx={{ overflowY: "auto", pr: 0.5, pb: 4 }}>
+          {renderFilterControls()}
+        </Box>
+
+        <Box sx={{ pt: 2, borderTop: `1px solid ${COLORS.border}`, display: "flex", gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={() => {
+              resetAllFilters();
+              setMobileDrawerOpen(false);
+            }}
+            sx={{
+              borderRadius: "14px",
+              minHeight: 46,
+              textTransform: "none",
+              fontWeight: 800,
+              borderColor: COLORS.border,
+              color: COLORS.text,
+            }}
+          >
+            Clear
+          </Button>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => setMobileDrawerOpen(false)}
+            sx={{
+              borderRadius: "14px",
+              minHeight: 46,
+              textTransform: "none",
+              fontWeight: 800,
+              bgcolor: COLORS.primary,
+              "&:hover": { bgcolor: "#0b5d56" },
+            }}
+          >
+            Apply Filters
+          </Button>
+        </Box>
+      </Drawer>
     </>
   );
 }

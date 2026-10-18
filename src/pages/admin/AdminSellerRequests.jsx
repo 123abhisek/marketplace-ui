@@ -123,14 +123,12 @@ export default function AdminSellerRequests() {
         </div>
       )}
 
-      {loading ? (
-        <div className="text-gray-500">Loading requests...</div>
-      ) : requests.length === 0 ? (
+      {requests.length === 0 && !loading ? (
         <div className="text-gray-500 border rounded-lg p-8 text-center bg-gray-50">
           No seller requests found for this filter.
         </div>
       ) : (
-        <div className="overflow-x-auto border rounded-xl">
+        <div className="overflow-x-auto border rounded-xl bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-left">
               <tr>
@@ -143,7 +141,32 @@ export default function AdminSellerRequests() {
               </tr>
             </thead>
             <tbody>
-              {requests.map((req) => (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={`skel-row-${i}`} className="border-t animate-pulse">
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-32 mb-1.5" />
+                      <div className="h-3 bg-gray-100 rounded w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-28 mb-1" />
+                      <div className="h-3 bg-gray-100 rounded w-36" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-40" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-6 bg-gray-200 rounded-full w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="h-4 bg-gray-200 rounded w-24" />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="h-7 bg-gray-200 rounded-md w-28 ml-auto" />
+                    </td>
+                  </tr>
+                ))
+              ) : requests.map((req) => (
                 <tr key={req.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-800">{req.business_name}</div>

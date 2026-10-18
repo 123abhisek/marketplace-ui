@@ -263,7 +263,7 @@ export default function LoginPage() {
 
     try {
       await login({
-        email: data.email,
+        email: data.email?.trim(),
         password: data.password,
       });
       // navigation is handled inside useAppState.login() based on user role
@@ -374,19 +374,16 @@ export default function LoginPage() {
                 name="email"
                 control={control}
                 rules={{
-                  required: "Email is required",
-                  pattern: {
-                    value: /^\S+@\S+\.\S+$/,
-                    message: "Invalid email address",
-                  },
+                  required: "Email, username, or phone number is required",
                 }}
                 render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Email address"
-                    type="email"
-                    autoComplete="email"
+                    label="Email, username, or phone"
+                    placeholder="e.g. name@example.com or 9876543210"
+                    type="text"
+                    autoComplete="username"
                     disabled={loading}
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message || " "}

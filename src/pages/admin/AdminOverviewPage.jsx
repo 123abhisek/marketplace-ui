@@ -148,10 +148,9 @@ export default function AdminOverviewPage() {
           />
 
           {error && <Alert severity="warning" sx={{ borderRadius: "14px" }}>{error}</Alert>}
-          {loading && <LinearProgress sx={{ borderRadius: 4 }} />}
 
           {/* ── Executive Performance Summary Bar ── */}
-          <ExecutiveSummaryBar liveData={analyticsData} />
+          <ExecutiveSummaryBar liveData={analyticsData} loading={loading} />
 
           {/* ── 5 Primary KPI Cards with Real Data ── */}
           <Grid container spacing={2.2}>
@@ -165,6 +164,7 @@ export default function AdminOverviewPage() {
                 sparkColor="#10B981"
                 color="#10B981"
                 icon={<CurrencyRupeeRoundedIcon />}
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={4} lg={2.4}>
@@ -177,6 +177,7 @@ export default function AdminOverviewPage() {
                 sparkColor={BI_COLORS.bookings}
                 color={BI_COLORS.bookings}
                 icon={<ConfirmationNumberRoundedIcon />}
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={4} lg={2.4}>
@@ -189,6 +190,7 @@ export default function AdminOverviewPage() {
                 sparkColor="#F59E0B"
                 color="#F59E0B"
                 icon={<AccountBalanceRoundedIcon />}
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={4} lg={2.4}>
@@ -201,6 +203,7 @@ export default function AdminOverviewPage() {
                 sparkColor="#0F766E"
                 color="#0F766E"
                 icon={<TrendingUpRoundedIcon />}
+                loading={loading}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={4} lg={2.4}>
@@ -213,6 +216,7 @@ export default function AdminOverviewPage() {
                 sparkColor="#8B5CF6"
                 color="#8B5CF6"
                 icon={<StorefrontRoundedIcon />}
+                loading={loading}
               />
             </Grid>
           </Grid>

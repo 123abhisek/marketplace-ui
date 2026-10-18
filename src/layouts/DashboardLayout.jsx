@@ -9,8 +9,9 @@ import {
 import { useAppState } from "../hooks/useAppState";
 import { routes } from "../router";
 
-import { Stack, Box, Chip, Typography } from "@mui/material";
+import { Stack, Box, Chip, Typography, Button } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { isUserPremium } from "../utils/permissions";
 
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
@@ -58,12 +59,12 @@ function SidebarLink({ to, icon: Icon, label, end = false, onClick, badge }) {
 }
 
 function SidebarContent({ onNavigate, user }) {
-  const isPremium = user?.isPremium || user?.role === "premium";
+  const isPremium = isUserPremium(user);
 
   return (
     <div className="flex h-full flex-col bg-white">
-      {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-5">
+      {/* Logo & Account Status Header */}
+      <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
         <Stack
           component={RouterLink}
           to="/"
@@ -76,13 +77,24 @@ function SidebarContent({ onNavigate, user }) {
             component="img"
             src="/icon.png"
             alt="EasyDeal"
-            sx={{ height: 40, width: "auto", objectFit: "contain" }}
+            sx={{ height: 38, width: "auto", objectFit: "contain" }}
           />
         </Stack>
-        <div>
-          <p className="text-sm font-semibold text-slate-900">EasyDeal</p>
-          <p className="text-xs text-slate-500">
-            {isPremium ? "Premium Account" : "My Dashboard"}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-bold text-slate-900">EasyDeal</p>
+            {isPremium ? (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-xs">
+                ⭐ PRO
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600 border border-slate-200">
+                FREE
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-medium text-slate-500 truncate">
+            {isPremium ? "Premium Account" : "Standard Account"}
           </p>
         </div>
       </div>
@@ -111,6 +123,7 @@ function SidebarContent({ onNavigate, user }) {
                 icon={CalendarMonthRoundedIcon}
                 label="My Bookings"
                 onClick={onNavigate}
+                badge={!isPremium ? "PRO" : null}
               />
             </div>
           </div>
@@ -169,12 +182,6 @@ function SidebarContent({ onNavigate, user }) {
                 label="Subscription"
                 onClick={onNavigate}
               />
-              {/* <SidebarLink
-                to="/dashboard/become-seller"
-                icon={VerifiedUserRoundedIcon}
-                label="Become Seller"
-                onClick={onNavigate}
-              /> */}
               <SidebarLink
                 to="/dashboard/logout"
                 icon={LogoutRoundedIcon}
@@ -187,31 +194,48 @@ function SidebarContent({ onNavigate, user }) {
       </div>
 
       {/* Premium CTA for free users */}
-      {!isPremium && (
+      {!isPremium ? (
         <div className="border-t border-slate-200 p-4">
           <RouterLink to="/subscription" className="block no-underline">
-            <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4 hover:from-amber-100 hover:to-orange-100 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <WorkspacePremiumRoundedIcon sx={{ fontSize: 16, color: "#b45309" }} />
-                <p className="text-sm font-bold text-amber-800">Upgrade to Premium</p>
+            <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-300/80 p-3.5 hover:border-amber-400 transition-all shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 14 }} />
+                  </div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-amber-900">Unlock Premium</p>
+                </div>
+                <span className="text-[11px] font-black text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded-full border border-amber-200">
+                  ₹299
+                </span>
               </div>
-              <p className="text-xs leading-5 text-amber-700">
-                View full listing details, images & seller contacts.
+              <p className="text-[11px] leading-relaxed text-slate-700 font-medium mb-2.5">
+                Unlock seller phone numbers, HD photos & instant site visits.
               </p>
+              <div className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1">
+                <span>Upgrade Now</span>
+                <span>→</span>
+              </div>
             </div>
           </RouterLink>
         </div>
-      )}
-
-      {isPremium && (
+      ) : (
         <div className="border-t border-slate-200 p-4">
-          <div className="rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 p-4">
-            <div className="flex items-center gap-2">
-              <WorkspacePremiumRoundedIcon sx={{ fontSize: 16, color: "#0f766e" }} />
-              <p className="text-sm font-bold text-teal-800">Premium Active</p>
+          <div className="rounded-2xl bg-gradient-to-br from-teal-500/10 via-emerald-500/10 to-teal-500/5 border border-teal-300 p-3.5 shadow-xs">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-md bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <WorkspacePremiumRoundedIcon sx={{ fontSize: 14 }} />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-wider text-teal-900">Premium Member</p>
+              </div>
+              <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active
+              </span>
             </div>
-            <p className="mt-1 text-xs leading-5 text-teal-600">
-              Full access to all listings and seller contacts.
+            <p className="text-[11px] leading-relaxed text-teal-800 font-medium">
+              All owner contacts, HD photos & site visit bookings are unlocked.
             </p>
           </div>
         </div>
@@ -301,6 +325,30 @@ export default function DashboardLayout() {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  {!isUserPremium(user) && (
+                    <Button
+                      component={RouterLink}
+                      to="/subscription"
+                      size="small"
+                      variant="contained"
+                      startIcon={<WorkspacePremiumRoundedIcon sx={{ color: "#F59E0B !important", fontSize: "16px !important" }} />}
+                      sx={{
+                        background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                        color: "#fff",
+                        borderRadius: "10px",
+                        fontWeight: 800,
+                        fontSize: { xs: "0.74rem", sm: "0.8rem" },
+                        px: { xs: 1.3, sm: 2 },
+                        py: 0.8,
+                        textTransform: "none",
+                        boxShadow: "0 2px 10px rgba(15,23,42,0.15)",
+                        "&:hover": { background: "#0F172A", transform: "translateY(-1px)" },
+                      }}
+                    >
+                      <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>Upgrade to </Box>Premium
+                    </Button>
+                  )}
+
                   <Box sx={{ display: { xs: "none", sm: "inline-flex" } }}>
                     <button
                       type="button"
@@ -313,19 +361,25 @@ export default function DashboardLayout() {
 
                   <Link
                     to="/dashboard/profile"
-                    className="inline-flex items-center gap-2 sm:gap-3 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:bg-slate-50"
+                    className={`inline-flex items-center gap-2 sm:gap-3 rounded-xl border ${
+                      isUserPremium(user) ? "border-amber-300 bg-amber-50/40" : "border-slate-200 bg-white"
+                    } px-2.5 py-1.5 sm:px-3 sm:py-2 transition hover:bg-slate-50`}
                   >
-                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-200 text-slate-700">
-                      <PersonRoundedIcon sx={{ fontSize: 18 }} />
+                    <div className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full ${
+                      isUserPremium(user) ? "bg-amber-500 text-white shadow-xs" : "bg-slate-200 text-slate-700"
+                    }`}>
+                      {isUserPremium(user) ? (
+                        <WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />
+                      ) : (
+                        <PersonRoundedIcon sx={{ fontSize: 18 }} />
+                      )}
                     </div>
                     <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left" }}>
-                      <p className="text-sm font-semibold text-slate-900">
-                        My Account
+                      <p className="text-sm font-semibold text-slate-900 leading-tight">
+                        {user?.name || "My Account"}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {user?.isPremium || user?.role === "premium"
-                          ? "Premium Plan"
-                          : "Free Plan"}
+                      <p className={`text-xs font-bold leading-tight ${isUserPremium(user) ? "text-amber-700" : "text-slate-500"}`}>
+                        {isUserPremium(user) ? "⭐ Premium Plan" : "Free Plan"}
                       </p>
                     </Box>
                   </Link>

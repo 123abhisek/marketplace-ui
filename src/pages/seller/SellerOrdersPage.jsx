@@ -25,6 +25,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { TableSkeleton } from "../../components/skeletons/AppSkeletons";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
@@ -216,8 +217,6 @@ export default function SellerOrdersPage() {
             </CardContent>
           </Card>
 
-          {loading && <LinearProgress sx={{ borderRadius: 4 }} />}
-
           {/* Orders Table */}
           <Card sx={{ borderRadius: "20px", border: `1px solid ${COLORS.border}`, boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)" }}>
             <CardContent sx={{ p: 3 }}>
@@ -234,7 +233,20 @@ export default function SellerOrdersPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredOrders.map((row) => {
+                    {loading ? (
+                      <TableSkeleton rows={5} columns={6} />
+                    ) : filteredOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                          <Typography sx={{ color: COLORS.neutral, fontWeight: 700, fontSize: "0.95rem" }}>
+                            No customer inquiries found
+                          </Typography>
+                          <Typography sx={{ color: COLORS.neutral, fontSize: "0.78rem", mt: 0.5 }}>
+                            Site visit requests and buyer leads for your listings will be listed here automatically.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredOrders.map((row) => {
                       const isProperty = (row.listing_type || row.listing?.type || "").toLowerCase() === "property";
                       const title = row.listing_title || row.listing?.title || "Marketplace Listing";
                       const status = String(row.status || "confirmed").toLowerCase();
@@ -321,18 +333,6 @@ export default function SellerOrdersPage() {
                         </TableRow>
                       );
                     })}
-                    {filteredOrders.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                          <Typography sx={{ color: COLORS.neutral, fontWeight: 700, fontSize: "0.95rem" }}>
-                            No customer inquiries found
-                          </Typography>
-                          <Typography sx={{ color: COLORS.neutral, fontSize: "0.78rem", mt: 0.5 }}>
-                            Site visit requests and buyer leads for your listings will be listed here automatically.
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </TableContainer>

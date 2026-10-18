@@ -2,19 +2,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert, Box, Button, Chip, Grid, InputAdornment,
-  MenuItem, Stack, TextField, Typography,
+  MenuItem, Skeleton, Stack, TextField, Typography,
 } from '@mui/material'
 import SearchRoundedIcon    from '@mui/icons-material/SearchRounded'
 import TuneRoundedIcon      from '@mui/icons-material/TuneRounded'
 import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded'
 import AddHomeRoundedIcon   from '@mui/icons-material/AddHomeRounded'
 import RefreshRoundedIcon   from '@mui/icons-material/RefreshRounded'
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
 import { Link as RouterLink } from 'react-router-dom'
 import PropertyCard         from '../components/PropertyCard'
 import Loader               from '../components/Loader'
 import EmptyState           from '../components/EmptyState'
 import { propertyService }  from '../services/api'
-import { extractError }     from '../utils/mappers'
+import { extractError, normalizeProperty } from '../utils/mappers'
 import { useAppState }      from '../hooks/useAppState'
 
 const TYPES = [
@@ -49,9 +50,9 @@ export default function PropertiesPage() {
     setLoading(true)
     setError('')
     try {
-      // ✅ No double-mapping — getAll already returns mapped data
-      const mapped = await propertyService.getAll({ limit: 100 })
-      setProperties(mapped)
+      const res = await propertyService.getAll({ limit: 100 })
+      const list = Array.isArray(res) ? res : res?.data || res?.items || []
+      setProperties(list.map(normalizeProperty))
     } catch (err) {
       if (err?.name === 'CanceledError' || err?.name === 'AbortError') return
       setError(extractError(err))
@@ -72,12 +73,24 @@ export default function PropertiesPage() {
       const matchQ = !q
         || p.title?.toLowerCase().includes(q)
         || p.location?.toLowerCase().includes(q)
-      const matchT = typeFilter === 'All' || p.propertyType === typeFilter
+        || p.city?.toLowerCase().includes(q)
+        || p.localAddress?.toLowerCase().includes(q)
+      
+      const pType = String(p.propertyType || p.property_type || '').toLowerCase()
+      const tFilter = typeFilter.toLowerCase()
+      const matchT = typeFilter === 'All'
+        || pType === tFilter
+        || (tFilter === 'site' && pType.includes('site'))
+        || (tFilter === 'agricultural' && (pType.includes('agri') || pType.includes('farm')))
+        || pType.includes(tFilter)
+
       return matchQ && matchT
     })
     .sort((a, b) => {
-      if (sortBy === 'price-asc')  return Number(a.expectedPrice) - Number(b.expectedPrice)
-      if (sortBy === 'price-desc') return Number(b.expectedPrice) - Number(a.expectedPrice)
+      const priceA = Number(a.price ?? a.expectedPrice ?? 0)
+      const priceB = Number(b.price ?? b.expectedPrice ?? 0)
+      if (sortBy === 'price-asc')  return priceA - priceB
+      if (sortBy === 'price-desc') return priceB - priceA
       return 0 // API returns newest first; preserve order for 'latest'
     })
 
@@ -96,7 +109,7 @@ export default function PropertiesPage() {
             Property Listings
           </Typography>
           <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', mt: 0.25 }}>
-            {loading ? 'Loading…' : `${properties.length} listings available`}
+            {loading ? <Skeleton variant="text" width={110} height={18} animation="wave" /> : `${properties.length} listings available`}
           </Typography>
         </Box>
 
@@ -144,6 +157,69 @@ export default function PropertiesPage() {
           }>
           {error}
         </Alert>
+      )}
+
+      {/* ── Non-Premium Plan Notice Banner ── */}
+      {!hasFullAccess && (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+            border: '1px solid #FDE68A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: '11px',
+                bgcolor: '#F59E0B',
+                color: '#fff',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+              }}
+            >
+              <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: '#92400E' }}>
+                Browsing as Free Member
+              </Typography>
+              <Typography sx={{ fontSize: '0.78rem', color: '#B45309' }}>
+                Seller phone numbers, exact addresses & HD photos are locked. Upgrade to unlock full access.
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            component={RouterLink}
+            to="/subscription"
+            variant="contained"
+            size="small"
+            sx={{
+              background: '#B45309',
+              color: '#fff',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              textTransform: 'none',
+              px: 2.2,
+              py: 0.8,
+              boxShadow: '0 2px 8px rgba(180,83,9,0.25)',
+              '&:hover': { background: '#92400E' },
+            }}
+          >
+            Upgrade to Premium — ₹299
+          </Button>
+        </Box>
       )}
 
       {/* ── Filters Bar ── */}

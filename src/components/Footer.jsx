@@ -60,7 +60,7 @@ export default function Footer() {
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           {/* Company Brand & Client Profile */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={2.5}>
               <Stack direction="row" alignItems="center" spacing={1.5}>
                 <Box
@@ -143,7 +143,7 @@ export default function Footer() {
                   <EmailRoundedIcon sx={{ fontSize: 18, color: "#0F766E" }} />
                   <Box
                     component="a"
-                    href="mailto:Easydealhelpdesk03@gmail.com"
+                    href="mailto:easydealhelpdesk03@gmail.com"
                     sx={{
                       color: "#CBD5E1",
                       fontSize: "0.875rem",
@@ -151,7 +151,7 @@ export default function Footer() {
                       "&:hover": { color: "#2DD4BF" },
                     }}
                   >
-                    Easydealhelpdesk03@gmail.com
+                    easydealhelpdesk03@gmail.com
                   </Box>
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -194,7 +194,7 @@ export default function Footer() {
 
           {/* Navigation Links Columns */}
           {Object.entries(LINKS).map(([category, links]) => (
-            <Grid item xs={12} sm={4} md={2.6} key={category}>
+            <Grid size={{ xs: 12, sm: 4, md: 2.6 }} key={category}>
               <Typography
                 variant="subtitle2"
                 fontWeight={800}
@@ -262,7 +262,7 @@ export default function Footer() {
                   sx={{ fontSize: "0.825rem" }}
                 >
                   Call/WhatsApp us at 8088185203 or email
-                  Easydealhelpdesk03@gmail.com for direct property & vehicle
+                  easydealhelpdesk03@gmail.com for direct property & vehicle
                   inspection support.
                 </Typography>
               </Box>

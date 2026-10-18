@@ -19,6 +19,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { ListItemSkeleton } from "../components/skeletons/AppSkeletons";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -1478,11 +1479,7 @@ export default function PremiumDashboard() {
                           </Stack>
                           <Stack spacing={1.4}>
                             {ordersLoading ? (
-                              <Card sx={cardSx}>
-                                <CardContent>
-                                  <Typography>Loading orders...</Typography>
-                                </CardContent>
-                              </Card>
+                              <ListItemSkeleton count={3} />
                             ) : orders.length === 0 ? (
                               <Card sx={cardSx}>
                                 <CardContent>

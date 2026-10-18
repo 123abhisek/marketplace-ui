@@ -1,10 +1,9 @@
-// src/components/analytics/ExecutiveSummaryBar.jsx
 import React from "react";
-import { Box, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Skeleton, Stack, Typography } from "@mui/material";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 
-export default function ExecutiveSummaryBar({ liveData }) {
+export default function ExecutiveSummaryBar({ liveData, loading = false }) {
   const kpis = liveData?.kpis;
 
   const metrics = [
@@ -64,28 +63,45 @@ export default function ExecutiveSummaryBar({ liveData }) {
             useFlexGap
             alignItems="center"
           >
-            {metrics.map((item) => (
-              <Box
-                key={item.label}
-                sx={{
-                  p: 1,
-                  px: 1.5,
-                  borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.12)",
-                  border: "1px solid rgba(255, 255, 255, 0.18)",
-                }}
-              >
-                <Typography sx={{ fontSize: "0.68rem", color: "rgba(255, 255, 255, 0.75)", fontWeight: 700 }}>
-                  {item.label}
-                </Typography>
-                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.2 }}>
-                  <CheckCircleRoundedIcon sx={{ fontSize: 13, color: "#A7F3D0" }} />
-                  <Typography sx={{ fontSize: "0.88rem", fontWeight: 900, color: "#FFFFFF" }}>
-                    {item.val}
-                  </Typography>
-                </Stack>
-              </Box>
-            ))}
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <Box
+                    key={`exec-skel-${i}`}
+                    sx={{
+                      p: 1,
+                      px: 1.5,
+                      borderRadius: "12px",
+                      background: "rgba(255, 255, 255, 0.12)",
+                      border: "1px solid rgba(255, 255, 255, 0.18)",
+                      minWidth: 80,
+                    }}
+                  >
+                    <Skeleton variant="text" width={55} height={12} sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
+                    <Skeleton variant="text" width={70} height={20} sx={{ bgcolor: "rgba(255,255,255,0.3)", mt: 0.2 }} />
+                  </Box>
+                ))
+              : metrics.map((item) => (
+                  <Box
+                    key={item.label}
+                    sx={{
+                      p: 1,
+                      px: 1.5,
+                      borderRadius: "12px",
+                      background: "rgba(255, 255, 255, 0.12)",
+                      border: "1px solid rgba(255, 255, 255, 0.18)",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "0.68rem", color: "rgba(255, 255, 255, 0.75)", fontWeight: 700 }}>
+                      {item.label}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.2 }}>
+                      <CheckCircleRoundedIcon sx={{ fontSize: 13, color: "#A7F3D0" }} />
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 900, color: "#FFFFFF" }}>
+                        {item.val}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                ))}
           </Stack>
         </Stack>
       </CardContent>

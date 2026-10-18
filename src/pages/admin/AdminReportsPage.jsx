@@ -147,9 +147,8 @@ export default function AdminReportsPage() {
           />
 
           {error && <Alert severity="warning" sx={{ borderRadius: "14px" }}>{error}</Alert>}
-          {loading && <LinearProgress sx={{ borderRadius: 4 }} />}
 
-          <ExecutiveSummaryBar liveData={analyticsData} />
+          <ExecutiveSummaryBar liveData={analyticsData} loading={loading} />
 
           <Card
             sx={{

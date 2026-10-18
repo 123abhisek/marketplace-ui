@@ -1,5 +1,5 @@
-
 // src/components/PropertyCard.jsx
+import React from 'react'
 import {
   Box, Button, Card, CardContent, Chip,
   Divider, Stack, Tooltip, Typography,
@@ -7,24 +7,39 @@ import {
 import ApartmentRoundedIcon      from '@mui/icons-material/ApartmentRounded'
 import LocationOnRoundedIcon     from '@mui/icons-material/LocationOnRounded'
 import BedRoundedIcon            from '@mui/icons-material/BedRounded'
+import BathtubRoundedIcon        from '@mui/icons-material/BathtubRounded'
 import SquareFootRoundedIcon     from '@mui/icons-material/SquareFootRounded'
+import AgricultureRoundedIcon    from '@mui/icons-material/AgricultureRounded'
+import WeekendRoundedIcon        from '@mui/icons-material/WeekendRounded'
+import ExploreRoundedIcon        from '@mui/icons-material/ExploreRounded'
+import LayersRoundedIcon         from '@mui/icons-material/LayersRounded'
 import PhoneRoundedIcon          from '@mui/icons-material/PhoneRounded'
+import WhatsAppIcon              from '@mui/icons-material/WhatsApp'
 import LockRoundedIcon           from '@mui/icons-material/LockRounded'
 import VisibilityRoundedIcon     from '@mui/icons-material/VisibilityRounded'
 import EditRoundedIcon           from '@mui/icons-material/EditRounded'
 import DeleteOutlineRoundedIcon  from '@mui/icons-material/DeleteOutlineRounded'
+import PhotoCameraRoundedIcon    from '@mui/icons-material/PhotoCameraRounded'
+import CheckCircleRoundedIcon    from '@mui/icons-material/CheckCircleRounded'
+import VerifiedRoundedIcon       from '@mui/icons-material/VerifiedRounded'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useAppState }           from '../hooks/useAppState'
 import { formatCurrency }        from '../utils/formatters'
 import { formatLandArea, formatBuiltupArea } from '../utils/landUnits'
-import { getDisplayCity } from '../utils/permissions'
+import { getDisplayCity }        from '../utils/permissions'
 
-const TYPE_COLORS = {
-  Residential: { bg: '#EEF2FF', color: '#4361EE' },
-  Commercial:  { bg: '#FFF7ED', color: '#EA580C' },
-  Agricultural:{ bg: '#ECFDF5', color: '#10B981' },
-  Site:        { bg: '#F5F3FF', color: '#7C3AED' },
-  Flat:        { bg: '#EFF6FF', color: '#2563EB' },
+const TYPE_CONFIG = {
+  Apartment:                  { bg: '#E0F2FE', color: '#0369A1', label: 'Apartment' },
+  Flat:                       { bg: '#E0F2FE', color: '#0369A1', label: 'Flat' },
+  Residential:                { bg: '#EEF2FF', color: '#4361EE', label: 'Residential' },
+  'Agricultural / Farm Land': { bg: '#ECFDF5', color: '#047857', label: 'Agricultural Land' },
+  Agricultural:               { bg: '#ECFDF5', color: '#047857', label: 'Agricultural Land' },
+  'Site / Plot':              { bg: '#F5F3FF', color: '#6D28D9', label: 'Site / Plot' },
+  Site:                       { bg: '#F5F3FF', color: '#6D28D9', label: 'Site / Plot' },
+  Commercial:                 { bg: '#FFF7ED', color: '#C2410C', label: 'Commercial' },
+  'Villa / Independent House':{ bg: '#FFF1F2', color: '#BE123C', label: 'Villa / House' },
+  Villa:                      { bg: '#FFF1F2', color: '#BE123C', label: 'Villa' },
+  Land:                       { bg: '#F0FDFA', color: '#0F766E', label: 'Land' },
 }
 
 export default function PropertyCard({ item, editUrl, onDelete }) {
@@ -42,22 +57,79 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
     user?.isAdmin
   )
   const locked = !hasFullAccess && !editUrl
-  const typeStyle = TYPE_COLORS[item.propertyType] || { bg: '#F1F5F9', color: '#64748B' }
   const detailUrl = `/properties/${item.id}`
 
+  // Safe Property Type Normalization & Styling
+  const rawType = item.propertyType || item.property_type || 'Property'
+  let matchedKey = Object.keys(TYPE_CONFIG).find(
+    (k) => rawType.toLowerCase().includes(k.toLowerCase())
+  )
+  const typeStyle = matchedKey ? TYPE_CONFIG[matchedKey] : { bg: '#F1F5F9', color: '#475569', label: rawType }
+
+  // Transaction Type (Sale / Rent / Lease)
+  const rentLeaseStr = String(item.rentLease || item.rent_lease || '').toLowerCase()
+  const isRent = rentLeaseStr.includes('rent')
+  const isLease = rentLeaseStr.includes('lease')
+  const transBadge = isRent
+    ? { label: 'For Rent', bg: '#EFF6FF', color: '#1D4ED8' }
+    : isLease
+    ? { label: 'For Lease', bg: '#FEF3C7', color: '#B45309' }
+    : { label: 'For Sale', bg: '#ECFDF5', color: '#047857' }
+
+  // Location string
   const displayCity = getDisplayCity(item)
   const locationLabel = hasFullAccess
-    ? (item.location || item.apartmentName || displayCity || 'Karnataka')
-    : (displayCity || 'Karnataka')
+    ? (item.localAddress || item.local_address
+        ? `${item.localAddress || item.local_address}, ${displayCity || item.city || ''}`.replace(/^,\s*|,\s*$/g, '')
+        : (item.location || displayCity || 'Karnataka'))
+    : (displayCity || item.city || 'Karnataka')
 
   const itemPrice = item.price ?? item.expectedPrice ?? item.expected_price
+  const rentAdvance = item.rentAdvanceAmount ?? item.rent_advance_amount
 
-  // Format status badge if this is an owner/management view
+  // Contact info
+  const contactNumber = item.contactNumber || item.contact || item.owner?.phone || ''
+  const whatsappUrl = contactNumber
+    ? `https://wa.me/91${contactNumber.replace(/\D/g, '')}?text=${encodeURIComponent(
+        `Hi! I am interested in your property "${item.title}" on EasyDeal.`
+      )}`
+    : null
+
+  // Status for management views
   const statusStr = String(item.status || 'approved').toLowerCase()
   const isPending = statusStr === 'pending'
   const isRejected = statusStr === 'rejected'
   const isSuspended = statusStr === 'suspended'
   const isApproved = statusStr === 'approved' || (!isPending && !isRejected && !isSuspended)
+
+  // Images list
+  const images = Array.isArray(item.images) ? item.images : []
+  const hasImages = images.length > 0 && Boolean(images[0])
+
+  // Key Specifications
+  const bedrooms = item.bedrooms ?? item.rooms ?? null
+  const bathrooms = item.bathrooms ?? null
+  const landArea = item.landArea || item.land_area || null
+  const builtupArea = item.area || null
+  const formattedArea = formatLandArea(landArea) || formatBuiltupArea(builtupArea)
+  const furnishing = item.furnishing || null
+  const facing = item.facing || null
+  const floor = item.floor || null
+  const cropsGrown = item.cropsGrown || item.crops_grown || null
+
+  // Extract Top 2-3 Amenities / Highlights from details
+  const details = item.details || {}
+  const amenitiesObj = details.amenities || {}
+  const highlightTags = []
+
+  if (amenitiesObj.gated === 'Yes' || details.gated_community === 'Yes') highlightTags.push('🛡️ Gated')
+  if (amenitiesObj.parking === 'Yes' || item.parking) highlightTags.push('🚗 Parking')
+  if (amenitiesObj.water_supply === 'Yes' || item.waterSupply || item.water_supply) highlightTags.push('💧 Water')
+  if (amenitiesObj.lift === 'Yes') highlightTags.push('🛗 Lift')
+  if (amenitiesObj.power_backup === 'Yes') highlightTags.push('⚡ Backup')
+  if (amenitiesObj.borewell === 'Yes') highlightTags.push('🚰 Borewell')
+  if (amenitiesObj.clear_title === 'Yes' || amenitiesObj.registered === 'Yes') highlightTags.push('✅ Clear Title')
+  if (amenitiesObj.khata_rtc === 'Yes') highlightTags.push('📜 RTC / Khata')
 
   return (
     <Card
@@ -67,7 +139,7 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
         border: '1px solid #E2E8F0',
         overflow: 'hidden',
         height: '100%',
-        minHeight: locked ? 475 : 430,
+        minHeight: locked ? 520 : 480,
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -79,7 +151,7 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
         },
       }}
     >
-      {/* ── Image / Placeholder (Strict Fixed Height) ── */}
+      {/* ── Image / Header Section (Fixed Height 200px) ── */}
       <Box
         component={RouterLink}
         to={detailUrl}
@@ -96,10 +168,10 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
           cursor: 'pointer',
         }}
       >
-        {item.images?.[0] ? (
+        {hasImages ? (
           <Box
             component="img"
-            src={item.images[0]}
+            src={images[0]}
             alt={item.title}
             sx={{
               width: '100%',
@@ -129,20 +201,21 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                 width: 52,
                 height: 52,
                 borderRadius: '16px',
-                background: typeStyle.color + '22',
+                background: typeStyle.color + '1A',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <ApartmentRoundedIcon sx={{ fontSize: 26, color: typeStyle.color }} />
+              <ApartmentRoundedIcon sx={{ fontSize: 28, color: typeStyle.color }} />
             </Box>
-            <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 600 }}>
-              No Image
+            <Typography sx={{ fontSize: '0.74rem', color: '#94A3B8', fontWeight: 600 }}>
+              No Photo Available
             </Typography>
           </Box>
         )}
 
+        {/* Lock Overlay for Non-Premium */}
         {locked && (
           <Box
             sx={{
@@ -164,27 +237,52 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
           </Box>
         )}
 
-        {/* Property Type Chip */}
-        <Chip
-          label={item.propertyType || 'Property'}
-          size="small"
+        {/* Top-Left Category & Transaction Badges */}
+        <Stack
+          direction="row"
+          spacing={0.8}
+          alignItems="center"
           sx={{
             position: 'absolute',
             top: 12,
             left: 12,
-            height: 24,
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            background: typeStyle.bg,
-            color: typeStyle.color,
-            border: 'none',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             zIndex: 2,
           }}
-        />
+        >
+          {/* Specific Property Type */}
+          <Chip
+            label={typeStyle.label}
+            size="small"
+            sx={{
+              height: 24,
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              background: typeStyle.bg,
+              color: typeStyle.color,
+              border: `1px solid ${typeStyle.color}33`,
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          />
 
-        {/* Status / Access Badge on Top-Right */}
+          {/* Transaction Pill (Sale / Rent) */}
+          <Chip
+            label={transBadge.label}
+            size="small"
+            sx={{
+              height: 24,
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              background: transBadge.bg,
+              color: transBadge.color,
+              border: `1px solid ${transBadge.color}33`,
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          />
+        </Stack>
+
+        {/* Top-Right Status or Access Badge */}
         {editUrl || onDelete ? (
           <Box
             sx={{
@@ -195,12 +293,12 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
               py: 0.35,
               borderRadius: '8px',
               background: isApproved
-                ? 'rgba(16,185,129,0.92)'
+                ? 'rgba(16,185,129,0.95)'
                 : isPending
-                ? 'rgba(245,158,11,0.92)'
+                ? 'rgba(245,158,11,0.95)'
                 : isRejected
-                ? 'rgba(239,68,68,0.92)'
-                : 'rgba(100,116,139,0.92)',
+                ? 'rgba(239,68,68,0.95)'
+                : 'rgba(100,116,139,0.95)',
               color: '#FFFFFF',
               fontSize: '0.68rem',
               fontWeight: 800,
@@ -252,9 +350,34 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
             Full Access
           </Box>
         )}
+
+        {/* Bottom-Right Photo Counter */}
+        {images.length > 0 && !locked && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              px: 1,
+              py: 0.3,
+              borderRadius: '6px',
+              background: 'rgba(15,23,42,0.7)',
+              color: '#FFFFFF',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              zIndex: 2,
+            }}
+          >
+            <PhotoCameraRoundedIcon sx={{ fontSize: 12 }} />
+            {images.length} {images.length === 1 ? 'photo' : 'photos'}
+          </Box>
+        )}
       </Box>
 
-      {/* ── Card Content (Strict Sizing & Alignment) ── */}
+      {/* ── Card Content Body ── */}
       <CardContent
         sx={{
           p: 2.2,
@@ -265,20 +388,19 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
           '&:last-child': { pb: 2.2 },
         }}
       >
-        {/* Top details group */}
-        <Stack spacing={1.2}>
-          {/* Title (Fixed 2 lines, Clickable) */}
+        <Stack spacing={1.5}>
+          {/* Title (2 lines clamp) */}
           <Typography
             component={RouterLink}
             to={detailUrl}
             fontWeight={800}
             sx={{
-              fontSize: '0.96rem',
-              color: '#1E293B',
+              fontSize: '0.98rem',
+              color: '#0F172A',
               textDecoration: 'none',
-              letterSpacing: '-0.01em',
+              letterSpacing: '-0.015em',
               lineHeight: 1.35,
-              height: 42,
+              minHeight: 42,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
@@ -290,13 +412,14 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
             {item.title}
           </Typography>
 
-          {/* Location (Fixed 1 line) */}
-          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ height: 20, overflow: 'hidden' }}>
-            <LocationOnRoundedIcon sx={{ fontSize: 15, color: '#94A3B8', flexShrink: 0 }} />
+          {/* Location line */}
+          <Stack direction="row" spacing={0.6} alignItems="center" sx={{ overflow: 'hidden' }}>
+            <LocationOnRoundedIcon sx={{ fontSize: 16, color: '#0F766E', flexShrink: 0 }} />
             <Typography
               sx={{
-                fontSize: '0.78rem',
-                color: '#94A3B8',
+                fontSize: '0.8rem',
+                color: '#64748B',
+                fontWeight: 600,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -306,69 +429,198 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
             </Typography>
           </Stack>
 
-          {/* Quick specs (Fixed height) */}
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ height: 24, overflow: 'hidden' }}>
-            {item.bedrooms ? (
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <BedRoundedIcon sx={{ fontSize: 14, color: '#4361EE' }} />
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                  {item.bedrooms} Bed
+          {/* Description snippet */}
+          {Boolean(item.description?.trim()) && (
+            <Typography
+              sx={{
+                fontSize: '0.78rem',
+                color: '#64748B',
+                lineHeight: 1.45,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                wordBreak: 'break-word',
+              }}
+            >
+              {item.description.trim()}
+            </Typography>
+          )}
+
+          {/* Key Specifications Grid (Bedrooms, Bathrooms, Area, Furnishing/Facing) */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 0.8,
+              p: 1.2,
+              borderRadius: '12px',
+              bgcolor: '#F8FAFC',
+              border: '1px solid #F1F5F9',
+            }}
+          >
+            {/* Spec 1: Configuration / Bedrooms / Crops */}
+            {bedrooms ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <BedRoundedIcon sx={{ fontSize: 16, color: '#4361EE' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {bedrooms} {bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}
                 </Typography>
               </Stack>
-            ) : null}
-            {(item.landArea || item.area) ? (
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <SquareFootRoundedIcon sx={{ fontSize: 14, color: '#7C3AED' }} />
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                  {formatLandArea(item.landArea) || formatBuiltupArea(item.area)}
+            ) : cropsGrown ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <AgricultureRoundedIcon sx={{ fontSize: 16, color: '#047857' }} />
+                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {cropsGrown.split(',')[0]}
                 </Typography>
               </Stack>
             ) : (
-              !item.bedrooms && (
-                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 500 }}>
-                  Verified Listing
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <ApartmentRoundedIcon sx={{ fontSize: 16, color: '#0284C7' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {typeStyle.label}
                 </Typography>
-              )
+              </Stack>
             )}
-          </Stack>
+
+            {/* Spec 2: Bathrooms or Floor */}
+            {bathrooms ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <BathtubRoundedIcon sx={{ fontSize: 15, color: '#0284C7' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {bathrooms} {bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}
+                </Typography>
+              </Stack>
+            ) : floor ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <LayersRoundedIcon sx={{ fontSize: 15, color: '#6366F1' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  Floor {floor}
+                </Typography>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <VerifiedRoundedIcon sx={{ fontSize: 15, color: '#059669' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700 }}>
+                  Verified
+                </Typography>
+              </Stack>
+            )}
+
+            {/* Spec 3: Area / Land Size */}
+            {formattedArea ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {formattedArea}
+                </Typography>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
+                <Typography sx={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600 }}>
+                  Plot / Site
+                </Typography>
+              </Stack>
+            )}
+
+            {/* Spec 4: Furnishing or Facing */}
+            {furnishing ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <WeekendRoundedIcon sx={{ fontSize: 15, color: '#EA580C' }} />
+                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {furnishing}
+                </Typography>
+              </Stack>
+            ) : facing ? (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <ExploreRoundedIcon sx={{ fontSize: 15, color: '#D97706' }} />
+                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700 }}>
+                  {facing} Facing
+                </Typography>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <CheckCircleRoundedIcon sx={{ fontSize: 15, color: '#0F766E' }} />
+                <Typography sx={{ fontSize: '0.76rem', color: '#0F766E', fontWeight: 700 }}>
+                  Ready to Move
+                </Typography>
+              </Stack>
+            )}
+          </Box>
+
+          {/* Quick Highlight Pills (if any amenities matched) */}
+          {highlightTags.length > 0 && (
+            <Stack direction="row" spacing={0.6} flexWrap="wrap" sx={{ gap: 0.5 }}>
+              {highlightTags.slice(0, 3).map((tag, idx) => (
+                <Chip
+                  key={idx}
+                  label={tag}
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    bgcolor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    color: '#475569',
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
         </Stack>
 
-        {/* Bottom group */}
-        <Box sx={{ mt: 'auto', pt: 1.2 }}>
-          <Divider sx={{ opacity: 0.6, mb: 1.2 }} />
+        {/* ── Bottom Section: Price + Action Buttons ── */}
+        <Box sx={{ mt: 'auto', pt: 1.5 }}>
+          <Divider sx={{ opacity: 0.7, mb: 1.5 }} />
 
-          {/* Price + Contact / View row */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ height: 40 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            {/* Price block */}
             <Box>
-              <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600, mb: 0.2 }}>
-                Expected Price
+              <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {isRent ? 'Monthly Rent' : isLease ? 'Lease Deposit' : 'Expected Price'}
               </Typography>
-              <Typography
-                fontWeight={900}
-                sx={{
-                  fontSize: '1.02rem',
-                  color: '#0F766E',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact for Price'}
-              </Typography>
+              <Stack direction="row" alignItems="baseline" spacing={0.4}>
+                <Typography
+                  fontWeight={900}
+                  sx={{
+                    fontSize: '1.12rem',
+                    color: '#0F766E',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact for Price'}
+                </Typography>
+                {isRent && (
+                  <Typography sx={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>
+                    / mo
+                  </Typography>
+                )}
+              </Stack>
+              {rentAdvance && isRent && (
+                <Typography sx={{ fontSize: '0.66rem', color: '#94A3B8', fontWeight: 600 }}>
+                  Advance: {formatCurrency(rentAdvance)}
+                </Typography>
+              )}
             </Box>
 
+            {/* Actions block */}
             {locked ? (
               <Button
                 component={RouterLink}
                 to={detailUrl}
                 size="small"
-                startIcon={<VisibilityRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
                 sx={{
                   borderRadius: '10px',
                   fontWeight: 800,
-                  fontSize: '0.74rem',
+                  fontSize: '0.76rem',
                   bgcolor: '#0F766E',
                   color: '#FFFFFF',
-                  px: 1.5,
-                  py: 0.6,
+                  px: 1.8,
+                  py: 0.7,
                   boxShadow: 'none',
                   '&:hover': { bgcolor: '#0D655E' },
                 }}
@@ -422,47 +674,75 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                 )}
               </Stack>
             ) : (
-              <Stack direction="row" spacing={1} alignItems="center">
-                {item.contactNumber && (
-                  <Tooltip title={`Call ${item.contactNumber}`}>
+              <Stack direction="row" spacing={0.8} alignItems="center">
+                {/* WhatsApp Chat Button */}
+                {whatsappUrl && (
+                  <Tooltip title="Chat on WhatsApp">
                     <Box
                       component="a"
-                      href={`tel:${item.contactNumber}`}
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 0.5,
-                        px: 1.3,
-                        py: 0.65,
+                        justifyContent: 'center',
+                        width: 34,
+                        height: 34,
                         borderRadius: '10px',
-                        background: '#ECFDF5',
-                        color: '#059669',
+                        background: '#DCFCE7',
+                        color: '#15803D',
                         textDecoration: 'none',
                         cursor: 'pointer',
-                        '&:hover': { background: '#D1FAE5' },
-                        transition: 'background 0.15s',
+                        transition: 'all 0.15s ease',
+                        '&:hover': { background: '#BBF7D0', transform: 'scale(1.05)' },
                       }}
                     >
-                      <PhoneRoundedIcon sx={{ fontSize: 13, color: '#10B981' }} />
-                      <Typography sx={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
-                        Call
-                      </Typography>
+                      <WhatsAppIcon sx={{ fontSize: 18 }} />
                     </Box>
                   </Tooltip>
                 )}
+
+                {/* Call Button */}
+                {contactNumber && (
+                  <Tooltip title={`Call ${contactNumber}`}>
+                    <Box
+                      component="a"
+                      href={`tel:${contactNumber}`}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 34,
+                        height: 34,
+                        borderRadius: '10px',
+                        background: '#EEF2FF',
+                        color: '#4361EE',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        '&:hover': { background: '#E0E7FF', transform: 'scale(1.05)' },
+                      }}
+                    >
+                      <PhoneRoundedIcon sx={{ fontSize: 17 }} />
+                    </Box>
+                  </Tooltip>
+                )}
+
+                {/* View Details Button */}
                 <Button
                   component={RouterLink}
                   to={detailUrl}
                   size="small"
-                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
                   sx={{
                     borderRadius: '10px',
                     fontWeight: 800,
-                    fontSize: '0.74rem',
+                    fontSize: '0.76rem',
                     bgcolor: '#0F766E',
                     color: '#FFFFFF',
-                    px: 1.5,
-                    py: 0.6,
+                    px: 1.6,
+                    py: 0.7,
                     boxShadow: 'none',
                     '&:hover': { bgcolor: '#0D655E' },
                   }}
@@ -473,28 +753,60 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
             )}
           </Stack>
 
-          {/* Upgrade CTA for locked */}
+          {/* Upgrade CTA for Non-Premium Members */}
           {locked && (
             <Button
               component={RouterLink}
               to="/subscription"
               variant="outlined"
               size="small"
-              startIcon={<LockRoundedIcon sx={{ fontSize: '13px !important' }} />}
+              startIcon={<LockRoundedIcon sx={{ fontSize: '14px !important', flexShrink: 0 }} />}
               fullWidth
               sx={{
                 borderRadius: '10px',
                 borderColor: '#FDE68A',
                 background: '#FFFBEB',
-                color: '#D97706',
+                color: '#B45309',
                 fontWeight: 700,
-                fontSize: '0.75rem',
-                height: 34,
+                fontSize: '0.73rem',
+                lineHeight: 1.35,
+                minHeight: 36,
+                height: 'auto',
+                py: 0.8,
+                px: 1.2,
                 mt: 1.2,
-                '&:hover': { background: '#FEF3C7', borderColor: '#F59E0B' },
+                textTransform: 'none',
+                textAlign: 'center',
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '& .MuiButton-startIcon': {
+                  mr: 0.8,
+                  ml: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  alignSelf: 'center',
+                },
+                '&:hover': {
+                  background: '#FEF3C7',
+                  borderColor: '#F59E0B',
+                  color: '#92400E',
+                },
               }}
             >
-              Upgrade to unlock
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: 'inherit',
+                  fontWeight: 'inherit',
+                  lineHeight: 'inherit',
+                  color: 'inherit',
+                  textAlign: 'center',
+                }}
+              >
+                Upgrade to unlock seller contact & HD photos
+              </Typography>
             </Button>
           )}
         </Box>

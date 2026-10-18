@@ -1,7 +1,6 @@
-// src/dashboard/LogoutPage.jsx
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CircularProgress, Stack, Typography } from '@mui/material'
+import { Stack, Skeleton } from '@mui/material'
 import { useAppState } from '../hooks/useAppState'
 
 export default function LogoutPage() {
@@ -15,8 +14,8 @@ export default function LogoutPage() {
 
   return (
     <Stack alignItems="center" spacing={2} className="py-12">
-      <CircularProgress />
-      <Typography>Logging out...</Typography>
+      <Skeleton variant="circular" width={48} height={48} animation="wave" />
+      <Skeleton variant="text" width={120} height={24} animation="wave" />
     </Stack>
   )
 }

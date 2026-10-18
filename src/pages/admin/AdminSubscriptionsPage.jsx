@@ -17,6 +17,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Skeleton,
   Snackbar,
   Stack,
   Table,
@@ -29,6 +30,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { TableSkeleton } from "../../components/skeletons/AppSkeletons";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import CurrencyRupeeRoundedIcon from "@mui/icons-material/CurrencyRupeeRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
@@ -212,7 +214,6 @@ export default function AdminSubscriptionsPage() {
           </Stack>
 
           {error && <Alert severity="error" sx={{ borderRadius: "14px" }}>{error}</Alert>}
-          {loading && <LinearProgress sx={{ borderRadius: 4 }} />}
 
           {/* 4 Summary Revenue & Subscriber Cards */}
           <Grid container spacing={2.5}>
@@ -232,7 +233,11 @@ export default function AdminSubscriptionsPage() {
                         Overall Premium Revenue
                       </Typography>
                       <Typography sx={{ fontSize: "1.85rem", fontWeight: 900, mt: 0.8, color: "#FFFFFF" }}>
-                        ₹{Number(summary.total_revenue).toLocaleString("en-IN")}
+                        {loading ? (
+                          <Skeleton variant="text" width={110} height={42} animation="wave" sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
+                        ) : (
+                          `₹${Number(summary.total_revenue).toLocaleString("en-IN")}`
+                        )}
                       </Typography>
                       <Typography sx={{ fontSize: "0.75rem", color: "#A7F3D0", mt: 0.5, fontWeight: 700 }}>
                         All-time subscription payments
@@ -266,7 +271,11 @@ export default function AdminSubscriptionsPage() {
                         Active Premium Users
                       </Typography>
                       <Typography sx={{ fontSize: "1.85rem", fontWeight: 900, mt: 0.8, color: "#0f172a" }}>
-                        {summary.total_subscribers}
+                        {loading ? (
+                          <Skeleton variant="text" width={60} height={42} animation="wave" sx={{ bgcolor: "#F1F5F9" }} />
+                        ) : (
+                          summary.total_subscribers
+                        )}
                       </Typography>
                       <Typography sx={{ fontSize: "0.75rem", color: "#10B981", mt: 0.5, fontWeight: 700 }}>
                         Currently active & live access
@@ -300,7 +309,11 @@ export default function AdminSubscriptionsPage() {
                         Total Upgrade Orders
                       </Typography>
                       <Typography sx={{ fontSize: "1.85rem", fontWeight: 900, mt: 0.8, color: "#0f172a" }}>
-                        {summary.total_subscriptions}
+                        {loading ? (
+                          <Skeleton variant="text" width={60} height={42} animation="wave" sx={{ bgcolor: "#F1F5F9" }} />
+                        ) : (
+                          summary.total_subscriptions
+                        )}
                       </Typography>
                       <Typography sx={{ fontSize: "0.75rem", color: "#6366F1", mt: 0.5, fontWeight: 700 }}>
                         Completed upgrades
@@ -419,7 +432,9 @@ export default function AdminSubscriptionsPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredSubscriptions.length === 0 ? (
+                    {loading ? (
+                      <TableSkeleton rows={5} columns={7} />
+                    ) : filteredSubscriptions.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                           <Box sx={{ maxWidth: 360, mx: "auto", textAlign: "center" }}>

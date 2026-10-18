@@ -154,6 +154,7 @@ function toCard(raw, kind, fallbackId) {
       meta: meta || item.propertyType || "",
       metaIcon: "sqft",
       isPremiumOnly: Boolean(item.message || item.isPremiumOnly),
+      description: item.description || "",
       image: getFirstImage(item.images ?? item.image),
     };
   }
@@ -182,6 +183,7 @@ function toCard(raw, kind, fallbackId) {
     meta,
     metaIcon: "km",
     isPremiumOnly: Boolean(item.message || item.isPremiumOnly),
+    description: item.description || "",
     image: getFirstImage(item.images ?? item.image),
   };
 }
@@ -309,7 +311,7 @@ function ListingCard({ item, user, isLoggedIn }) {
       sx={{
         width: "100%",
         maxWidth: 340,
-        minHeight: 470,
+        minHeight: 500,
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -541,6 +543,24 @@ function ListingCard({ item, user, isLoggedIn }) {
             >
               {safeItem.type || "Listing"}
             </Typography>
+
+            {Boolean(safeItem.description?.trim()) && (
+              <Typography
+                sx={{
+                  color: "#64748b",
+                  fontSize: ".78rem",
+                  lineHeight: 1.4,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  mt: 0.5,
+                }}
+              >
+                {safeItem.description.trim()}
+              </Typography>
+            )}
           </Box>
 
           <Stack

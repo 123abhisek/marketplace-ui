@@ -87,23 +87,25 @@ export default function ReportFilters({
 
             <Stack direction="row" spacing={1} flexWrap="wrap">
               <Tooltip title="Refresh Data">
-                <Button
-                  variant="outlined"
-                  onClick={onRefresh}
-                  disabled={loading}
-                  startIcon={<RefreshRoundedIcon />}
-                  sx={{
-                    borderRadius: "12px",
-                    borderColor: BI_COLORS.border,
-                    color: BI_COLORS.navy,
-                    fontWeight: 800,
-                    fontSize: "0.82rem",
-                    textTransform: "none",
-                    "&:hover": { background: "#F1F5F9" },
-                  }}
-                >
-                  Refresh
-                </Button>
+                <span>
+                  <Button
+                    variant="outlined"
+                    onClick={onRefresh}
+                    disabled={loading}
+                    startIcon={<RefreshRoundedIcon />}
+                    sx={{
+                      borderRadius: "12px",
+                      borderColor: BI_COLORS.border,
+                      color: BI_COLORS.navy,
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                      textTransform: "none",
+                      "&:hover": { background: "#F1F5F9" },
+                    }}
+                  >
+                    Refresh
+                  </Button>
+                </span>
               </Tooltip>
 
               <Button

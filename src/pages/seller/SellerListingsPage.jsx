@@ -33,6 +33,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import { CardSkeletonGrid } from "../../components/skeletons/AppSkeletons";
 import { useLocation } from "react-router-dom";
 import { propertyService, vehicleService } from "../../services/api";
 import api from "../../services/api";
@@ -90,7 +91,7 @@ const UI = {
 };
 
 const cardSx = {
-  width: "30rem",
+  width: "100%",
   borderRadius: "24px",
   border: `1px solid ${UI.border}`,
   background: UI.surface,
@@ -1454,7 +1455,11 @@ export default function SellerListingsPage() {
         </Card>
 
         <Grid container spacing={2.5}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <Grid item xs={12} sx={{ width: "100%" }}>
+              <CardSkeletonGrid count={6} sm={6} lg={4} xl={3} />
+            </Grid>
+          ) : filtered.length === 0 ? (
             <Grid item xs={12} sx={{ width: "100%" }}>
               <Box
                 sx={{

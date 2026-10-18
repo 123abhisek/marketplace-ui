@@ -8,12 +8,15 @@ import TuneRoundedIcon          from '@mui/icons-material/TuneRounded'
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
 import NoteAddRoundedIcon       from '@mui/icons-material/NoteAddRounded'
 import RefreshRoundedIcon       from '@mui/icons-material/RefreshRounded'
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
 import { Link as RouterLink }   from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
 import VehicleCard              from '../components/VehicleCard'
 import EmptyState               from '../components/EmptyState'
 import { useAppState }          from '../hooks/useAppState'
 import { vehicleService }       from '../services/api'
+import { isUserPremium }        from '../utils/permissions'
+import { normalizeVehicle }     from '../utils/mappers'
 
 const BRANDS = ['All', 'Maruti', 'Hyundai', 'Honda', 'Toyota', 'Royal Enfield', 'Bajaj', 'Hero']
 
@@ -89,7 +92,7 @@ export default function VehiclesPage() {
     try {
       const data = await vehicleService.getAll()
       const list = Array.isArray(data) ? data : data?.data || data?.items || []
-      setVehicles(list)
+      setVehicles(list.map(normalizeVehicle))
     } catch (err) {
       console.error("Failed to load vehicles:", err)
     } finally {
@@ -113,26 +116,26 @@ export default function VehiclesPage() {
       const matchQ = !q
         || v.title?.toLowerCase().includes(q)
         || v.location?.toLowerCase().includes(q)
+        || v.city?.toLowerCase().includes(q)
         || v.brand?.toLowerCase().includes(q)
-      const matchB = brand === 'All' || v.brand === brand
+        || v.model?.toLowerCase().includes(q)
+        || v.category?.toLowerCase().includes(q)
+      const vBrand = String(v.brand || '').toLowerCase()
+      const matchB = brand === 'All' || vBrand.includes(brand.toLowerCase())
       return matchQ && matchB
     })
     .sort((a, b) => {
-      if (sortBy === 'price-asc')  return Number(a.expectedPrice) - Number(b.expectedPrice)
-      if (sortBy === 'price-desc') return Number(b.expectedPrice) - Number(a.expectedPrice)
-      if (sortBy === 'km-asc')     return Number(a.kmDriven) - Number(b.kmDriven)
-      return b.id - a.id
+      const priceA = Number(a.price ?? a.expectedPrice ?? 0)
+      const priceB = Number(b.price ?? b.expectedPrice ?? 0)
+      const kmA = Number(a.kmDriven ?? a.km_driven ?? 0)
+      const kmB = Number(b.kmDriven ?? b.km_driven ?? 0)
+      if (sortBy === 'price-asc')  return priceA - priceB
+      if (sortBy === 'price-desc') return priceB - priceA
+      if (sortBy === 'km-asc')     return kmA - kmB
+      return (b.id ?? 0) - (a.id ?? 0)
     })
 
-  const hasFullAccess = Boolean(
-    user?.isPremium ||
-    user?.is_premium ||
-    user?.role === 'premium' ||
-    user?.role === 'admin' ||
-    user?.role === 'seller' ||
-    user?.is_admin ||
-    user?.isAdmin
-  )
+  const hasFullAccess = isUserPremium(user)
 
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, sm: 4 } }}>
@@ -148,7 +151,7 @@ export default function VehiclesPage() {
             Vehicle Listings
           </Typography>
           <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', mt: 0.25 }}>
-            {loading ? 'Loading…' : `${vehicles.length} vehicles available`}
+            {loading ? <Skeleton variant="text" width={110} height={18} animation="wave" /> : `${vehicles.length} vehicles available`}
           </Typography>
         </Box>
 
@@ -186,8 +189,70 @@ export default function VehiclesPage() {
             Refresh
           </Button>
         </Stack>
-
       </Stack>
+
+      {/* ── Non-Premium Plan Notice Banner ── */}
+      {!hasFullAccess && (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+            border: '1px solid #FDE68A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: '11px',
+                bgcolor: '#F59E0B',
+                color: '#fff',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+              }}
+            >
+              <WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: '#92400E' }}>
+                Browsing as Free Member
+              </Typography>
+              <Typography sx={{ fontSize: '0.78rem', color: '#B45309' }}>
+                Seller phone numbers, inspection details & HD photos are locked. Upgrade to unlock full access.
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            component={RouterLink}
+            to="/subscription"
+            variant="contained"
+            size="small"
+            sx={{
+              background: '#B45309',
+              color: '#fff',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              textTransform: 'none',
+              px: 2.2,
+              py: 0.8,
+              boxShadow: '0 2px 8px rgba(180,83,9,0.25)',
+              '&:hover': { background: '#92400E' },
+            }}
+          >
+            Upgrade to Premium — ₹299
+          </Button>
+        </Box>
+      )}
 
       {/* ── Filters Bar ── */}
       <Box

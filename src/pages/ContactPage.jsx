@@ -304,9 +304,9 @@ function ContactInfoCard({ item }) {
     <Box
       sx={{
         height: "100%",
-         width:"40rem",
-        p: { xs: 3, md: 3.5 },
-        borderRadius: "26px",
+        width: "100%",
+        p: { xs: 2.75, sm: 3, md: 3 },
+        borderRadius: "24px",
         background: item.bg,
         border: "1px solid rgba(255,255,255,0.86)",
         display: "flex",
@@ -314,25 +314,26 @@ function ContactInfoCard({ item }) {
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
-        gap: 1.15,
+        gap: 1.1,
         transition: "transform 0.22s ease, box-shadow 0.22s ease",
         "&:hover": {
-          transform: "translateY(-6px)",
-          boxShadow: "0 16px 38px rgba(15,23,42,0.09)",
+          transform: "translateY(-5px)",
+          boxShadow: "0 16px 36px rgba(15,23,42,0.08)",
         },
       }}
     >
       <Box
         sx={{
-          width: 56,
-          height: 56,
+          width: 54,
+          height: 54,
           borderRadius: "16px",
-          bgcolor: "rgba(255,255,255,0.78)",
+          bgcolor: "rgba(255,255,255,0.82)",
           display: "grid",
           placeItems: "center",
           color: item.color,
-          boxShadow: "0 6px 18px rgba(15,23,42,0.07)",
+          boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
           "& svg": { fontSize: 24 },
+          mx: "auto",
         }}
       >
         {item.icon}
@@ -345,6 +346,7 @@ function ContactInfoCard({ item }) {
           letterSpacing: "0.1em",
           textTransform: "uppercase",
           color: C.faint,
+          textAlign: "center",
         }}
       >
         {item.label}
@@ -352,11 +354,15 @@ function ContactInfoCard({ item }) {
 
       <Typography
         sx={{
-          fontSize: "1rem",
+          fontSize: item.value.length > 22 ? { xs: "0.85rem", sm: "0.88rem", md: "0.92rem" } : "1rem",
           fontWeight: 800,
           color: C.text,
           lineHeight: 1.35,
-          maxWidth: "18ch",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+          textAlign: "center",
+          width: "100%",
+          px: 0.5,
         }}
       >
         {item.value}
@@ -366,8 +372,9 @@ function ContactInfoCard({ item }) {
         sx={{
           fontSize: "0.82rem",
           color: C.muted,
-          lineHeight: 1.65,
-          maxWidth: "24ch",
+          lineHeight: 1.55,
+          textAlign: "center",
+          width: "100%",
         }}
       >
         {item.sub}
@@ -642,9 +649,9 @@ Looking forward to discussing further. Thank you.`;
 
       <Box sx={{ py: { xs: 6, md: 8 }, bgcolor: C.surface }}>
         <Container maxWidth="lg">
-          <Grid container spacing={2.5} justifyContent="center">
+          <Grid container spacing={2.5} justifyContent="center" alignItems="stretch">
             {CONTACT_CARDS.map((item, i) => (
-              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex" }}>
+              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                 <ContactInfoCard item={item} />
               </Grid>
             ))}

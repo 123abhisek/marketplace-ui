@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  Skeleton,
   Stack,
   Typography,
   Card,
@@ -124,18 +125,22 @@ export default function MyListingsPage() {
         {/* Listing Stats Chips (Desktop & Tablet) */}
         <Box sx={{ display: { xs: "none", sm: "block" } }}>
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Chip
-              label={loading ? "Loading…" : `${totalListings} Listings Total`}
-              sx={{
-                fontWeight: 800,
-                fontSize: "0.8rem",
-                background: "rgba(15, 118, 110, 0.08)",
-                color: "#0F766E",
-                border: "1px solid rgba(15, 118, 110, 0.2)",
-                borderRadius: "8px",
-                height: 32,
-              }}
-            />
+            {loading ? (
+              <Skeleton variant="rounded" width={110} height={32} sx={{ borderRadius: "8px", bgcolor: "#E2E8F0" }} />
+            ) : (
+              <Chip
+                label={`${totalListings} Listings Total`}
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "0.8rem",
+                  background: "rgba(15, 118, 110, 0.08)",
+                  color: "#0F766E",
+                  border: "1px solid rgba(15, 118, 110, 0.2)",
+                  borderRadius: "8px",
+                  height: 32,
+                }}
+              />
+            )}
             {properties.length > 0 && (
               <Chip
                 label={`${properties.length} Properties`}
@@ -174,17 +179,21 @@ export default function MyListingsPage() {
           justifyContent="space-between"
           sx={{ display: { xs: "flex", sm: "none" } }}
         >
-          <Chip
-            label={loading ? "Loading…" : `${totalListings} Listings Total`}
-            size="small"
-            sx={{
-              fontWeight: 800,
-              fontSize: "0.75rem",
-              background: "rgba(15, 118, 110, 0.08)",
-              color: "#0F766E",
-              borderRadius: "8px",
-            }}
-          />
+          {loading ? (
+            <Skeleton variant="rounded" width={90} height={26} sx={{ borderRadius: "8px", bgcolor: "#E2E8F0" }} />
+          ) : (
+            <Chip
+              label={`${totalListings} Listings Total`}
+              size="small"
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.75rem",
+                background: "rgba(15, 118, 110, 0.08)",
+                color: "#0F766E",
+                borderRadius: "8px",
+              }}
+            />
+          )}
           <Button
             onClick={fetchMyListings}
             disabled={loading}

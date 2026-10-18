@@ -284,6 +284,9 @@ export const propertyService = {
       rent_lease: String(payload.rent_lease ?? "").trim(),
       images: Array.isArray(payload.images) ? payload.images : [],
     };
+    if (payload.details !== undefined) {
+      finalPayload.details = payload.details;
+    }
 
     return post("property/add", finalPayload);
   },
@@ -306,53 +309,47 @@ export const vehicleService = {
     return put(`vehicle/${id}`, finalPayload);
   },
 
-  add: async ({
-    title,
-    category,
-    vehicleType,
-    vehicleNumber,
-    brand,
-    model,
-    year,
-    rtoCode,
-    kmDriven,
-    state,
-    location,
-    expectedPrice,
-    contactNumber,
-    images,
-  }) => {
-    const price = parseFloat(String(expectedPrice ?? "").trim());
+  add: async (payload) => {
+    const price = parseFloat(
+      String(payload.price ?? payload.expectedPrice ?? "").trim()
+    );
 
-    if (
-      !String(expectedPrice ?? "").trim() ||
-      Number.isNaN(price) ||
-      price <= 0
-    ) {
+    if (Number.isNaN(price) || price <= 0) {
       const err = new Error(
-        "Price is required and must be a number greater than 0.",
+        "Price is required and must be a number greater than 0."
       );
       err.isFrontendError = true;
       throw err;
     }
 
-    const payload = {
-      title: String(title ?? "").trim(),
-      category: String(category ?? vehicleType ?? "").trim(),
-      expectedPrice: price || 0,
-      contactNumber: String(contactNumber ?? "").trim(),
-      vehicleNumber: String(vehicleNumber ?? "").trim(),
-      brand: String(brand ?? "").trim(),
-      model: String(model ?? "").trim(),
-      year: String(year ?? "").trim(),
-      rtoCode: String(rtoCode ?? "").trim(),
-      kmDriven: String(kmDriven ?? "0").trim(),
-      state: String(state ?? "").trim(),
-      location: String(location ?? "").trim(),
-      images: Array.isArray(images) ? images : [],
+    const finalPayload = {
+      title: String(payload.title ?? "").trim(),
+      category: String(payload.category ?? payload.vehicleType ?? "").trim(),
+      price: price || 0,
+      contact: String(payload.contact ?? payload.contactNumber ?? "").trim(),
+      vehicle_number: String(payload.vehicle_number ?? payload.vehicleNumber ?? "").trim(),
+      brand: String(payload.brand ?? "").trim(),
+      model: String(payload.model ?? "").trim(),
+      year: String(payload.year ?? "").trim(),
+      rto_code: String(payload.rto_code ?? payload.rtoCode ?? "").trim(),
+      km_driven: String(payload.km_driven ?? payload.kmDriven ?? "0").trim(),
+      state: String(payload.state ?? "").trim(),
+      local_address: String(payload.local_address ?? payload.localAddress ?? "").trim(),
+      city: String(payload.city ?? "").trim(),
+      location: String(payload.location ?? "").trim(),
+      fuel_type: String(payload.fuel_type ?? payload.fuelType ?? "").trim(),
+      transmission: String(payload.transmission ?? "").trim(),
+      ownership: String(payload.ownership ?? "").trim(),
+      insurance_validity: String(payload.insurance_validity ?? payload.insuranceValidity ?? "").trim(),
+      color: String(payload.color ?? "").trim(),
+      description: String(payload.description ?? "").trim(),
+      images: Array.isArray(payload.images) ? payload.images : [],
     };
+    if (payload.details !== undefined) {
+      finalPayload.details = payload.details;
+    }
 
-    return post("vehicle/add", payload);
+    return post("vehicle/add", finalPayload);
   },
 };
 
@@ -386,4 +383,62 @@ export const bookingService = {
   },
 
   getOne: (id) => get(`booking/${id}`),
-}
+};
+
+export const locationService = {
+  getStates: async () => {
+    try {
+      const res = await get("location/states");
+      return res?.data ?? res;
+    } catch {
+      const fallback = await fetch("https://india-lgd-index-api.vercel.app/v1/states");
+      const json = await fallback.json();
+      return json?.data ?? [];
+    }
+  },
+
+  getDistricts: async (state) => {
+    try {
+      const res = await get(`location/districts?state=${encodeURIComponent(state)}`);
+      return res?.data ?? res;
+    } catch {
+      const fallback = await fetch(`https://india-lgd-index-api.vercel.app/v1/districts?state=${encodeURIComponent(state)}`);
+      const json = await fallback.json();
+      return json?.data ?? [];
+    }
+  },
+
+  getSubdistricts: async (district) => {
+    try {
+      const res = await get(`location/subdistricts?district=${encodeURIComponent(district)}`);
+      return res?.data ?? res;
+    } catch {
+      const fallback = await fetch(`https://india-lgd-index-api.vercel.app/v1/subdistricts?district=${encodeURIComponent(district)}`);
+      const json = await fallback.json();
+      return json?.data ?? [];
+    }
+  },
+
+  getBlocks: async (district) => {
+    try {
+      const res = await get(`location/blocks?district=${encodeURIComponent(district)}`);
+      return res?.data ?? res;
+    } catch {
+      const fallback = await fetch(`https://india-lgd-index-api.vercel.app/v1/blocks?district=${encodeURIComponent(district)}`);
+      const json = await fallback.json();
+      return json?.data ?? [];
+    }
+  },
+
+  search: async (q) => {
+    try {
+      const res = await get(`location/search?q=${encodeURIComponent(q)}`);
+      return res?.data ?? res;
+    } catch {
+      const fallback = await fetch(`https://india-lgd-index-api.vercel.app/v1/search?q=${encodeURIComponent(q)}`);
+      const json = await fallback.json();
+      return json?.data ?? {};
+    }
+  },
+};
+

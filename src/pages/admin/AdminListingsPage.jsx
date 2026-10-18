@@ -13,11 +13,13 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { CardSkeletonGrid } from "../../components/skeletons/AppSkeletons";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -102,7 +104,7 @@ function getTypeConfig(type) {
       };
 }
 
-function StatCard({ title, value, subtitle, icon, color, bg }) {
+function StatCard({ title, value, subtitle, icon, color, bg, loading }) {
   return (
     <Card sx={{ ...cardSx, height: "100%" }}>
       <CardContent sx={{ p: 2.1 }}>
@@ -121,7 +123,11 @@ function StatCard({ title, value, subtitle, icon, color, bg }) {
             {icon}
           </Box>
           <Typography sx={{ fontSize: "1.7rem", lineHeight: 1, fontWeight: 900, color: UI.text }}>
-            {value}
+            {loading ? (
+              <Skeleton variant="text" width={60} height={36} animation="wave" sx={{ bgcolor: "#F1F5F9" }} />
+            ) : (
+              value
+            )}
           </Typography>
           <Typography sx={{ fontSize: "0.85rem", fontWeight: 800, color: UI.text }}>
             {title}
@@ -386,19 +392,21 @@ export default function AdminListingsPage() {
                       }}
                     />
                     <Tooltip title="Refresh listings">
-                      <IconButton
-                        onClick={loadListings}
-                        disabled={loading}
-                        sx={{
-                          width: 42,
-                          height: 42,
-                          borderRadius: "14px",
-                          border: `1px solid ${UI.border}`,
-                          background: UI.surfaceSoft,
-                        }}
-                      >
-                        <RefreshRoundedIcon sx={{ fontSize: 18, color: UI.text }} />
-                      </IconButton>
+                      <span>
+                        <IconButton
+                          onClick={loadListings}
+                          disabled={loading}
+                          sx={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: "14px",
+                            border: `1px solid ${UI.border}`,
+                            background: UI.surfaceSoft,
+                          }}
+                        >
+                          <RefreshRoundedIcon sx={{ fontSize: 18, color: UI.text }} />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Stack>
                 </Stack>
@@ -445,10 +453,10 @@ export default function AdminListingsPage() {
               gap: 1.6,
             }}
           >
-            <StatCard title="Total Listings" value={counts.all} subtitle="Properties and vehicles" icon={<Inventory2RoundedIcon sx={{ fontSize: 22 }} />} color={UI.primary} bg={UI.primarySoft} />
-            <StatCard title="Properties" value={counts.properties} subtitle="All property listings" icon={<HomeWorkRoundedIcon sx={{ fontSize: 22 }} />} color={UI.primary} bg={UI.primarySoft} />
-            <StatCard title="Vehicles" value={counts.vehicles} subtitle="All vehicle listings" icon={<DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />} color={UI.blue} bg={UI.blueSoft} />
-            <StatCard title="Listed Value" value={formatMoney(counts.totalValue)} subtitle="Combined listed price" icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 22 }} />} color={UI.purple} bg={UI.purpleSoft} />
+            <StatCard title="Total Listings" value={counts.all} subtitle="Properties and vehicles" icon={<Inventory2RoundedIcon sx={{ fontSize: 22 }} />} color={UI.primary} bg={UI.primarySoft} loading={loading} />
+            <StatCard title="Properties" value={counts.properties} subtitle="All property listings" icon={<HomeWorkRoundedIcon sx={{ fontSize: 22 }} />} color={UI.primary} bg={UI.primarySoft} loading={loading} />
+            <StatCard title="Vehicles" value={counts.vehicles} subtitle="All vehicle listings" icon={<DirectionsCarRoundedIcon sx={{ fontSize: 22 }} />} color={UI.blue} bg={UI.blueSoft} loading={loading} />
+            <StatCard title="Listed Value" value={formatMoney(counts.totalValue)} subtitle="Combined listed price" icon={<CurrencyRupeeRoundedIcon sx={{ fontSize: 22 }} />} color={UI.purple} bg={UI.purpleSoft} loading={loading} />
           </Box>
 
           <Card sx={cardSx}>
@@ -466,14 +474,7 @@ export default function AdminListingsPage() {
                 <Divider sx={{ borderColor: UI.border }} />
 
                 {loading ? (
-                  <Box sx={{ py: 9, display: "grid", placeItems: "center" }}>
-                    <Stack spacing={1.2} alignItems="center">
-                      <CircularProgress size={34} sx={{ color: UI.primary }} />
-                      <Typography sx={{ color: UI.muted, fontSize: "0.88rem", fontWeight: 700 }}>
-                        Loading listings...
-                      </Typography>
-                    </Stack>
-                  </Box>
+                  <CardSkeletonGrid count={6} sm={6} md={4} lg={4} />
                 ) : filteredListings.length === 0 ? (
                   <Box sx={{ py: 9, textAlign: "center" }}>
                     <Avatar sx={{ mx: "auto", width: 62, height: 62, bgcolor: UI.primarySoft, color: UI.primary }}>

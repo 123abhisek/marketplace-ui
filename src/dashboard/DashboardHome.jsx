@@ -22,8 +22,11 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
 import { useAppState } from "../hooks/useAppState";
 import { formatCurrency } from "../utils/formatters";
+import { isUserPremium } from "../utils/permissions";
 
 // ── Weekly bar chart (Ref 4 — Knowledge dashboard) ────────────────────────────
 const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -281,6 +284,7 @@ function ListingRow({ item, type, locked, last }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function DashboardHome() {
   const { user, properties = [], vehicles = [] } = useAppState();
+  const isPremium = isUserPremium(user);
 
   const myProperties = properties.filter((p) => p.ownerId === user?.id);
   const myVehicles = vehicles.filter((v) => v.ownerId === user?.id);
@@ -298,9 +302,10 @@ export default function DashboardHome() {
   });
 
   const premiumFeatures = [
-    "View price and contact details",
-    "Post property & vehicle listings",
-    "Unlimited listing browsing",
+    "View full owner phone numbers & direct WhatsApp",
+    "Browse high-resolution photo galleries & virtual tours",
+    "Book on-site property visits & vehicle test drives",
+    "Direct on-ground verified agent assistance",
   ];
 
   return (
@@ -333,31 +338,235 @@ export default function DashboardHome() {
             {todayStr}
           </Typography>
         </Box>
-        {!user.isPremium && (
+        {!isPremium && (
           <Button
             component={RouterLink}
             to="/subscription"
             variant="contained"
             size="small"
+            startIcon={<WorkspacePremiumRoundedIcon sx={{ color: "#F59E0B !important" }} />}
             endIcon={<ArrowForwardRoundedIcon />}
             sx={{
-              background: "linear-gradient(135deg, #4361EE 0%, #7C3AED 100%)",
+              background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
               borderRadius: "12px",
               fontWeight: 800,
               fontSize: "0.8rem",
-              boxShadow: "0 4px 16px rgba(67,97,238,0.3)",
+              boxShadow: "0 4px 16px rgba(15,23,42,0.2)",
               whiteSpace: "nowrap",
+              py: 1,
+              px: 2,
               alignSelf: { xs: "flex-start", sm: "auto" },
+              "&:hover": { background: "#0F172A", transform: "translateY(-1px)" },
             }}
           >
-            Upgrade to Premium
+            Upgrade to Premium — ₹299
           </Button>
         )}
       </Stack>
 
-      {/* ── Stat Cards (Ref 1 — smmplanner top row) ── */}
+      {/* ── Tailored Experience Banner (Free vs Premium) ── */}
+      {!isPremium ? (
+        <Card
+          sx={{
+            borderRadius: "22px",
+            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F766E 100%)",
+            color: "#fff",
+            boxShadow: "0 10px 30px rgba(15,23,42,0.18)",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: -40,
+              right: -40,
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.05)",
+            }}
+          />
+          <CardContent sx={{ p: { xs: 2.5, sm: 3.5 }, position: "relative", zIndex: 1 }}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Stack spacing={1.5}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip
+                      icon={<WorkspacePremiumRoundedIcon sx={{ fontSize: "16px !important", color: "#F59E0B !important" }} />}
+                      label="FREE PLAN ACTIVE"
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(245,158,11,0.18)",
+                        color: "#FCD34D",
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        border: "1px solid rgba(245,158,11,0.35)",
+                      }}
+                    />
+                    <Typography sx={{ color: "rgba(255,255,255,0.65)", fontSize: "0.8rem", fontWeight: 600 }}>
+                      Limited Mode (Owner contact & photos hidden)
+                    </Typography>
+                  </Stack>
+
+                  <Typography variant="h5" fontWeight={900} sx={{ color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.25 }}>
+                    Unlock Seller Phone Numbers, HD Photos & Direct Site Visits
+                  </Typography>
+
+                  <Typography sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem", maxWidth: 640 }}>
+                    As a free member, you can browse listings by city. Upgrade to EasyDeal Premium to contact owners directly on WhatsApp/Phone, see full address landmarks, and schedule on-site visits.
+                  </Typography>
+
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 2.5 }} sx={{ pt: 0.5 }}>
+                    {[
+                      "Direct WhatsApp & Phone Numbers",
+                      "Full HD Photos & Gallery",
+                      "Book On-Site Visits & Test Drives",
+                    ].map((feat) => (
+                      <Stack key={feat} direction="row" spacing={0.8} alignItems="center">
+                        <CheckCircleRoundedIcon sx={{ fontSize: 16, color: "#10B981" }} />
+                        <Typography sx={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>
+                          {feat}
+                        </Typography>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Stack>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: "left", md: "right" } }}>
+                <Stack spacing={1.5} alignItems={{ xs: "flex-start", md: "flex-end" }}>
+                  <Box>
+                    <Typography sx={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.6)", fontWeight: 700, textTransform: "uppercase" }}>
+                      Special Member Offer
+                    </Typography>
+                    <Typography variant="h3" fontWeight={900} sx={{ color: "#FCD34D", letterSpacing: "-0.03em" }}>
+                      ₹299
+                      <Typography component="span" sx={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", fontWeight: 500, ml: 0.5 }}>
+                        / month
+                      </Typography>
+                    </Typography>
+                  </Box>
+
+                  <Button
+                    component={RouterLink}
+                    to="/subscription"
+                    variant="contained"
+                    size="medium"
+                    endIcon={<ArrowForwardRoundedIcon />}
+                    sx={{
+                      background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+                      color: "#fff",
+                      borderRadius: "12px",
+                      fontWeight: 900,
+                      fontSize: "0.88rem",
+                      px: 3,
+                      py: 1.2,
+                      boxShadow: "0 6px 20px rgba(245,158,11,0.4)",
+                      "&:hover": { background: "linear-gradient(135deg, #D97706 0%, #B45309 100%)" },
+                    }}
+                  >
+                    Upgrade to Premium
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card
+          sx={{
+            borderRadius: "22px",
+            background: "linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #115E59 100%)",
+            color: "#fff",
+            boxShadow: "0 10px 30px rgba(15,118,110,0.22)",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: -40,
+              right: -40,
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.06)",
+            }}
+          />
+          <CardContent sx={{ p: { xs: 2.5, sm: 3 }, position: "relative", zIndex: 1 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Box
+                  sx={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: "16px",
+                    background: "rgba(255,255,255,0.18)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    color: "#FCD34D",
+                    flexShrink: 0,
+                  }}
+                >
+                  <WorkspacePremiumRoundedIcon sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="h6" fontWeight={900} sx={{ color: "#fff", letterSpacing: "-0.02em" }}>
+                      ⭐ Premium Account Active
+                    </Typography>
+                    <Chip
+                      label="UNLIMITED ACCESS"
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.2)",
+                        color: "#fff",
+                        fontWeight: 800,
+                        fontSize: "0.68rem",
+                        height: 20,
+                      }}
+                    />
+                  </Stack>
+                  <Typography sx={{ color: "rgba(255,255,255,0.88)", fontSize: "0.82rem", mt: 0.3 }}>
+                    All owner phone numbers, high-resolution galleries, full addresses, and direct site visit bookings are active.
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Button
+                component={RouterLink}
+                to="/dashboard/properties"
+                variant="contained"
+                size="small"
+                endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  background: "#fff",
+                  color: "#0F766E",
+                  borderRadius: "10px",
+                  fontWeight: 800,
+                  fontSize: "0.82rem",
+                  px: 2.5,
+                  py: 1,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  "&:hover": { background: "#F0FDFA" },
+                  whiteSpace: "nowrap",
+                  alignSelf: { xs: "flex-start", sm: "center" },
+                }}
+              >
+                Browse Listings
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Stat Cards ── */}
       <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-        <Grid item xs={6} sm={6} lg={3}>
+        <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
           <StatCard
             label="Total Properties"
             value={properties.length}
@@ -367,7 +576,7 @@ export default function DashboardHome() {
             trend="+12%"
           />
         </Grid>
-        <Grid item xs={6} sm={6} lg={3}>
+        <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
           <StatCard
             label="Total Vehicles"
             value={vehicles.length}
@@ -377,7 +586,7 @@ export default function DashboardHome() {
             trend="+8%"
           />
         </Grid>
-        <Grid item xs={6} sm={6} lg={3}>
+        <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
           <StatCard
             label="My Listings"
             value={myProperties.length + myVehicles.length}
@@ -386,13 +595,15 @@ export default function DashboardHome() {
             iconBg="#ECFDF5"
           />
         </Grid>
-        <Grid item xs={6} sm={6} lg={3}>
+        <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
           <StatCard
-            label={user.isPremium ? "Premium Plan" : "Free Plan"}
-            value={user.isPremium ? "PRO" : "FREE"}
+            label={isPremium ? "Premium Membership" : "Current Plan"}
+            value={isPremium ? "PRO ⭐" : "FREE"}
             icon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} />}
-            iconColor={user.isPremium ? "#F59E0B" : "#94A3B8"}
-            iconBg={user.isPremium ? "#FFFBEB" : "#F8FAFC"}
+            iconColor={isPremium ? "#F59E0B" : "#64748B"}
+            iconBg={isPremium ? "#FFFBEB" : "#F8FAFC"}
+            trend={isPremium ? "ACTIVE" : "UPGRADE"}
+            trendPositive={isPremium}
           />
         </Grid>
       </Grid>
@@ -400,7 +611,7 @@ export default function DashboardHome() {
       {/* ── Middle Row: Activity Chart + Subscription Card ── */}
       <Grid container spacing={2.5}>
         {/* Activity Chart (Ref 4 — Knowledge bar chart) */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card
             sx={{
               borderRadius: "20px",
@@ -485,25 +696,25 @@ export default function DashboardHome() {
           </Card>
         </Grid>
 
-        {/* Subscription Card (Ref 3 — gradient premium card) */}
-        <Grid item xs={12} md={5}>
+        {/* Subscription Card */}
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card
             sx={{
               borderRadius: "20px",
               height: "100%",
-              background: user.isPremium
-                ? "linear-gradient(145deg, #4361EE 0%, #7C3AED 60%, #9333EA 100%)"
+              background: isPremium
+                ? "linear-gradient(145deg, #0F766E 0%, #115E59 60%, #042F2E 100%)"
                 : "#ffffff",
-              boxShadow: user.isPremium
-                ? "0 12px 40px rgba(67,97,238,0.35)"
+              boxShadow: isPremium
+                ? "0 12px 40px rgba(15,118,110,0.3)"
                 : "0 2px 20px rgba(15,23,42,0.07)",
-              color: user.isPremium ? "#fff" : "inherit",
+              color: isPremium ? "#fff" : "inherit",
               position: "relative",
               overflow: "hidden",
             }}
           >
             {/* Background decoration */}
-            {user.isPremium && (
+            {isPremium && (
               <>
                 <Box
                   sx={{
@@ -545,7 +756,7 @@ export default function DashboardHome() {
                   width: 50,
                   height: 50,
                   borderRadius: "14px",
-                  background: user.isPremium
+                  background: isPremium
                     ? "rgba(255,255,255,0.18)"
                     : "#FFFBEB",
                   display: "flex",
@@ -558,7 +769,7 @@ export default function DashboardHome() {
                 <WorkspacePremiumRoundedIcon
                   sx={{
                     fontSize: 26,
-                    color: user.isPremium ? "#fff" : "#F59E0B",
+                    color: isPremium ? "#FCD34D" : "#F59E0B",
                   }}
                 />
               </Box>
@@ -569,25 +780,25 @@ export default function DashboardHome() {
                   fontSize: "1.15rem",
                   letterSpacing: "-0.02em",
                   mb: 0.5,
-                  color: user.isPremium ? "#fff" : "#1E293B",
+                  color: isPremium ? "#fff" : "#1E293B",
                 }}
               >
-                {user.isPremium ? "✓ Premium Active" : "Upgrade to Premium"}
+                {isPremium ? "⭐ Premium Active" : "Upgrade to Premium"}
               </Typography>
 
               <Typography
                 sx={{
                   fontSize: "0.82rem",
-                  opacity: user.isPremium ? 0.75 : undefined,
-                  color: user.isPremium ? "#fff" : "#64748B",
+                  opacity: isPremium ? 0.85 : undefined,
+                  color: isPremium ? "#fff" : "#64748B",
                   mb: 2.5,
                   flex: 1,
                   lineHeight: 1.5,
                 }}
               >
-                {user.isPremium
-                  ? "You have full access to all marketplace features."
-                  : "Get full listing details, contact numbers, and posting access."}
+                {isPremium
+                  ? "You have full, unrestricted access to all marketplace features."
+                  : "Get full listing details, direct owner contacts, and HD photos."}
               </Typography>
 
               {/* Features list */}
@@ -599,9 +810,9 @@ export default function DashboardHome() {
                     spacing={1}
                     alignItems="center"
                   >
-                    {user.isPremium ? (
+                    {isPremium ? (
                       <CheckCircleRoundedIcon
-                        sx={{ fontSize: 16, color: "rgba(255,255,255,0.8)" }}
+                        sx={{ fontSize: 16, color: "#34D399" }}
                       />
                     ) : (
                       <LockRoundedIcon
@@ -611,10 +822,10 @@ export default function DashboardHome() {
                     <Typography
                       sx={{
                         fontSize: "0.78rem",
-                        color: user.isPremium
-                          ? "rgba(255,255,255,0.85)"
+                        color: isPremium
+                          ? "rgba(255,255,255,0.9)"
                           : "#64748B",
-                        fontWeight: user.isPremium ? 500 : 400,
+                        fontWeight: isPremium ? 600 : 400,
                       }}
                     >
                       {f}
@@ -623,7 +834,7 @@ export default function DashboardHome() {
                 ))}
               </Stack>
 
-              {!user.isPremium ? (
+              {!isPremium ? (
                 <Button
                   component={RouterLink}
                   to="/subscription"
@@ -632,12 +843,12 @@ export default function DashboardHome() {
                   fullWidth
                   sx={{
                     background:
-                      "linear-gradient(135deg, #4361EE 0%, #7C3AED 100%)",
+                      "linear-gradient(135deg, #0F766E 0%, #0D9488 100%)",
                     borderRadius: "12px",
                     fontWeight: 800,
                     py: 1.25,
-                    boxShadow: "0 4px 20px rgba(67,97,238,0.35)",
-                    "&:hover": { boxShadow: "0 6px 28px rgba(67,97,238,0.45)" },
+                    boxShadow: "0 4px 20px rgba(15,118,110,0.3)",
+                    "&:hover": { boxShadow: "0 6px 28px rgba(15,118,110,0.4)" },
                   }}
                 >
                   Upgrade — ₹299
@@ -655,11 +866,11 @@ export default function DashboardHome() {
                   <Typography
                     sx={{
                       fontSize: "0.8rem",
-                      color: "rgba(255,255,255,0.9)",
-                      fontWeight: 700,
+                      color: "rgba(255,255,255,0.95)",
+                      fontWeight: 800,
                     }}
                   >
-                    All features unlocked ✨
+                    All marketplace features unlocked ✨
                   </Typography>
                 </Box>
               )}
@@ -668,7 +879,7 @@ export default function DashboardHome() {
         </Grid>
       </Grid>
 
-      {/* ── Recent Listings (Ref 1 — clean table rows) ── */}
+      {/* ── Recent Listings ── */}
       <Card
         sx={{
           borderRadius: "20px",
@@ -692,7 +903,9 @@ export default function DashboardHome() {
               <Typography
                 sx={{ fontSize: "0.78rem", color: "#94A3B8", mt: 0.25 }}
               >
-                Latest property and vehicle listings
+                {isPremium
+                  ? "Full details unlocked for all listings"
+                  : "Photos & owner phone numbers unlocked with Premium Plan"}
               </Typography>
             </Box>
             <Button
@@ -702,7 +915,7 @@ export default function DashboardHome() {
               endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
               sx={{
                 fontWeight: 700,
-                color: "#4361EE",
+                color: "#0F766E",
                 fontSize: "0.8rem",
                 minWidth: "auto",
               }}
@@ -734,7 +947,7 @@ export default function DashboardHome() {
               <Typography
                 sx={{ fontSize: "0.82rem", color: "#94A3B8", mt: 0.5 }}
               >
-                Premium users can add property and vehicle listings.
+                Add your property and vehicle listings to start receiving inquiries.
               </Typography>
             </Box>
           ) : (
@@ -744,7 +957,7 @@ export default function DashboardHome() {
                   key={item.id}
                   item={item}
                   type={item._type}
-                  locked={!user.isPremium}
+                  locked={!isPremium}
                   last={i === recentListings.length - 1}
                 />
               ))}

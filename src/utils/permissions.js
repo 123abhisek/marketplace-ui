@@ -6,6 +6,23 @@
  *
  * Checks active premium subscription, admin/seller roles, or listing ownership.
  */
+export function isUserPremium(user) {
+  if (!user) return false;
+  const role = String(user.role || "").toLowerCase();
+  return Boolean(
+    user.is_premium ||
+    user.isPremium ||
+    user.ispremium ||
+    role === "premium" ||
+    user.is_admin ||
+    user.isAdmin ||
+    role === "admin" ||
+    user.is_seller ||
+    user.isSeller ||
+    role === "seller"
+  );
+}
+
 export function canViewPremiumDetails(user, ownerId = null) {
   if (!user) return false;
 
@@ -14,19 +31,7 @@ export function canViewPremiumDetails(user, ownerId = null) {
     return true;
   }
 
-  const role = String(user.role || "").toLowerCase();
-
-  // Admin or Seller roles
-  if (user.is_admin || user.isAdmin || role === "admin" || user.is_seller || user.isSeller || role === "seller") {
-    return true;
-  }
-
-  // Premium status checks
-  if (user.is_premium || user.isPremium || role === "premium") {
-    return true;
-  }
-
-  return false;
+  return isUserPremium(user);
 }
 
 /**

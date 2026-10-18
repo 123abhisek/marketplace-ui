@@ -1,8 +1,10 @@
 
 // src/pages/AboutPage.jsx
-import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Button, Container, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useAppState } from "../hooks/useAppState";
+import api from "../services/api";
 
 import RocketLaunchRoundedIcon from "@mui/icons-material/RocketLaunchRounded";
 import HandshakeRoundedIcon from "@mui/icons-material/HandshakeRounded";
@@ -40,22 +42,15 @@ const hoverCard = {
 
 const centeredCardBase = {
   height: "100%",
+  width: "100%",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "space-between",
+  justifyContent: "center",
   textAlign: "center",
   borderRadius: "24px",
   ...hoverCard,
 };
-
-// ── Stats ────────────────────────────────────────────────────────────────────
-const STATS = [
-  { value: "12,000+", label: "Active Listings" },
-  { value: "8,500+", label: "Happy Customers" },
-  { value: "98%", label: "Satisfaction Rate" },
-  { value: "4", label: "Years in Market" },
-];
 
 // ── Values ───────────────────────────────────────────────────────────────────
 const VALUES = [
@@ -157,29 +152,18 @@ const CATEGORIES = [
 // ── Team ─────────────────────────────────────────────────────────────────────
 const TEAM = [
   {
-    name: "Arjun Sharma",
+    name: "Shridhar Poojari",
     role: "Founder & CEO",
-    initials: "AS",
+    initials: "SP",
     color: "#0f766e",
   },
   {
-    name: "Priya Nair",
+    name: "Akshay",
     role: "Head of Product",
-    initials: "PN",
+    initials: "A",
     color: "#7c3aed",
   },
-  {
-    name: "Rahul Mehta",
-    role: "Lead Engineer",
-    initials: "RM",
-    color: "#0369a1",
-  },
-  {
-    name: "Sneha Kapoor",
-    role: "Marketing Director",
-    initials: "SK",
-    color: "#be185d",
-  },
+  
 ];
 
 // ── Testimonials ─────────────────────────────────────────────────────────────
@@ -265,6 +249,83 @@ function StarRow({ count = 5 }) {
 export default function AboutPage() {
   const { user } = useAppState();
   const isLoggedIn = Boolean(user?.loggedIn);
+
+  const [stats, setStats] = useState({
+    total_listings: 0,
+    properties_count: 0,
+    vehicles_count: 0,
+    active_users: 0,
+    deals_closed: 0,
+    verified_percentage: 100,
+    loading: true,
+  });
+
+  useEffect(() => {
+    let active = true;
+    api
+      .get("public-stats")
+      .then((res) => {
+        if (!active) return;
+        const data = res?.data ?? res;
+        if (data) {
+          setStats({
+            total_listings: Number(data.total_listings ?? 0),
+            properties_count: Number(data.properties_count ?? 0),
+            vehicles_count: Number(data.vehicles_count ?? 0),
+            active_users: Number(data.active_users ?? 0),
+            deals_closed: Number(data.deals_closed ?? 0),
+            verified_percentage: Number(data.verified_percentage ?? 100),
+            loading: false,
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("Unable to fetch public stats:", err);
+        if (active) setStats((prev) => ({ ...prev, loading: false }));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const heroStats = [
+    { value: `${stats.total_listings}`, label: "Active Listings" },
+    { value: `${stats.properties_count}`, label: "Properties Listed" },
+    { value: `${stats.vehicles_count}`, label: "Vehicles Listed" },
+    { value: `${stats.active_users}`, label: "Active Users" },
+  ];
+
+  const whyStats = [
+    {
+      icon: <VerifiedRoundedIcon />,
+      label: "Verified Listings",
+      val: `${stats.verified_percentage}%`,
+      bg: "rgba(186,230,253,0.5)",
+      color: "#0369a1",
+    },
+    {
+      icon: <GroupsRoundedIcon />,
+      label: "Active Users",
+      val: `${stats.active_users}`,
+      bg: "rgba(196,181,253,0.5)",
+      color: "#7c3aed",
+    },
+    {
+      icon: <HandshakeRoundedIcon />,
+      label: "Deals Closed",
+      val: `${stats.deals_closed}`,
+      bg: "rgba(187,247,208,0.5)",
+      color: "#166534",
+    },
+    {
+      icon: <HomeWorkRoundedIcon />,
+      label: "Live Listings",
+      val: `${stats.total_listings}`,
+      bg: "rgba(254,240,138,0.5)",
+      color: "#a16207",
+    },
+  ];
 
   return (
     <Box sx={{ bgcolor: "#f8f9fb", overflowX: "hidden" }}>
@@ -395,15 +456,15 @@ export default function AboutPage() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Grid container spacing={2}>
-                {STATS.map((s, i) => (
-                  <Grid item xs={6} key={i} sx={{ display: "flex" }}>
+              <Grid container spacing={2} justifyContent="center" alignItems="stretch">
+                {heroStats.map((s, i) => (
+                  <Grid item xs={6} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                     <Box
                       sx={{
                         ...centeredCardBase,
-                        width: "100%",
                         minHeight: { xs: 150, md: 170 },
                         p: 3,
+                        gap: 0.75,
                         background:
                           i % 2 === 0
                             ? "linear-gradient(135deg, rgba(186,230,253,0.5), rgba(196,181,253,0.3))"
@@ -419,16 +480,27 @@ export default function AboutPage() {
                           color: C.text,
                           lineHeight: 1.1,
                           letterSpacing: "-0.03em",
+                          textAlign: "center",
                         }}
                       >
-                        {s.value}
+                        {stats.loading ? (
+                          <Skeleton
+                            variant="text"
+                            width={75}
+                            height={40}
+                            animation="wave"
+                            sx={{ mx: "auto", bgcolor: "rgba(15,23,42,0.08)" }}
+                          />
+                        ) : (
+                          s.value
+                        )}
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: "0.8rem",
+                          fontSize: "0.82rem",
                           color: C.muted,
-                          mt: 0.5,
                           fontWeight: 600,
+                          textAlign: "center",
                         }}
                       >
                         {s.label}
@@ -464,17 +536,17 @@ export default function AboutPage() {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center" alignItems="stretch">
             {CATEGORIES.map((cat, i) => (
-              <Grid item xs={12} md={4} key={i} sx={{ display: "flex" }}>
+              <Grid item xs={12} sm={6} md={4} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: "100%",
                     minHeight: { xs: 240, md: 260 },
-                    p: 4,
+                    p: { xs: 3.5, md: 4 },
                     background: cat.bg,
                     border: "1px solid rgba(255,255,255,0.9)",
+                    gap: 1.5,
                   }}
                 >
                   <Box
@@ -485,9 +557,9 @@ export default function AboutPage() {
                       bgcolor: "rgba(255,255,255,0.85)",
                       display: "grid",
                       placeItems: "center",
-                      mb: 2.5,
                       color: cat.iconColor,
                       boxShadow: "0 4px 16px rgba(15,23,42,0.08)",
+                      mx: "auto",
                     }}
                   >
                     {cat.icon}
@@ -498,7 +570,7 @@ export default function AboutPage() {
                       fontWeight: 800,
                       fontSize: "1.15rem",
                       color: C.text,
-                      mb: 1,
+                      textAlign: "center",
                     }}
                   >
                     {cat.label}
@@ -509,7 +581,9 @@ export default function AboutPage() {
                       fontSize: "0.875rem",
                       color: C.muted,
                       lineHeight: 1.7,
-                      maxWidth: "30ch",
+                      textAlign: "center",
+                      maxWidth: 280,
+                      mx: "auto",
                     }}
                   >
                     {cat.desc}
@@ -543,19 +617,17 @@ export default function AboutPage() {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center" alignItems="stretch">
             {VALUES.map((v, i) => (
-              <Grid item xs={12} sm={6} key={i} sx={{ display: "flex" }}>
+              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: "100%",
                     minHeight: { xs: 260, md: 280 },
-                    p: { xs: 3, md: 4 },
+                    p: { xs: 3, md: 3.5 },
                     background: v.gradient,
                     border: "1px solid rgba(255,255,255,0.85)",
-                    justifyContent: "center",
-                    gap: 2,
+                    gap: 1.75,
                   }}
                 >
                   <Box
@@ -570,6 +642,7 @@ export default function AboutPage() {
                       color: v.iconColor,
                       boxShadow: "0 4px 12px rgba(15,23,42,0.08)",
                       "& svg": { fontSize: 24 },
+                      mx: "auto",
                     }}
                   >
                     {v.icon}
@@ -580,6 +653,7 @@ export default function AboutPage() {
                       fontWeight: 800,
                       fontSize: "1.05rem",
                       color: C.text,
+                      textAlign: "center",
                     }}
                   >
                     {v.title}
@@ -590,7 +664,9 @@ export default function AboutPage() {
                       fontSize: "0.875rem",
                       color: C.muted,
                       lineHeight: 1.75,
-                      maxWidth: "32ch",
+                      textAlign: "center",
+                      maxWidth: 260,
+                      mx: "auto",
                     }}
                   >
                     {v.desc}
@@ -624,28 +700,27 @@ export default function AboutPage() {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center" alignItems="stretch">
             {HOW_IT_WORKS.map((step, i) => (
-              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex" }}>
+              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: "100%",
                     minHeight: { xs: 245, md: 270 },
-                    p: 3.5,
+                    p: { xs: 3, md: 3.5 },
                     bgcolor: step.color,
                     border: `1px solid ${step.border}`,
-                    justifyContent: "center",
+                    gap: 1.2,
                   }}
                 >
                   <Typography
                     sx={{
                       fontSize: "2.5rem",
                       fontWeight: 900,
-                      color: "rgba(15,23,42,0.1)",
+                      color: "rgba(15,23,42,0.12)",
                       lineHeight: 1,
-                      mb: 1.5,
                       letterSpacing: "-0.04em",
+                      textAlign: "center",
                     }}
                   >
                     {step.step}
@@ -654,10 +729,9 @@ export default function AboutPage() {
                   <Typography
                     sx={{
                       fontWeight: 800,
-                      fontSize: "1rem",
+                      fontSize: "1.05rem",
                       color: C.text,
-                      mb: 1,
-                      maxWidth: "18ch",
+                      textAlign: "center",
                     }}
                   >
                     {step.title}
@@ -667,8 +741,10 @@ export default function AboutPage() {
                     sx={{
                       fontSize: "0.85rem",
                       color: C.muted,
-                      lineHeight: 1.75,
-                      maxWidth: "30ch",
+                      lineHeight: 1.7,
+                      textAlign: "center",
+                      maxWidth: 240,
+                      mx: "auto",
                     }}
                   >
                     {step.desc}
@@ -702,19 +778,26 @@ export default function AboutPage() {
             </Typography>
           </Box>
 
-          <Grid container spacing={3} justifyContent="center">
+          <Grid container spacing={3} justifyContent="center" alignItems="center">
             {TEAM.map((member, i) => (
-              <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: "flex" }}>
+              <Grid
+                item
+                xs={12}
+                sm="auto"
+                key={i}
+                sx={{ display: "flex", justifyContent: "center" }}
+              >
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: "100%",
-                    minHeight: { xs: 220, md: 240 },
-                    p: 3.5,
+                    width: { xs: 230, sm: 240 },
+                    height: 260,
+                    flexShrink: 0,
+                    p: 3,
                     bgcolor: "#ffffff",
                     border: `1px solid ${C.border}`,
-                    justifyContent: "center",
-                    gap: 1.25,
+                    gap: 2,
+                    boxShadow: "0 6px 20px rgba(15,23,42,0.04)",
                   }}
                 >
                   <Box
@@ -726,11 +809,11 @@ export default function AboutPage() {
                       color: "#fff",
                       display: "grid",
                       placeItems: "center",
-                      mb: 0.5,
                       fontSize: "1.3rem",
                       fontWeight: 800,
                       letterSpacing: "-0.01em",
                       boxShadow: `0 8px 24px ${member.color}44`,
+                      mx: "auto",
                     }}
                   >
                     {member.initials}
@@ -739,22 +822,26 @@ export default function AboutPage() {
                   <Typography
                     sx={{
                       fontWeight: 800,
-                      fontSize: "1rem",
+                      fontSize: "1.05rem",
                       color: C.text,
+                      textAlign: "center",
+                      lineHeight: 1.35,
+                      px: 1,
                     }}
                   >
                     {member.name}
                   </Typography>
 
-                  <Typography
+                  {/* <Typography
                     sx={{
                       fontSize: "0.8rem",
                       color: C.muted,
                       fontWeight: 600,
+                      textAlign: "center",
                     }}
                   >
                     {member.role}
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Grid>
             ))}
@@ -784,19 +871,17 @@ export default function AboutPage() {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center" alignItems="stretch">
             {TESTIMONIALS.map((t, i) => (
-              <Grid item xs={12} md={4} key={i} sx={{ display: "flex" }}>
+              <Grid item xs={12} sm={6} md={4} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: "100%",
                     minHeight: { xs: 270, md: 300 },
-                    p: 4,
+                    p: { xs: 3.5, md: 4 },
                     background: t.bg,
                     border: "1px solid rgba(255,255,255,0.85)",
-                    justifyContent: "space-between",
-                    gap: 2,
+                    gap: 2.25,
                   }}
                 >
                   <StarRow count={t.stars} />
@@ -806,17 +891,16 @@ export default function AboutPage() {
                       fontSize: "0.95rem",
                       color: C.text,
                       lineHeight: 1.8,
-                      flex: 1,
                       fontStyle: "italic",
-                      display: "flex",
-                      alignItems: "center",
-                      maxWidth: "30ch",
+                      textAlign: "center",
+                      maxWidth: 280,
+                      mx: "auto",
                     }}
                   >
                     &quot;{t.quote}&quot;
                   </Typography>
 
-                  <Stack spacing={1.1} alignItems="center">
+                  <Stack spacing={0.8} alignItems="center" justifyContent="center">
                     <Box
                       sx={{
                         width: 42,
@@ -826,6 +910,7 @@ export default function AboutPage() {
                         display: "grid",
                         placeItems: "center",
                         boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+                        mx: "auto",
                       }}
                     >
                       <GroupsRoundedIcon
@@ -838,6 +923,7 @@ export default function AboutPage() {
                         fontWeight: 700,
                         fontSize: "0.875rem",
                         color: C.text,
+                        textAlign: "center",
                       }}
                     >
                       {t.name}
@@ -847,6 +933,7 @@ export default function AboutPage() {
                       sx={{
                         fontSize: "0.75rem",
                         color: C.muted,
+                        textAlign: "center",
                       }}
                     >
                       {t.role}
@@ -906,7 +993,7 @@ export default function AboutPage() {
             <Grid item xs={12} md={6}>
               <SectionLabel>Why EasyDeal</SectionLabel>
               <SectionHeading sx={{ mb: 2 }}>
-                Why Thousands Choose
+                Why Choose
                 <Box component="span" sx={{ color: C.primary }}>
                   {" "}
                   EasyDeal
@@ -958,58 +1045,18 @@ export default function AboutPage() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Grid container spacing={2} justifyContent="center">
-                {[
-                  {
-                    icon: <VerifiedRoundedIcon />,
-                    label: "Verified Listings",
-                    val: "100%",
-                    bg: "rgba(186,230,253,0.5)",
-                    color: "#0369a1",
-                  },
-                  {
-                    icon: <GroupsRoundedIcon />,
-                    label: "Active Users",
-                    val: "8.5K+",
-                    bg: "rgba(196,181,253,0.5)",
-                    color: "#7c3aed",
-                  },
-                  {
-                    icon: <HandshakeRoundedIcon />,
-                    label: "Deals Closed",
-                    val: "6,200+",
-                    bg: "rgba(187,247,208,0.5)",
-                    color: "#166534",
-                  },
-                  {
-                    icon: <StarRoundedIcon />,
-                    label: "Avg. Rating",
-                    val: "4.9 ★",
-                    bg: "rgba(254,240,138,0.5)",
-                    color: "#a16207",
-                  },
-                ].map((item, i) => (
-                  <Grid item xs={6} key={i} sx={{ display: "flex" }}>
+              <Grid container spacing={2} justifyContent="center" alignItems="stretch">
+                {whyStats.map((item, i) => (
+                  <Grid item xs={6} key={i} sx={{ display: "flex", justifyContent: "center" }}>
                     <Box
                       sx={{
-                        width: "100%",
+                        ...centeredCardBase,
                         minHeight: { xs: 155, md: 175 },
-                        p: 3,
+                        p: 2.5,
                         borderRadius: "20px",
                         bgcolor: item.bg,
                         border: "1px solid rgba(255,255,255,0.85)",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        textAlign: "center",
-                        gap: 1,
-                        transition:
-                          "transform 0.2s ease, box-shadow 0.2s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-                        },
+                        gap: 0.85,
                       }}
                     >
                       <Box
@@ -1023,6 +1070,7 @@ export default function AboutPage() {
                           color: item.color,
                           boxShadow: "0 4px 12px rgba(15,23,42,0.06)",
                           "& svg": { fontSize: 24 },
+                          mx: "auto",
                         }}
                       >
                         {item.icon}
@@ -1034,6 +1082,7 @@ export default function AboutPage() {
                           fontWeight: 900,
                           color: C.text,
                           lineHeight: 1.1,
+                          textAlign: "center",
                         }}
                       >
                         {item.val}
@@ -1041,11 +1090,12 @@ export default function AboutPage() {
 
                       <Typography
                         sx={{
-                          fontSize: "0.76rem",
+                          fontSize: "0.78rem",
                           color: C.muted,
                           fontWeight: 700,
                           lineHeight: 1.35,
-                          maxWidth: "12ch",
+                          textAlign: "center",
+                          maxWidth: "100%",
                         }}
                       >
                         {item.label}

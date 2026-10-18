@@ -21,6 +21,7 @@ import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
+import { ApprovalCardSkeleton } from "../../components/skeletons/AppSkeletons";
 import api from "../../services/api";
 
 export default function AdminApprovalsPage() {
@@ -113,7 +114,7 @@ export default function AdminApprovalsPage() {
       )}
 
       {loading ? (
-        <Typography sx={{ py: 4, textAlign: "center", color: "#94A3B8" }}>Loading pending approvals...</Typography>
+        <ApprovalCardSkeleton count={4} />
       ) : pendingListings.length === 0 ? (
         <Card sx={{ borderRadius: "20px", p: 4, textAlign: "center", border: "1px solid #E2E8F0" }}>
           <HourglassEmptyRoundedIcon sx={{ fontSize: 48, color: "#10B981", mb: 1 }} />

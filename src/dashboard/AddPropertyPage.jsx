@@ -1,5 +1,4 @@
-// src/dashboard/AddPropertyPage.jsx
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -8,6 +7,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -21,11 +21,20 @@ import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
 import FmdGoodRoundedIcon from "@mui/icons-material/FmdGoodRounded";
 import CurrencyRupeeRoundedIcon from "@mui/icons-material/CurrencyRupeeRounded";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
+import { FormSkeleton } from "../components/skeletons/AppSkeletons";
 import FormInput from "../components/FormInput";
 import SelectInput from "../components/SelectInput";
 import ImageUploader from "../components/ImageUploader";
+import LgdLocationSelector from "../components/LgdLocationSelector";
+import DynamicPropertyFields from "../components/DynamicPropertyFields";
+import {
+  PROPERTY_TYPES as CANONICAL_PROPERTY_TYPES,
+  getDefaultDetails,
+  normalizePropertyType,
+} from "../config/propertyFields";
 import { useAppState } from "../hooks/useAppState";
 import { propertyService } from "../services/api";
+import { isUserPremium } from "../utils/permissions";
 import { extractError } from "../utils/mappers";
 import { filesToBase64, revokePreviewUrls } from "../utils/imageUtils";
 import {
@@ -54,21 +63,53 @@ const cardSx = {
   boxShadow: UI.shadowSm,
 };
 
-const PROPERTY_TYPES = [
-  { label: "Residential", value: "Residential" },
-  { label: "Commercial", value: "Commercial" },
-  { label: "Agricultural / Farm Land", value: "Agricultural" },
-  { label: "Site / Plot", value: "Site" },
-  { label: "Flat", value: "Flat" },
-  { label: "Apartment", value: "Apartment" },
-  { label: "Villa / Independent House", value: "Villa" },
-  { label: "Land", value: "Land" },
-];
+const PROPERTY_TYPES = CANONICAL_PROPERTY_TYPES.map((t) => ({ label: t, value: t }));
 
 const RENT_LEASE_OPTIONS = [
   { label: "For Sale", value: "Sale" },
   { label: "For Rent", value: "Rent" },
   { label: "For Lease", value: "Lease" },
+];
+
+const FURNISHING_OPTIONS = [
+  { label: "Fully Furnished", value: "Fully Furnished" },
+  { label: "Semi-Furnished", value: "Semi-Furnished" },
+  { label: "Unfurnished", value: "Unfurnished" },
+];
+
+const FACING_OPTIONS = [
+  { label: "East", value: "East" },
+  { label: "North", value: "North" },
+  { label: "North-East", value: "North-East" },
+  { label: "West", value: "West" },
+  { label: "South", value: "South" },
+  { label: "North-West", value: "North-West" },
+  { label: "South-East", value: "South-East" },
+  { label: "South-West", value: "South-West" },
+];
+
+const PARKING_OPTIONS = [
+  { label: "Covered Car Parking", value: "Covered" },
+  { label: "Open Parking", value: "Open" },
+  { label: "Bike & Car Parking", value: "Bike & Car" },
+  { label: "Bike Only", value: "Bike Only" },
+  { label: "None", value: "None" },
+];
+
+const WATER_SUPPLY_OPTIONS = [
+  { label: "24/7 Corporation & Borewell", value: "24/7 Corporation & Borewell" },
+  { label: "Corporation Water", value: "Corporation Water" },
+  { label: "Borewell Water", value: "Borewell Water" },
+  { label: "Water Tanker / Other", value: "Water Tanker / Other" },
+];
+
+const PROPERTY_AGE_OPTIONS = [
+  { label: "Under Construction / New", value: "Under Construction" },
+  { label: "0-1 Year", value: "0-1 Year" },
+  { label: "1-3 Years", value: "1-3 Years" },
+  { label: "3-5 Years", value: "3-5 Years" },
+  { label: "5-10 Years", value: "5-10 Years" },
+  { label: "10+ Years", value: "10+ Years" },
 ];
 
 function toIntOrNull(value) {
@@ -146,16 +187,24 @@ export default function AddPropertyPage() {
     return () => revokePreviewUrls(files.map((f) => f.preview));
   }, [files]);
 
-  const { control, handleSubmit, watch, reset } = useForm({
+  const { control, handleSubmit, watch, reset, setValue } = useForm({
     mode: "onTouched",
     defaultValues: {
       title: "",
       propertyType: PROPERTY_TYPES[0].value,
-      location: "",
+      state: "Karnataka",
+      localAddress: "",
+      city: "",
       apartmentName: "",
       floor: "",
       rooms: "",
       bedrooms: "",
+      bathrooms: "",
+      furnishing: "",
+      facing: "",
+      parking: "",
+      waterSupply: "",
+      propertyAge: "",
       area: "",
       areaUnit: "Sq. Ft.",
       landArea: "",
@@ -181,14 +230,34 @@ export default function AddPropertyPage() {
         const parsedArea = parseAreaAndUnit(p.area, "Sq. Ft.");
         const parsedLandArea = parseAreaAndUnit(p.land_area, "Acres");
 
+        let editLocal = p.local_address || "";
+        let editCity = p.city || "";
+        if (!editLocal && !editCity && p.location) {
+          const parts = p.location.split(",").map((s) => s.trim()).filter(Boolean);
+          if (parts.length > 1) {
+            editCity = parts[parts.length - 1];
+            editLocal = parts.slice(0, -1).join(", ");
+          } else {
+            editLocal = p.location;
+          }
+        }
+
         reset({
           title: p.title || "",
           propertyType: p.property_type || PROPERTY_TYPES[0].value,
-          location: p.location || "",
+          state: p.state || "Karnataka",
+          localAddress: editLocal,
+          city: editCity,
           apartmentName: p.apartment_name || "",
           floor: String(p.floor || ""),
           rooms: p.rooms !== null && p.rooms !== undefined ? String(p.rooms) : "",
           bedrooms: p.bedrooms !== null && p.bedrooms !== undefined ? String(p.bedrooms) : "",
+          bathrooms: p.bathrooms !== null && p.bathrooms !== undefined ? String(p.bathrooms) : "",
+          furnishing: p.furnishing || "",
+          facing: p.facing || "",
+          parking: p.parking || "",
+          waterSupply: p.water_supply || p.waterSupply || "",
+          propertyAge: p.property_age || p.propertyAge || "",
           area: parsedArea.value,
           areaUnit: parsedArea.unit || "Sq. Ft.",
           landArea: parsedLandArea.value,
@@ -202,6 +271,12 @@ export default function AddPropertyPage() {
           leaseDurationYears: p.lease_duration_years !== null && p.lease_duration_years !== undefined ? String(p.lease_duration_years) : "",
           contactNumber: p.contact || user?.phone || "",
         });
+
+        if (p.details && typeof p.details === "object" && Object.keys(p.details).length > 0) {
+          setPropertyDetails(p.details);
+        } else {
+          setPropertyDetails(getDefaultDetails(normalizePropertyType(p.property_type)));
+        }
 
         if (Array.isArray(p.images) && p.images.length > 0) {
           const existingImgItems = p.images
@@ -221,18 +296,40 @@ export default function AddPropertyPage() {
     if (isEditMode) loadForEdit();
   }, [isEditMode, loadForEdit]);
 
-  const propType = watch("propertyType");
-  const watchLandArea = watch("landArea");
-  const watchLandUnit = watch("landAreaUnit");
+  const propType = watch("propertyType") || PROPERTY_TYPES[0].value;
+  const canonicalCategory = normalizePropertyType(propType);
+  const [propertyDetails, setPropertyDetails] = useState(() => getDefaultDetails(canonicalCategory));
+  const prevTypeRef = useRef(canonicalCategory);
+  const isInitialMount = useRef(true);
+
+  // Reset details when property type changes
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (prevTypeRef.current && prevTypeRef.current !== canonicalCategory) {
+      setPropertyDetails(getDefaultDetails(canonicalCategory));
+    }
+    prevTypeRef.current = canonicalCategory;
+  }, [canonicalCategory]);
+
   const watchRentLease = watch("rentLease");
-  const isResidential = ["Flat", "Residential", "Apartment", "Villa"].includes(propType);
-  const isAgri = propType === "Agricultural";
   const isRent = watchRentLease === "Rent";
   const isLease = watchRentLease === "Lease";
 
   const onSubmit = async (data) => {
     setImageError("");
     setApiError("");
+
+    // Validate Loan Pending Amount if loan is Yes
+    if (propertyDetails?.amenities?.loan_pending === "Yes") {
+      const loanAmt = propertyDetails?.amenities?.loan_pending_amount;
+      if (!loanAmt || isNaN(Number(String(loanAmt).replace(/,/g, ""))) || Number(String(loanAmt).replace(/,/g, "")) <= 0) {
+        setApiError("Loan balance amount is required and must be greater than 0 when 'Loan pending' is Yes.");
+        return;
+      }
+    }
 
     const MAX_SIZE_BYTES = 40 * 1024 * 1024;
     const newFiles = files.filter((f) => f.file !== null && !f.existing);
@@ -259,37 +356,42 @@ export default function AddPropertyPage() {
         return;
       }
 
-      const areaVal = toStr(data.area);
-      const areaUnitVal = toStr(data.areaUnit) || "Sq. Ft.";
-      const combinedArea = areaVal ? `${areaVal} ${areaUnitVal}` : "";
-
-      const landAreaVal = toStr(data.landArea);
-      const landAreaUnitVal = toStr(data.landAreaUnit) || "Acres";
-      const combinedLandArea = landAreaVal ? `${landAreaVal} ${landAreaUnitVal}` : "";
-
       const rentAdv = isRent && data.rentAdvanceAmount ? toFloatOrNull(data.rentAdvanceAmount) : null;
       const leaseDur = isLease && data.leaseDurationYears ? toFloatOrNull(data.leaseDurationYears) : null;
+
+      const stateVal = toStr(data.state || "Karnataka");
+      const localAddr = toStr(data.localAddress);
+      const cityVal = toStr(data.city);
+      const combinedLoc = [localAddr, cityVal, stateVal].filter(Boolean).join(", ");
 
       const payload = {
         title: toStr(data.title),
         property_type: toStr(data.propertyType),
-        location: toStr(data.location),
+        state: stateVal,
+        local_address: localAddr,
+        city: cityVal,
+        location: combinedLoc,
         contact: toStr(data.contactNumber),
         price: priceVal,
         apartment_name: toStr(data.apartmentName),
-        floor: toStr(data.floor),
-        rooms: parseInt(String(data.rooms ?? "0"), 10) || 0,
-        bedrooms: parseInt(String(data.bedrooms ?? "0"), 10) || 0,
-        crops_grown: toStr(data.cropsGrown),
-        additional_dimensions_details: toStr(data.additionalDimensionsDetails),
         description: toStr(data.description),
         rent_lease: toStr(data.rentLease),
         rent_advance_amount: rentAdv,
         lease_duration_years: leaseDur,
-        area: combinedArea,
-        land_area: combinedLandArea,
+        details: propertyDetails,
         images: [...existingUrls, ...base64Images],
       };
+
+      // Sync legacy database columns for maximum backward compatibility
+      if (propertyDetails?.bhk) payload.bedrooms = parseInt(propertyDetails.bhk, 10) || 0;
+      if (propertyDetails?.furnishing) payload.furnishing = propertyDetails.furnishing;
+      if (propertyDetails?.floor || propertyDetails?.floor_number) payload.floor = String(propertyDetails.floor || propertyDetails.floor_number);
+      if (propertyDetails?.facing) payload.facing = propertyDetails.facing;
+      if (propertyDetails?.dimensions) payload.additional_dimensions_details = propertyDetails.dimensions;
+      if (propertyDetails?.plot_area) payload.area = `${propertyDetails.plot_area} Sq. Ft.`;
+      if (Array.isArray(propertyDetails?.suitable_crops) && propertyDetails.suitable_crops.length > 0) {
+        payload.crops_grown = propertyDetails.suitable_crops.join(", ");
+      }
 
 
       if (isEditMode) {
@@ -315,33 +417,50 @@ export default function AddPropertyPage() {
   };
 
   if (loadingEdit) {
-    return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 350 }}>
-        <CircularProgress sx={{ color: UI.primary }} />
-      </Box>
-    );
+    return <FormSkeleton title="Loading property details..." />;
   }
 
   return (
     <Box sx={{ background: UI.bg, minHeight: "100vh", pb: 6 }}>
       <Stack spacing={3}>
         {/* ── Page Header ── */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          justifyContent="space-between"
+          spacing={2}
+        >
           <Box>
-            <Typography
-              sx={{
-                fontWeight: 900,
-                fontSize: { xs: "1.45rem", sm: "1.85rem" },
-                color: UI.text,
-                letterSpacing: "-0.03em",
-              }}
-            >
-              {isEditMode ? "✏️ Edit Property" : "Add Property Listing"}
-            </Typography>
-            <Typography sx={{ fontSize: "0.86rem", color: UI.muted, mt: 0.35 }}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, flexWrap: "wrap", gap: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: { xs: "1.45rem", sm: "1.85rem" },
+                  color: UI.text,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                {isEditMode ? "✏️ Edit Property" : "Add Property Listing"}
+              </Typography>
+              <Chip
+                label={isUserPremium(user) ? "👑 Premium Listing" : "Standard Listing"}
+                size="small"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "0.72rem",
+                  background: isUserPremium(user) ? "#FEF3C7" : "#F1F5F9",
+                  color: isUserPremium(user) ? "#B45309" : "#64748B",
+                  border: isUserPremium(user) ? "1px solid #FDE68A" : "1px solid #E2E8F0",
+                  borderRadius: "8px",
+                }}
+              />
+            </Stack>
+            <Typography sx={{ fontSize: "0.86rem", color: UI.muted }}>
               {isEditMode
                 ? "Update your property details, pricing, and photos"
-                : "List your property, apartment, plot, or farm land for sale or rent"}
+                : isUserPremium(user)
+                  ? "⭐ Premium listing: priority verification, top search placement & instant buyer alerts."
+                  : "List your property, apartment, plot, or farm land for sale or rent."}
             </Typography>
           </Box>
 
@@ -418,13 +537,17 @@ export default function AddPropertyPage() {
                     />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormInput
-                      name="location"
-                      label="Location / Area / City *"
-                      placeholder="e.g. Whitefield, Bengaluru"
+                  {/* Searchable Location Selector (India LGD Official Directory API) */}
+                  <Grid size={{ xs: 12 }}>
+                    <LgdLocationSelector
                       control={control}
-                      rules={{ required: "Location is required" }}
+                      setValue={setValue}
+                      watch={watch}
+                      stateFieldName="state"
+                      cityFieldName="city"
+                      localAddressFieldName="localAddress"
+                      UI={UI}
+                      showState={true}
                     />
                   </Grid>
 
@@ -467,174 +590,13 @@ export default function AddPropertyPage() {
               </CardContent>
             </Card>
 
-            {/* ── 2. Specifications & Dimensions ── */}
-            <Card sx={cardSx}>
-              <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
-                <SectionHeader
-                  icon={<FmdGoodRoundedIcon sx={{ fontSize: 20 }} />}
-                  title="Property Details & Dimensions"
-                  description="Size, area, plot dimensions, room counts, floor, and agricultural crops"
-                />
-                <Divider sx={{ mb: 3, borderColor: UI.border }} />
-
-                <Grid container spacing={2.5}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Grid container spacing={1}>
-                      <Grid size={{ xs: 7 }}>
-                        <FormInput
-                          name="area"
-                          label="Built-up Area"
-                          placeholder="e.g. 1450"
-                          type="number"
-                          control={control}
-                          rules={{
-                            validate: (v) => {
-                              if (!v) return true;
-                              const n = parseFloat(v);
-                              return (!isNaN(n) && n > 0) || "Must be greater than 0";
-                            },
-                          }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 5 }}>
-                        <SelectInput
-                          name="areaUnit"
-                          label="Unit"
-                          control={control}
-                          options={BUILTUP_AREA_UNITS}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={1}>
-                      <Grid container spacing={1}>
-                        <Grid size={{ xs: 7 }}>
-                          <FormInput
-                            name="landArea"
-                            label="Land / Plot Area"
-                            placeholder="e.g. 1 or 2.5"
-                            type="number"
-                            control={control}
-                            rules={{
-                              validate: (v) => {
-                                if (!v) return true;
-                                const n = parseFloat(v);
-                                return (!isNaN(n) && n > 0) || "Must be greater than 0";
-                              },
-                            }}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 5 }}>
-                          <SelectInput
-                            name="landAreaUnit"
-                            label="Unit"
-                            control={control}
-                            options={LAND_AREA_UNITS}
-                          />
-                        </Grid>
-                      </Grid>
-
-                      {/* Live Equivalent Conversion Preview */}
-                      {(() => {
-                        const preview = getLandConversionsPreview(watchLandArea, watchLandUnit);
-                        if (!preview) return null;
-                        return (
-                          <Box
-                            sx={{
-                              px: 1.4,
-                              py: 0.8,
-                              borderRadius: "10px",
-                              background: "rgba(15,118,110,0.06)",
-                              border: "1px solid rgba(15,118,110,0.18)",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.8,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <Typography sx={{ fontSize: "0.74rem", color: "#0F766E", fontWeight: 700 }}>
-                              💡 Equivalent:
-                            </Typography>
-                            <Typography sx={{ fontSize: "0.74rem", color: "#0F766E", fontWeight: 600 }}>
-                              {preview}
-                            </Typography>
-                          </Box>
-                        );
-                      })()}
-                    </Stack>
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <FormInput
-                      name="additionalDimensionsDetails"
-                      label="Additional Dimensions / Property Details"
-                      placeholder="Enter additional property dimensions or details, such as 30 × 40 ft plot, east-facing entrance, or additional construction details."
-                      control={control}
-                    />
-                  </Grid>
-
-                  {isResidential && (
-                    <>
-                      <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
-                          name="bedrooms"
-                          label="Bedrooms (BHK)"
-                          placeholder="e.g. 3"
-                          type="number"
-                          control={control}
-                          rules={{
-                            validate: (v) => {
-                              if (!v) return true;
-                              const n = parseInt(v, 10);
-                              return (!isNaN(n) && n >= 0) || "Bedrooms must be a whole number (e.g. 2, 3)";
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
-                          name="rooms"
-                          label="Total Rooms"
-                          placeholder="e.g. 5"
-                          type="number"
-                          control={control}
-                          rules={{
-                            validate: (v) => {
-                              if (!v) return true;
-                              const n = parseInt(v, 10);
-                              return (!isNaN(n) && n >= 0) || "Rooms must be a whole number";
-                            },
-                          }}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
-                          name="floor"
-                          label="Floor Number"
-                          placeholder="e.g. 4th Floor of 12"
-                          control={control}
-                        />
-                      </Grid>
-                    </>
-                  )}
-
-                  {isAgri && (
-                    <Grid size={{ xs: 12 }}>
-                      <FormInput
-                        name="cropsGrown"
-                        label="Crops Grown / Soil Details"
-                        placeholder="e.g. Areca nut, Coconut, Red soil, Borewell with pump"
-                        control={control}
-                      />
-                    </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-            </Card>
+            {/* ── 2. Category Specifications, Amenities & Custom Fields ── */}
+            <DynamicPropertyFields
+              category={canonicalCategory}
+              details={propertyDetails}
+              onChange={setPropertyDetails}
+              UI={UI}
+            />
 
             {/* ── 3. Pricing & Listing Intent ── */}
             <Card sx={cardSx}>

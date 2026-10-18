@@ -10,11 +10,13 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { ListItemSkeleton } from "../../components/skeletons/AppSkeletons";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
@@ -77,7 +79,7 @@ function getRoleColor(role = "") {
   };
 }
 
-function StatCard({ title, value, subtitle, icon, color, bg }) {
+function StatCard({ title, value, subtitle, icon, color, bg, loading }) {
   return (
     <Card sx={{ ...cardSx, height: "100%" }}>
       <CardContent sx={{ p: 2.1 }}>
@@ -103,7 +105,11 @@ function StatCard({ title, value, subtitle, icon, color, bg }) {
               color: UI.text,
             }}
           >
-            {value}
+            {loading ? (
+              <Skeleton variant="text" width={60} height={36} animation="wave" sx={{ bgcolor: "#F1F5F9" }} />
+            ) : (
+              value
+            )}
           </Typography>
           <Typography
             sx={{ fontSize: "0.85rem", fontWeight: 800, color: UI.text }}
@@ -300,6 +306,7 @@ export default function AdminUsersPage() {
               icon={<WorkspacePremiumRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.purple}
               bg={UI.purpleSoft}
+              loading={loading}
             />
             <StatCard
               title="Free Users"
@@ -308,6 +315,7 @@ export default function AdminUsersPage() {
               icon={<PersonRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.primary}
               bg={UI.primarySoft}
+              loading={loading}
             />
             <StatCard
               title="Admin Users"
@@ -316,6 +324,7 @@ export default function AdminUsersPage() {
               icon={<ShieldRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.blue}
               bg={UI.blueSoft}
+              loading={loading}
             />
             <StatCard
               title="Seller Users"
@@ -324,6 +333,7 @@ export default function AdminUsersPage() {
               icon={<ShieldRoundedIcon sx={{ fontSize: 22 }} />}
               color={UI.blue}
               bg={UI.blueSoft}
+              loading={loading}
             />
           </Box>
 
@@ -358,20 +368,7 @@ export default function AdminUsersPage() {
                 <Divider sx={{ borderColor: UI.border }} />
 
                 {loading ? (
-                  <Box sx={{ py: 8, display: "grid", placeItems: "center" }}>
-                    <Stack spacing={1.2} alignItems="center">
-                      <CircularProgress size={34} sx={{ color: UI.primary }} />
-                      <Typography
-                        sx={{
-                          fontSize: "0.88rem",
-                          color: UI.muted,
-                          fontWeight: 700,
-                        }}
-                      >
-                        Loading users...
-                      </Typography>
-                    </Stack>
-                  </Box>
+                  <ListItemSkeleton count={5} />
                 ) : filteredUsers.length === 0 ? (
                   <Box sx={{ py: 8, textAlign: "center" }}>
                     <Typography
