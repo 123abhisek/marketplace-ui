@@ -137,11 +137,13 @@ const get = (path, options) => apiFetch("GET", path, undefined, false, options);
 const post = (path, body, isForm, options) => apiFetch("POST", path, body, isForm, options);
 const del = (path, options) => apiFetch("DELETE", path, undefined, false, options);
 const put = (path, body, isForm, options) => apiFetch("PUT", path, body, isForm, options);
+const patch = (path, body, isForm, options) => apiFetch("PATCH", path, body, isForm, options);
 
 export const api = {
   get,
   post,
   put,
+  patch,
   delete: del,
 };
 
@@ -202,7 +204,16 @@ export const authService = {
     }
   },
 
-  updateProfile: (payload) => put("auth/me", payload),
+  updateProfile: async (payload) => {
+    try {
+      return await patch("auth/me", payload);
+    } catch (err) {
+      if (err?.status === 405 || err?.status === 404) {
+        return await put("auth/me", payload);
+      }
+      throw err;
+    }
+  },
 
   changePassword: ({ current_password, new_password }) =>
     post("auth/change-password", { current_password, new_password }),
@@ -439,6 +450,37 @@ export const locationService = {
       const json = await fallback.json();
       return json?.data ?? {};
     }
+  },
+
+  lookupPincode: async (pincode) => {
+    const cleanPin = String(pincode || "").replace(/\D/g, "").slice(0, 6);
+    if (cleanPin.length !== 6) return null;
+    try {
+      const res = await get(`location/pincode/${cleanPin}`);
+      if (res?.success) return res;
+    } catch {}
+
+    try {
+      const resp = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
+      const data = await resp.json();
+      if (Array.isArray(data) && data[0]?.Status === "Success") {
+        const poList = data[0]?.PostOffice || [];
+        const primary = poList[0] || {};
+        return {
+          success: true,
+          pincode: cleanPin,
+          state: primary.State || "",
+          city: primary.District || "",
+          district: primary.District || "",
+          division: primary.Division || "",
+          block: primary.Block || "",
+          post_offices: poList.map((p) => p.Name).filter(Boolean),
+        };
+      }
+    } catch (e) {
+      console.warn("Direct pincode fetch error:", e);
+    }
+    return null;
   },
 };
 

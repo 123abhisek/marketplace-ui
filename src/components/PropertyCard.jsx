@@ -109,16 +109,19 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
   // Key Specifications
   const bedrooms = item.bedrooms ?? item.rooms ?? null
   const bathrooms = item.bathrooms ?? null
-  const landArea = item.landArea || item.land_area || null
+  const details = item.details || {}
+  const acresGuntas = item.acres_guntas || details.acres_guntas || item.acresGuntas || null
+  const landArea = item.landArea || item.land_area || acresGuntas || null
   const builtupArea = item.area || null
-  const formattedArea = formatLandArea(landArea) || formatBuiltupArea(builtupArea)
+  const formattedArea = formatLandArea(landArea) || formatBuiltupArea(builtupArea) || acresGuntas
   const furnishing = item.furnishing || null
   const facing = item.facing || null
   const floor = item.floor || null
-  const cropsGrown = item.cropsGrown || item.crops_grown || null
+  const cropsGrown = item.cropsGrown || item.crops_grown || (details.suitable_crops ? (Array.isArray(details.suitable_crops) ? details.suitable_crops.join(', ') : details.suitable_crops) : null)
+  const soilType = details.soil ? (Array.isArray(details.soil) ? details.soil.join(', ') : details.soil) : null
+  const ownershipType = details.ownership || item.ownership || null
 
   // Extract Top 2-3 Amenities / Highlights from details
-  const details = item.details || {}
   const amenitiesObj = details.amenities || {}
   const highlightTags = []
 
@@ -130,6 +133,176 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
   if (amenitiesObj.borewell === 'Yes') highlightTags.push('🚰 Borewell')
   if (amenitiesObj.clear_title === 'Yes' || amenitiesObj.registered === 'Yes') highlightTags.push('✅ Clear Title')
   if (amenitiesObj.khata_rtc === 'Yes') highlightTags.push('📜 RTC / Khata')
+
+  // Full list of verified amenities for dynamic hover preview
+  const verifiedAmenitiesList = []
+  const AMENITY_MAP = {
+    water_supply: 'Water Supply',
+    borewell: 'Borewell',
+    electricity: 'Electricity',
+    road_access: 'Road Access',
+    clear_title: 'Clear Title',
+    registered: 'Registered',
+    khata_rtc: 'Khata / RTC',
+    fenced: 'Fenced',
+    gated: 'Gated',
+    parking: 'Parking',
+    lift: 'Elevator',
+    power_backup: 'Power Backup',
+    market: 'Market Nearby',
+    school: 'School Nearby',
+    hospital: 'Hospital Nearby',
+    bank_atm: 'ATM Nearby',
+    public_transport: 'Public Transit',
+  }
+  Object.entries(amenitiesObj).forEach(([k, v]) => {
+    if (v === 'Yes' || v === true) {
+      verifiedAmenitiesList.push(AMENITY_MAP[k] || k.replace(/_/g, ' '))
+    }
+  })
+
+  // Dynamic Hover Details Tooltip
+  const renderHoverPreview = () => (
+    <Box sx={{ p: 0.5, maxWidth: 320 }}>
+      <Stack direction="row" spacing={0.8} alignItems="center" sx={{ mb: 0.8 }}>
+        <Chip
+          label={typeStyle.label}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            bgcolor: 'rgba(20,184,166,0.2)',
+            color: '#2DD4BF',
+            border: '1px solid rgba(45,212,191,0.35)',
+          }}
+        />
+        <Chip
+          label={transBadge.label}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            bgcolor: 'rgba(255,255,255,0.1)',
+            color: '#F8FAFC',
+          }}
+        />
+      </Stack>
+
+      <Typography sx={{ fontSize: '0.84rem', fontWeight: 800, color: '#fff', mb: 0.4, lineHeight: 1.35 }}>
+        {item.title}
+      </Typography>
+
+      <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <LocationOnRoundedIcon sx={{ fontSize: 13, color: '#14B8A6', flexShrink: 0 }} />
+        {locationLabel}
+      </Typography>
+
+      {/* Dynamic Key Specs */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 0.6,
+          p: 0.8,
+          borderRadius: '8px',
+          bgcolor: 'rgba(255,255,255,0.06)',
+          mb: 1,
+        }}
+      >
+        {bedrooms && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🛏️ <strong>{bedrooms}</strong> BHK
+          </Typography>
+        )}
+        {bathrooms && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🚿 <strong>{bathrooms}</strong> Baths
+          </Typography>
+        )}
+        {floor && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🏢 Floor: <strong>{floor}</strong>
+          </Typography>
+        )}
+        {formattedArea && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            📐 <strong>{formattedArea}</strong>
+          </Typography>
+        )}
+        {acresGuntas && formattedArea !== acresGuntas && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🌾 <strong>{acresGuntas}</strong>
+          </Typography>
+        )}
+        {cropsGrown && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            🌱 <strong>{cropsGrown.split(',')[0]}</strong>
+          </Typography>
+        )}
+        {soilType && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🧱 Soil: <strong>{soilType}</strong>
+          </Typography>
+        )}
+        {furnishing && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🛋️ <strong>{furnishing}</strong>
+          </Typography>
+        )}
+        {facing && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🧭 <strong>{facing}</strong> Facing
+          </Typography>
+        )}
+        {ownershipType && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            📜 <strong>{ownershipType}</strong>
+          </Typography>
+        )}
+      </Box>
+
+      {/* Verified Amenities */}
+      {verifiedAmenitiesList.length > 0 && (
+        <Box sx={{ mb: 1 }}>
+          <Typography sx={{ fontSize: '0.64rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', mb: 0.4 }}>
+            Verified Amenities
+          </Typography>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.4 }}>
+            {verifiedAmenitiesList.slice(0, 5).map((am, i) => (
+              <Chip
+                key={i}
+                label={`✔ ${am}`}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  bgcolor: 'rgba(20,184,166,0.15)',
+                  color: '#2DD4BF',
+                  border: '1px solid rgba(45,212,191,0.25)',
+                }}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* Price row */}
+      <Box sx={{ pt: 0.6, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+          {isRent ? 'Monthly Rent' : isLease ? 'Lease Deposit' : 'Asking Price'}:
+        </Typography>
+        <Typography sx={{ fontSize: '0.82rem', fontWeight: 900, color: '#2DD4BF' }}>
+          {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact'} {isRent ? '/ mo' : ''}
+        </Typography>
+      </Box>
+      <Typography sx={{ fontSize: '0.62rem', color: '#64748B', textAlign: 'center', mt: 0.6 }}>
+        💡 Click Details to view HD photos, verify documents & contact owner
+      </Typography>
+    </Box>
+  )
 
   return (
     <Card
@@ -462,91 +635,113 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
           >
             {/* Spec 1: Configuration / Bedrooms / Crops */}
             {bedrooms ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <BedRoundedIcon sx={{ fontSize: 16, color: '#4361EE' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                  {bedrooms} {bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Configuration: ${bedrooms} Bedrooms`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <BedRoundedIcon sx={{ fontSize: 16, color: '#4361EE' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                    {bedrooms} {bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : cropsGrown ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <AgricultureRoundedIcon sx={{ fontSize: 16, color: '#047857' }} />
-                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {cropsGrown.split(',')[0]}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Suitable Crops: ${cropsGrown}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <AgricultureRoundedIcon sx={{ fontSize: 16, color: '#047857' }} />
+                  <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {cropsGrown.split(',')[0]}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <ApartmentRoundedIcon sx={{ fontSize: 16, color: '#0284C7' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                  {typeStyle.label}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Property Category: ${typeStyle.label}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <ApartmentRoundedIcon sx={{ fontSize: 16, color: '#0284C7' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                    {typeStyle.label}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             )}
 
             {/* Spec 2: Bathrooms or Floor */}
             {bathrooms ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <BathtubRoundedIcon sx={{ fontSize: 15, color: '#0284C7' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                  {bathrooms} {bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Bathrooms: ${bathrooms}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <BathtubRoundedIcon sx={{ fontSize: 15, color: '#0284C7' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                    {bathrooms} {bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : floor ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <LayersRoundedIcon sx={{ fontSize: 15, color: '#6366F1' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                  Floor {floor}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Floor Level: Floor ${floor}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <LayersRoundedIcon sx={{ fontSize: 15, color: '#6366F1' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                    Floor {floor}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <VerifiedRoundedIcon sx={{ fontSize: 15, color: '#059669' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700 }}>
-                  Verified
-                </Typography>
-              </Stack>
+              <Tooltip title="Verified Property Listing" arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <VerifiedRoundedIcon sx={{ fontSize: 15, color: '#059669' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700 }}>
+                    Verified
+                  </Typography>
+                </Stack>
+              </Tooltip>
             )}
 
             {/* Spec 3: Area / Land Size */}
             {formattedArea ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
-                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                  {formattedArea}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Total Area / Land Size: ${formattedArea}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+                  <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                    {formattedArea}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
-                <Typography sx={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600 }}>
-                  Plot / Site
-                </Typography>
-              </Stack>
+              <Tooltip title="Plot / Site Area available on request" arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <SquareFootRoundedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
+                  <Typography sx={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600 }}>
+                    Plot / Site
+                  </Typography>
+                </Stack>
+              </Tooltip>
             )}
 
             {/* Spec 4: Furnishing or Facing */}
             {furnishing ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <WeekendRoundedIcon sx={{ fontSize: 15, color: '#EA580C' }} />
-                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {furnishing}
-                </Typography>
-              </Stack>
+              <Tooltip title={`Furnishing Status: ${furnishing}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <WeekendRoundedIcon sx={{ fontSize: 15, color: '#EA580C' }} />
+                  <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {furnishing}
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : facing ? (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <ExploreRoundedIcon sx={{ fontSize: 15, color: '#D97706' }} />
-                <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700 }}>
-                  {facing} Facing
-                </Typography>
-              </Stack>
+              <Tooltip title={`Facing: ${facing}`} arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <ExploreRoundedIcon sx={{ fontSize: 15, color: '#D97706' }} />
+                  <Typography sx={{ fontSize: '0.76rem', color: '#1E293B', fontWeight: 700 }}>
+                    {facing} Facing
+                  </Typography>
+                </Stack>
+              </Tooltip>
             ) : (
-              <Stack direction="row" spacing={0.7} alignItems="center">
-                <CheckCircleRoundedIcon sx={{ fontSize: 15, color: '#0F766E' }} />
-                <Typography sx={{ fontSize: '0.76rem', color: '#0F766E', fontWeight: 700 }}>
-                  Ready to Move
-                </Typography>
-              </Stack>
+              <Tooltip title="Possession: Ready to Move" arrow>
+                <Stack direction="row" spacing={0.7} alignItems="center">
+                  <CheckCircleRoundedIcon sx={{ fontSize: 15, color: '#0F766E' }} />
+                  <Typography sx={{ fontSize: '0.76rem', color: '#0F766E', fontWeight: 700 }}>
+                    Ready to Move
+                  </Typography>
+                </Stack>
+              </Tooltip>
             )}
           </Box>
 
@@ -554,19 +749,21 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
           {highlightTags.length > 0 && (
             <Stack direction="row" spacing={0.6} flexWrap="wrap" sx={{ gap: 0.5 }}>
               {highlightTags.slice(0, 3).map((tag, idx) => (
-                <Chip
-                  key={idx}
-                  label={tag}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    bgcolor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    color: '#475569',
-                  }}
-                />
+                <Tooltip key={idx} title={`Verified Feature: ${tag}`} arrow>
+                  <Chip
+                    label={tag}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      bgcolor: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      color: '#475569',
+                      cursor: 'default',
+                    }}
+                  />
+                </Tooltip>
               ))}
             </Stack>
           )}
@@ -576,31 +773,38 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
         <Box sx={{ mt: 'auto', pt: 1.5 }}>
           <Divider sx={{ opacity: 0.7, mb: 1.5 }} />
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
+            sx={{ gap: 1 }}
+          >
             {/* Price block */}
-            <Box>
-              <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <Box sx={{ minWidth: 0, flexShrink: 1, pr: 0.5 }}>
+              <Typography sx={{ fontSize: '0.66rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {isRent ? 'Monthly Rent' : isLease ? 'Lease Deposit' : 'Expected Price'}
               </Typography>
-              <Stack direction="row" alignItems="baseline" spacing={0.4}>
+              <Stack direction="row" alignItems="baseline" spacing={0.4} sx={{ flexWrap: 'nowrap' }}>
                 <Typography
                   fontWeight={900}
                   sx={{
-                    fontSize: '1.12rem',
+                    fontSize: { xs: '1.02rem', sm: '1.08rem' },
                     color: '#0F766E',
                     letterSpacing: '-0.02em',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Contact for Price'}
                 </Typography>
                 {isRent && (
-                  <Typography sx={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     / mo
                   </Typography>
                 )}
               </Stack>
               {rentAdvance && isRent && (
-                <Typography sx={{ fontSize: '0.66rem', color: '#94A3B8', fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.64rem', color: '#94A3B8', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   Advance: {formatCurrency(rentAdvance)}
                 </Typography>
               )}
@@ -608,27 +812,55 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
 
             {/* Actions block */}
             {locked ? (
-              <Button
-                component={RouterLink}
-                to={detailUrl}
-                size="small"
-                startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
-                sx={{
-                  borderRadius: '10px',
-                  fontWeight: 800,
-                  fontSize: '0.76rem',
-                  bgcolor: '#0F766E',
-                  color: '#FFFFFF',
-                  px: 1.8,
-                  py: 0.7,
-                  boxShadow: 'none',
-                  '&:hover': { bgcolor: '#0D655E' },
+              <Tooltip
+                arrow
+                placement="top"
+                enterDelay={120}
+                leaveDelay={200}
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: '#0F172A',
+                      color: '#F8FAFC',
+                      borderRadius: '14px',
+                      p: 1.5,
+                      boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                    },
+                  },
+                  arrow: { sx: { color: '#0F172A' } },
                 }}
+                title={renderHoverPreview()}
               >
-                Details
-              </Button>
+                <Button
+                  component={RouterLink}
+                  to={detailUrl}
+                  size="small"
+                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
+                  sx={{
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.76rem',
+                    bgcolor: '#0F766E',
+                    color: '#FFFFFF',
+                    px: 1.6,
+                    py: 0.65,
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 8px rgba(15,118,110,0.25)',
+                    transition: 'all 0.18s ease',
+                    '&:hover': {
+                      bgcolor: '#0D655E',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(15,118,110,0.35)',
+                    },
+                  }}
+                >
+                  Details
+                </Button>
+              </Tooltip>
             ) : (editUrl || onDelete) ? (
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={0.8} alignItems="center" sx={{ ml: 'auto', flexShrink: 0 }}>
                 {editUrl && (
                   <Button
                     component={RouterLink}
@@ -645,6 +877,7 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                       px: 1.4,
                       py: 0.6,
                       boxShadow: 'none',
+                      whiteSpace: 'nowrap',
                       '&:hover': { bgcolor: '#DBEAFE' },
                     }}
                   >
@@ -666,6 +899,7 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                       px: 1.4,
                       py: 0.6,
                       boxShadow: 'none',
+                      whiteSpace: 'nowrap',
                       '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' },
                     }}
                   >
@@ -674,10 +908,10 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                 )}
               </Stack>
             ) : (
-              <Stack direction="row" spacing={0.8} alignItems="center">
+              <Stack direction="row" spacing={0.7} alignItems="center" sx={{ ml: 'auto', flexShrink: 0 }}>
                 {/* WhatsApp Chat Button */}
                 {whatsappUrl && (
-                  <Tooltip title="Chat on WhatsApp">
+                  <Tooltip title="Chat with seller on WhatsApp">
                     <Box
                       component="a"
                       href={whatsappUrl}
@@ -687,25 +921,26 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 34,
-                        height: 34,
-                        borderRadius: '10px',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
                         background: '#DCFCE7',
                         color: '#15803D',
                         textDecoration: 'none',
                         cursor: 'pointer',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease',
                         '&:hover': { background: '#BBF7D0', transform: 'scale(1.05)' },
                       }}
                     >
-                      <WhatsAppIcon sx={{ fontSize: 18 }} />
+                      <WhatsAppIcon sx={{ fontSize: 17 }} />
                     </Box>
                   </Tooltip>
                 )}
 
                 {/* Call Button */}
                 {contactNumber && (
-                  <Tooltip title={`Call ${contactNumber}`}>
+                  <Tooltip title={`Call seller: ${contactNumber}`}>
                     <Box
                       component="a"
                       href={`tel:${contactNumber}`}
@@ -713,42 +948,71 @@ export default function PropertyCard({ item, editUrl, onDelete }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 34,
-                        height: 34,
-                        borderRadius: '10px',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
                         background: '#EEF2FF',
                         color: '#4361EE',
                         textDecoration: 'none',
                         cursor: 'pointer',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease',
                         '&:hover': { background: '#E0E7FF', transform: 'scale(1.05)' },
                       }}
                     >
-                      <PhoneRoundedIcon sx={{ fontSize: 17 }} />
+                      <PhoneRoundedIcon sx={{ fontSize: 16 }} />
                     </Box>
                   </Tooltip>
                 )}
 
-                {/* View Details Button */}
-                <Button
-                  component={RouterLink}
-                  to={detailUrl}
-                  size="small"
-                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
-                  sx={{
-                    borderRadius: '10px',
-                    fontWeight: 800,
-                    fontSize: '0.76rem',
-                    bgcolor: '#0F766E',
-                    color: '#FFFFFF',
-                    px: 1.6,
-                    py: 0.7,
-                    boxShadow: 'none',
-                    '&:hover': { bgcolor: '#0D655E' },
+                {/* View Details Button with Dynamic Hover Tooltip */}
+                <Tooltip
+                  arrow
+                  placement="top"
+                  enterDelay={120}
+                  leaveDelay={200}
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        bgcolor: '#0F172A',
+                        color: '#F8FAFC',
+                        borderRadius: '14px',
+                        p: 1.5,
+                        boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                      },
+                    },
+                    arrow: { sx: { color: '#0F172A' } },
                   }}
+                  title={renderHoverPreview()}
                 >
-                  Details
-                </Button>
+                  <Button
+                    component={RouterLink}
+                    to={detailUrl}
+                    size="small"
+                    startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
+                    sx={{
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.76rem',
+                      bgcolor: '#0F766E',
+                      color: '#FFFFFF',
+                      px: 1.5,
+                      py: 0.65,
+                      minWidth: 'auto',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 8px rgba(15,118,110,0.25)',
+                      transition: 'all 0.18s ease',
+                      '&:hover': {
+                        bgcolor: '#0D655E',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(15,118,110,0.35)',
+                      },
+                    }}
+                  >
+                    Details
+                  </Button>
+                </Tooltip>
               </Stack>
             )}
           </Stack>

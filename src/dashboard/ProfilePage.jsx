@@ -1,19 +1,23 @@
 // src/dashboard/ProfilePage.jsx
-import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import {
+  Autocomplete,
   Avatar,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
+  InputAdornment,
   LinearProgress,
   Stack,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -37,10 +41,17 @@ import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import StarsRoundedIcon from '@mui/icons-material/StarsRounded'
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded'
+import LocationCityRoundedIcon from '@mui/icons-material/LocationCityRounded'
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
+import MapRoundedIcon from '@mui/icons-material/MapRounded'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import FormInput from '../components/FormInput'
 import SelectInput from '../components/SelectInput'
 import ImageUploader from '../components/ImageUploader'
 import { useAppState } from '../hooks/useAppState'
+import { locationService } from '../services/api'
 
 const UI = {
   bg: '#F8FAFC',
@@ -233,12 +244,13 @@ export default function ProfilePage() {
   const [submitting, setSubmitting] = useState(false)
   const [showUploader, setShowUploader] = useState(false)
 
-  const { control, handleSubmit, watch } = useForm({
+  const { control, handleSubmit, watch, reset, setValue } = useForm({
     defaultValues: {
       name: user.name || '',
       gender: user.gender || '',
-      dob: user.dob || '',
-      location: user.location || '',
+      dob: user.dob ? String(user.dob).split('T')[0] : '',
+      location: user.location || user.address || user.local_address || '',
+      address: user.address || user.location || user.local_address || '',
       state: user.state || '',
       city: user.city || '',
       pincode: user.pincode || '',
@@ -248,7 +260,296 @@ export default function ProfilePage() {
     },
   })
 
+  useEffect(() => {
+    if (user && Object.keys(user).length > 0) {
+      const userAddress = user.location || user.address || user.local_address || ''
+      reset({
+        name: user.name || '',
+        gender: user.gender || '',
+        dob: user.dob ? String(user.dob).split('T')[0] : '',
+        location: userAddress,
+        address: userAddress,
+        state: user.state || '',
+        city: user.city || '',
+        pincode: user.pincode || '',
+        occupation: user.occupation || '',
+        email: user.email || '',
+        mobile: user.mobile || user.phone || '',
+      })
+      if (user.photo || user.avatar_url || user.avatar_b64) {
+        setFiles([{ name: 'profile-photo', preview: user.photo || user.avatar_url || user.avatar_b64 }])
+      }
+    }
+  }, [user, reset])
+
   const values = watch()
+
+  // ── Address & Location API Integration ──
+  const [states, setStates] = useState([])
+  const [loadingStates, setLoadingStates] = useState(false)
+  const [districts, setDistricts] = useState([])
+  const [loadingDistricts, setLoadingDistricts] = useState(false)
+  const [subdistricts, setSubdistricts] = useState([])
+  const [locationSearchQuery, setLocationSearchQuery] = useState('')
+  const [locationSearchResults, setLocationSearchResults] = useState([])
+  const [searchingLocation, setSearchingLocation] = useState(false)
+  const [pincodeLoading, setPincodeLoading] = useState(false)
+  const [pincodeStatus, setPincodeStatus] = useState(null)
+  const [geoLoading, setGeoLoading] = useState(false)
+  const lastLookedUpPincode = useRef('')
+
+  // 1. Fetch States on Mount from Location API
+  useEffect(() => {
+    let mounted = true
+    setLoadingStates(true)
+    locationService
+      .getStates()
+      .then((data) => {
+        if (!mounted) return
+        const list = Array.isArray(data) ? data : data?.data || []
+        setStates(list)
+      })
+      .catch((err) => {
+        console.warn('Failed to load states:', err)
+      })
+      .finally(() => {
+        if (mounted) setLoadingStates(false)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // 2. Fetch Districts whenever selected state changes
+  const selectedState = values.state || 'Karnataka'
+  useEffect(() => {
+    let mounted = true
+    setLoadingDistricts(true)
+    locationService
+      .getDistricts(selectedState)
+      .then((data) => {
+        if (!mounted) return
+        const list = Array.isArray(data) ? data : data?.data || []
+        setDistricts(list)
+      })
+      .catch((err) => {
+        console.warn('Failed to load districts:', err)
+        if (mounted) setDistricts([])
+      })
+      .finally(() => {
+        if (mounted) setLoadingDistricts(false)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [selectedState])
+
+  // 3. Fetch Sub-districts / Taluks whenever selected city / district changes
+  const selectedCity = values.city || ''
+  useEffect(() => {
+    if (!selectedCity || !districts.length) {
+      setSubdistricts([])
+      return
+    }
+    const matchedDist = districts.find(
+      (d) => d.name?.toLowerCase() === String(selectedCity).toLowerCase()
+    )
+    if (!matchedDist?.code) {
+      setSubdistricts([])
+      return
+    }
+    let mounted = true
+    locationService
+      .getSubdistricts(matchedDist.code)
+      .then((data) => {
+        if (!mounted) return
+        const list = Array.isArray(data) ? data : data?.data || []
+        setSubdistricts(list)
+      })
+      .catch(() => {
+        if (mounted) setSubdistricts([])
+      })
+    return () => {
+      mounted = false
+    }
+  }, [selectedCity, districts])
+
+  // 4. Instant Global Location Search (Official LGD API)
+  useEffect(() => {
+    const q = locationSearchQuery.trim()
+    if (q.length < 2) {
+      setLocationSearchResults([])
+      setSearchingLocation(false)
+      return
+    }
+    const timer = setTimeout(async () => {
+      setSearchingLocation(true)
+      try {
+        const res = await locationService.search(q)
+        const data = res?.data || res
+        const resObj = data?.results || {}
+        const items = []
+        ;(resObj.districts || []).forEach((d) => {
+          items.push({
+            id: `district-${d.code}`,
+            type: 'District',
+            name: d.name,
+            stateCode: d.state_code,
+            districtCode: d.code,
+            displayName: `${d.name} (District)`,
+          })
+        })
+        ;(resObj.subdistricts || []).forEach((s) => {
+          items.push({
+            id: `subdistrict-${s.code}`,
+            type: 'Taluk / Locality',
+            name: s.name,
+            stateCode: s.state_code,
+            districtCode: s.district_code,
+            displayName: `${s.name} (Taluk / Area)`,
+          })
+        })
+        ;(resObj.blocks || []).forEach((b) => {
+          items.push({
+            id: `block-${b.code}`,
+            type: 'Block',
+            name: b.name,
+            stateCode: b.state_code,
+            districtCode: b.district_code,
+            displayName: `${b.name} (Block)`,
+          })
+        })
+        setLocationSearchResults(items.slice(0, 15))
+      } catch {
+        setLocationSearchResults([])
+      } finally {
+        setSearchingLocation(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [locationSearchQuery])
+
+  const handleSelectSearchResult = (item) => {
+    if (!item) return
+    if (item.stateCode) {
+      const matchState = states.find((s) => String(s.code) === String(item.stateCode))
+      if (matchState) {
+        setValue('state', matchState.name, { shouldValidate: true, shouldDirty: true })
+      }
+    }
+    if (item.type === 'District') {
+      setValue('city', item.name, { shouldValidate: true, shouldDirty: true })
+    } else {
+      const existing = watch('location') || ''
+      if (!existing || existing.toLowerCase() === 'bengaluru' || existing.toLowerCase() === 'karnataka') {
+        setValue('location', item.name, { shouldValidate: true, shouldDirty: true })
+      } else if (!existing.toLowerCase().includes(item.name.toLowerCase())) {
+        setValue('location', `${item.name}, ${existing}`, { shouldValidate: true, shouldDirty: true })
+      }
+      if (item.districtCode) {
+        const matchDist = districts.find((d) => String(d.code) === String(item.districtCode))
+        if (matchDist) {
+          setValue('city', matchDist.name, { shouldValidate: true, shouldDirty: true })
+        }
+      }
+    }
+    setLocationSearchQuery('')
+    setLocationSearchResults([])
+  }
+
+  // 5. Postal Pincode Lookup API
+  const handlePincodeLookup = useCallback(async (pinCodeToLookup) => {
+    const pin = String(pinCodeToLookup || '').replace(/\D/g, '').slice(0, 6)
+    if (pin.length !== 6) {
+      setPincodeStatus(null)
+      return
+    }
+    setPincodeLoading(true)
+    try {
+      const res = await locationService.lookupPincode(pin)
+      if (res && res.success) {
+        if (res.state) {
+          setValue('state', res.state, { shouldValidate: true, shouldDirty: true })
+        }
+        if (res.city || res.district) {
+          setValue('city', res.city || res.district, { shouldValidate: true, shouldDirty: true })
+        }
+        setPincodeStatus({
+          verified: true,
+          message: `Verified: ${res.city || res.district}, ${res.state}`,
+          postOffices: res.post_offices || [],
+        })
+      } else {
+        setPincodeStatus({ verified: false, message: 'PIN code not recognized', postOffices: [] })
+      }
+    } catch {
+      setPincodeStatus(null)
+    } finally {
+      setPincodeLoading(false)
+    }
+  }, [setValue])
+
+  const currentPincode = values.pincode
+  useEffect(() => {
+    const clean = String(currentPincode || '').replace(/\D/g, '')
+    if (clean.length === 6 && clean !== lastLookedUpPincode.current) {
+      lastLookedUpPincode.current = clean
+      handlePincodeLookup(clean)
+    }
+  }, [currentPincode, handlePincodeLookup])
+
+  // 6. GPS Location Detection
+  const handleDetectGPSLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser')
+      return
+    }
+    setGeoLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          )
+          const data = await res.json()
+          const addr = data?.address || {}
+          const state = addr.state || ''
+          const city = addr.city || addr.town || addr.district || addr.county || ''
+          const pincode = addr.postcode || ''
+          const suburb = addr.suburb || addr.neighbourhood || addr.road || ''
+
+          if (state) setValue('state', state, { shouldValidate: true, shouldDirty: true })
+          if (city) setValue('city', city, { shouldValidate: true, shouldDirty: true })
+          if (pincode) setValue('pincode', pincode.replace(/\D/g, '').slice(0, 6), { shouldValidate: true, shouldDirty: true })
+          if (suburb) {
+            const currentLoc = watch('location') || ''
+            if (!currentLoc) {
+              setValue('location', `${suburb}, ${city}`, { shouldValidate: true, shouldDirty: true })
+            }
+          }
+        } catch (err) {
+          console.warn('GPS reverse geocode error:', err)
+        } finally {
+          setGeoLoading(false)
+        }
+      },
+      (err) => {
+        console.warn('GPS error:', err)
+        setGeoLoading(false)
+      },
+      { timeout: 10000 }
+    )
+  }
+
+  const handleAddLocalityToAddress = (localityName) => {
+    const currentLoc = watch('location') || ''
+    if (!currentLoc || currentLoc.trim().toLowerCase() === 'bengaluru' || currentLoc.trim().toLowerCase() === 'karnataka') {
+      setValue('location', localityName, { shouldValidate: true, shouldDirty: true })
+    } else if (!currentLoc.toLowerCase().includes(localityName.toLowerCase())) {
+      setValue('location', `${localityName}, ${currentLoc}`, { shouldValidate: true, shouldDirty: true })
+    }
+  }
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
@@ -269,7 +570,7 @@ export default function ProfilePage() {
       values.name,
       values.gender,
       values.dob,
-      values.location,
+      values.location || values.address,
       values.state,
       values.city,
       values.pincode,
@@ -304,7 +605,13 @@ export default function ProfilePage() {
   const onSubmit = async (data) => {
     setSubmitting(true)
     try {
-      await updateProfile({ ...data, photo: files[0]?.preview || user.photo })
+      const fullAddress = data.location || data.address || ''
+      await updateProfile({
+        ...data,
+        location: fullAddress,
+        address: fullAddress,
+        photo: files[0]?.preview || user.photo,
+      })
       setShowUploader(false)
     } finally {
       setSubmitting(false)
@@ -638,50 +945,386 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
 
-                {/* 2. Location & Address */}
+                {/* 2. Location & Address (Integrated with India LGD & Postal PIN API) */}
                 <Card sx={cardSx}>
                   <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
-                    <SectionHeader
-                      icon={<FmdGoodRoundedIcon sx={{ fontSize: 20 }} />}
-                      title="Address & Location"
-                      description="Specify your city, state, pincode, and operational area."
-                    />
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      justifyContent="space-between"
+                      alignItems={{ xs: 'flex-start', sm: 'center' }}
+                      spacing={1.5}
+                      sx={{ mb: 2 }}
+                    >
+                      <SectionHeader
+                        icon={<FmdGoodRoundedIcon sx={{ fontSize: 20 }} />}
+                        title="Address & Location"
+                        description="Auto-detect city, state, and area using India's official directory & postal API."
+                      />
+
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={handleDetectGPSLocation}
+                        disabled={geoLoading}
+                        startIcon={
+                          geoLoading ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            <MyLocationRoundedIcon sx={{ fontSize: 18 }} />
+                          )
+                        }
+                        sx={{
+                          borderRadius: '12px',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          color: UI.primary,
+                          borderColor: UI.primaryBorder,
+                          bgcolor: UI.primarySoft,
+                          '&:hover': {
+                            bgcolor: 'rgba(15, 118, 110, 0.14)',
+                            borderColor: UI.primary,
+                          },
+                        }}
+                      >
+                        {geoLoading ? 'Detecting GPS…' : 'Use My GPS Location'}
+                      </Button>
+                    </Stack>
                     <Divider sx={{ mb: 3, borderColor: UI.border }} />
 
+                    {/* Quick Instant Location Search (Official India Directory) */}
+                    <Box
+                      sx={{
+                        p: 2,
+                        mb: 2.5,
+                        borderRadius: '14px',
+                        bgcolor: '#F8FAFC',
+                        border: `1px dashed ${UI.border}`,
+                      }}
+                    >
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <SearchRoundedIcon sx={{ fontSize: 18, color: UI.primary }} />
+                        <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: UI.text }}>
+                          Quick Location Search (Official Directory)
+                        </Typography>
+                      </Stack>
+
+                      <Autocomplete
+                        freeSolo
+                        options={locationSearchResults}
+                        getOptionLabel={(opt) =>
+                          typeof opt === 'string' ? opt : opt.displayName || opt.name || ''
+                        }
+                        inputValue={locationSearchQuery}
+                        onInputChange={(_, value) => setLocationSearchQuery(value)}
+                        onChange={(_, selected) => {
+                          if (selected && typeof selected === 'object') {
+                            handleSelectSearchResult(selected)
+                          }
+                        }}
+                        loading={searchingLocation}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            placeholder="Type to search any city, town, taluk or district (e.g. Indiranagar, Kumta, Udupi)..."
+                            InputProps={{
+                              ...params.InputProps,
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <PlaceRoundedIcon sx={{ fontSize: 18, color: UI.muted }} />
+                                </InputAdornment>
+                              ),
+                              endAdornment: (
+                                <>
+                                  {searchingLocation ? (
+                                    <CircularProgress color="inherit" size={16} />
+                                  ) : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                            sx={{
+                              bgcolor: '#fff',
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '10px',
+                                fontSize: '0.86rem',
+                              },
+                            }}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box
+                            component="li"
+                            {...props}
+                            key={option.id || option.name}
+                            sx={{
+                              fontSize: '0.86rem',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              py: 1,
+                            }}
+                          >
+                            <Stack direction="row" spacing={1.2} alignItems="center">
+                              <LocationCityRoundedIcon sx={{ fontSize: 18, color: UI.primary }} />
+                              <Typography sx={{ fontWeight: 600, fontSize: '0.86rem' }}>
+                                {option.name}
+                              </Typography>
+                            </Stack>
+                            <Chip
+                              label={option.type}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                bgcolor: UI.primarySoft,
+                                color: UI.primary,
+                              }}
+                            />
+                          </Box>
+                        )}
+                      />
+                    </Box>
+
                     <Grid container spacing={2.5}>
+                      {/* Full Street Address */}
                       <Grid size={{ xs: 12 }}>
                         <FormInput
                           name="location"
-                          label="Full Address / Locality"
+                          label="Full Address / Locality / Street"
                           control={control}
-                          placeholder="Street name, landmark, area"
+                          placeholder="Flat/House No., Building/Apartment Name, Street, Landmark, Area"
+                          multiline
+                          rows={3}
+                          helperText="Enter your complete address or operational locality for buyers to locate you."
                         />
                       </Grid>
 
+                      {/* Locality & Taluks suggestion chips */}
+                      {(pincodeStatus?.postOffices?.length > 0 || subdistricts.length > 0) && (
+                        <Grid size={{ xs: 12 }}>
+                          <Box
+                            sx={{
+                              p: 1.8,
+                              bgcolor: '#F0FDFA',
+                              borderRadius: '12px',
+                              border: `1px solid ${UI.primaryBorder}`,
+                            }}
+                          >
+                            <Typography
+                              sx={{ fontSize: '0.78rem', fontWeight: 800, color: UI.primary, mb: 1 }}
+                            >
+                              📍{' '}
+                              {pincodeStatus?.postOffices?.length > 0
+                                ? `Localities found for PIN ${values.pincode} (click to add to address):`
+                                : `Sub-districts / Taluks in ${values.city || 'District'} (click to add to address):`}
+                            </Typography>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.8 }}>
+                              {(pincodeStatus?.postOffices?.length > 0
+                                ? pincodeStatus.postOffices
+                                : subdistricts.map((s) => s.name)
+                              )
+                                .slice(0, 16)
+                                .map((name) => (
+                                  <Chip
+                                    key={name}
+                                    label={name}
+                                    size="small"
+                                    icon={<AddRoundedIcon sx={{ fontSize: '14px !important' }} />}
+                                    onClick={() => handleAddLocalityToAddress(name)}
+                                    clickable
+                                    sx={{
+                                      fontSize: '0.76rem',
+                                      fontWeight: 700,
+                                      bgcolor: '#fff',
+                                      border: `1px solid ${UI.primaryBorder}`,
+                                      color: UI.text,
+                                      '&:hover': {
+                                        bgcolor: UI.primary,
+                                        color: '#fff',
+                                        borderColor: UI.primary,
+                                        '& .MuiChip-icon': { color: '#fff !important' },
+                                      },
+                                    }}
+                                  />
+                                ))}
+                            </Stack>
+                          </Box>
+                        </Grid>
+                      )}
+
+                      {/* City / District Dropdown */}
                       <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
+                        <Controller
                           name="city"
-                          label="City"
                           control={control}
-                          placeholder="e.g. Bengaluru, Mysuru"
+                          render={({ field, fieldState }) => (
+                            <Autocomplete
+                              freeSolo
+                              options={districts.map((d) => d.name)}
+                              value={field.value || ''}
+                              loading={loadingDistricts}
+                              onChange={(_, newValue) => {
+                                field.onChange(newValue || '')
+                              }}
+                              onInputChange={(_, newInputValue) => {
+                                field.onChange(newInputValue)
+                              }}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label="City / District"
+                                  placeholder="e.g. Bengaluru, Mysuru"
+                                  error={!!fieldState.error}
+                                  // helperText={
+                                  //   fieldState.error?.message ||
+                                  //   (districts.length > 0
+                                  //     ? `${districts.length} official districts available`
+                                  //     : ' ')
+                                  // }
+                                  InputProps={{
+                                    ...params.InputProps,
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <LocationCityRoundedIcon
+                                          sx={{ fontSize: 20, color: UI.primary }}
+                                        />
+                                      </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                      <>
+                                        {loadingDistricts ? (
+                                          <CircularProgress color="inherit" size={18} />
+                                        ) : null}
+                                        {params.InputProps.endAdornment}
+                                      </>
+                                    ),
+                                  }}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      borderRadius: '12px',
+                                      minHeight: '54px',
+                                    },
+                                  }}
+                                />
+                              )}
+                            />
+                          )}
                         />
                       </Grid>
 
+                      {/* State Dropdown */}
                       <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
+                        <Controller
                           name="state"
-                          label="State"
                           control={control}
-                          placeholder="e.g. Karnataka"
+                          render={({ field, fieldState }) => (
+                            <Autocomplete
+                              freeSolo
+                              options={states.map((s) => s.name)}
+                              value={field.value || 'Karnataka'}
+                              loading={loadingStates}
+                              onChange={(_, newValue) => {
+                                field.onChange(newValue || '')
+                                if (newValue !== field.value) {
+                                  setValue('city', '', { shouldValidate: true })
+                                }
+                              }}
+                              onInputChange={(_, newInputValue) => {
+                                field.onChange(newInputValue)
+                              }}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label="State"
+                                  placeholder="e.g. Karnataka"
+                                  error={!!fieldState.error}
+                                  helperText={fieldState.error?.message || ' '}
+                                  InputProps={{
+                                    ...params.InputProps,
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <MapRoundedIcon sx={{ fontSize: 20, color: UI.muted }} />
+                                      </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                      <>
+                                        {loadingStates ? (
+                                          <CircularProgress color="inherit" size={18} />
+                                        ) : null}
+                                        {params.InputProps.endAdornment}
+                                      </>
+                                    ),
+                                  }}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      borderRadius: '12px',
+                                      minHeight: '54px',
+                                    },
+                                  }}
+                                />
+                              )}
+                            />
+                          )}
                         />
                       </Grid>
 
+                      {/* Pincode with Auto-Lookup */}
                       <Grid size={{ xs: 12, sm: 4 }}>
-                        <FormInput
+                        <Controller
                           name="pincode"
-                          label="Pincode"
                           control={control}
-                          placeholder="e.g. 560001"
+                          render={({ field, fieldState }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              label="Pincode"
+                              placeholder="e.g. 560068"
+                              error={!!fieldState.error || (pincodeStatus && !pincodeStatus.verified)}
+                              helperText={
+                                fieldState.error?.message ||
+                                (pincodeStatus ? (
+                                  <Typography
+                                    component="span"
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      color: pincodeStatus.verified ? '#10B981' : '#EF4444',
+                                    }}
+                                  >
+                                    {pincodeStatus.message}
+                                  </Typography>
+                                ) : (
+                                  'Enter 6 digits to autofill city & state'
+                                ))
+                              }
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 6)
+                                field.onChange(val)
+                              }}
+                              InputProps={{
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    {pincodeLoading ? (
+                                      <CircularProgress size={18} color="inherit" />
+                                    ) : pincodeStatus?.verified ? (
+                                      <CheckCircleRoundedIcon
+                                        sx={{ color: '#10B981', fontSize: 20 }}
+                                      />
+                                    ) : null}
+                                  </InputAdornment>
+                                ),
+                              }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '12px',
+                                  minHeight: '54px',
+                                },
+                              }}
+                            />
+                          )}
                         />
                       </Grid>
                     </Grid>
@@ -833,6 +1476,7 @@ export default function ProfilePage() {
                           { ok: !!values.name, label: 'Full name verified' },
                           { ok: !!values.email, label: 'Email address added' },
                           { ok: !!values.mobile, label: 'Phone number added' },
+                          { ok: !!(values.location || values.address), label: 'Street address / locality added' },
                           { ok: !!values.city && !!values.state, label: 'City and state added' },
                           { ok: !!(files[0]?.preview || user.photo), label: 'Profile photo uploaded' },
                         ].map((item) => (

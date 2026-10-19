@@ -765,7 +765,8 @@ function EditDialogContent({
                       <Grid item xs={6} sm={7}>
                         <TextField
                           fullWidth
-                          label="Land Area"
+                          label="Land Area (Acres / Guntas)"
+                          placeholder="e.g. 2 Acres 15 Guntas"
                           value={editForm.landArea || ""}
                           onChange={(e) => setField("landArea", e.target.value)}
                           sx={inputSx}

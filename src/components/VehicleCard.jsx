@@ -125,6 +125,141 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
   if (amenitiesObj.single_owner === 'Yes') highlightTags.push('👤 1st Owner')
   if (insuranceValidity) highlightTags.push(`Ins: ${insuranceValidity}`)
 
+  // Dynamic Hover Details Tooltip
+  const renderHoverPreview = () => (
+    <Box sx={{ p: 0.5, maxWidth: 320 }}>
+      <Stack direction="row" spacing={0.8} alignItems="center" sx={{ mb: 0.8 }}>
+        <Chip
+          label={catStyle.label}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            bgcolor: 'rgba(124,58,237,0.2)',
+            color: '#A78BFA',
+            border: '1px solid rgba(167,139,250,0.35)',
+          }}
+        />
+        {fuelBadge && (
+          <Chip
+            label={fuelBadge.label}
+            size="small"
+            sx={{
+              height: 20,
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              bgcolor: 'rgba(255,255,255,0.1)',
+              color: '#F8FAFC',
+            }}
+          />
+        )}
+      </Stack>
+
+      <Typography sx={{ fontSize: '0.84rem', fontWeight: 800, color: '#fff', mb: 0.4, lineHeight: 1.35 }}>
+        {item.title}
+      </Typography>
+
+      <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <LocationOnRoundedIcon sx={{ fontSize: 13, color: '#A78BFA', flexShrink: 0 }} />
+        {locationLabel}
+      </Typography>
+
+      {/* Dynamic Key Specs */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 0.6,
+          p: 0.8,
+          borderRadius: '8px',
+          bgcolor: 'rgba(255,255,255,0.06)',
+          mb: 1,
+        }}
+      >
+        {year && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            📅 Year: <strong>{year}</strong>
+          </Typography>
+        )}
+        {kmDriven && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🛣️ <strong>{Number(kmDriven).toLocaleString('en-IN')} km</strong>
+          </Typography>
+        )}
+        {transmission && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            ⚙️ <strong>{transmission}</strong>
+          </Typography>
+        )}
+        {ownership && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            👤 <strong>{ownership}</strong>
+          </Typography>
+        )}
+        {fuelType && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            ⛽ <strong>{fuelType}</strong>
+          </Typography>
+        )}
+        {rtoCode && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🛡️ RTO: <strong>{rtoCode}</strong>
+          </Typography>
+        )}
+        {item.color && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            🎨 Color: <strong>{item.color}</strong>
+          </Typography>
+        )}
+        {insuranceValidity && (
+          <Typography sx={{ fontSize: '0.7rem', color: '#E2E8F0' }}>
+            📄 Ins: <strong>{insuranceValidity}</strong>
+          </Typography>
+        )}
+      </Box>
+
+      {/* Verified Highlights */}
+      {highlightTags.length > 0 && (
+        <Box sx={{ mb: 1 }}>
+          <Typography sx={{ fontSize: '0.64rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', mb: 0.4 }}>
+            Vehicle Highlights
+          </Typography>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.4 }}>
+            {highlightTags.map((tag, i) => (
+              <Chip
+                key={i}
+                label={tag}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  bgcolor: 'rgba(124,58,237,0.18)',
+                  color: '#C4B5FD',
+                  border: '1px solid rgba(196,181,253,0.3)',
+                }}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* Price row */}
+      <Box sx={{ pt: 0.6, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+          Asking Price:
+        </Typography>
+        <Typography sx={{ fontSize: '0.82rem', fontWeight: 900, color: '#A78BFA' }}>
+          {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Price on Request'}
+        </Typography>
+      </Box>
+      <Typography sx={{ fontSize: '0.62rem', color: '#64748B', textAlign: 'center', mt: 0.6 }}>
+        💡 Click Details to view HD photos, RC documents & contact owner
+      </Typography>
+    </Box>
+  )
+
   return (
     <Card
       sx={{
@@ -480,55 +615,65 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
             }}
           >
             {/* Spec 1: Manufacturing Year */}
-            <Stack direction="row" spacing={0.7} alignItems="center">
-              <CalendarTodayRoundedIcon sx={{ fontSize: 14, color: '#4361EE' }} />
-              <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                {year ? `Year ${year}` : 'Recent Model'}
-              </Typography>
-            </Stack>
+            <Tooltip title={year ? `Manufacturing Year: ${year}` : 'Recent Vehicle Model'} arrow>
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <CalendarTodayRoundedIcon sx={{ fontSize: 14, color: '#4361EE' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {year ? `Year ${year}` : 'Recent Model'}
+                </Typography>
+              </Stack>
+            </Tooltip>
 
             {/* Spec 2: Kilometers Driven */}
-            <Stack direction="row" spacing={0.7} alignItems="center">
-              <SpeedRoundedIcon sx={{ fontSize: 15, color: '#7C3AED' }} />
-              <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                {kmDriven ? `${Number(kmDriven).toLocaleString('en-IN')} km` : 'Low km'}
-              </Typography>
-            </Stack>
+            <Tooltip title={kmDriven ? `Odometer Reading: ${Number(kmDriven).toLocaleString('en-IN')} km` : 'Low km driven'} arrow>
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <SpeedRoundedIcon sx={{ fontSize: 15, color: '#7C3AED' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {kmDriven ? `${Number(kmDriven).toLocaleString('en-IN')} km` : 'Low km'}
+                </Typography>
+              </Stack>
+            </Tooltip>
 
             {/* Spec 3: Transmission */}
-            <Stack direction="row" spacing={0.7} alignItems="center">
-              <TuneRoundedIcon sx={{ fontSize: 15, color: '#0F766E' }} />
-              <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                {transmission || 'Manual'}
-              </Typography>
-            </Stack>
+            <Tooltip title={`Transmission: ${transmission || 'Manual'}`} arrow>
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <TuneRoundedIcon sx={{ fontSize: 15, color: '#0F766E' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {transmission || 'Manual'}
+                </Typography>
+              </Stack>
+            </Tooltip>
 
             {/* Spec 4: Ownership History */}
-            <Stack direction="row" spacing={0.7} alignItems="center">
-              <AssignmentIndRoundedIcon sx={{ fontSize: 15, color: '#D97706' }} />
-              <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
-                {ownership || '1st Owner'}
-              </Typography>
-            </Stack>
+            <Tooltip title={`Ownership: ${ownership || '1st Owner'}`} arrow>
+              <Stack direction="row" spacing={0.7} alignItems="center">
+                <AssignmentIndRoundedIcon sx={{ fontSize: 15, color: '#D97706' }} />
+                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 700 }}>
+                  {ownership || '1st Owner'}
+                </Typography>
+              </Stack>
+            </Tooltip>
           </Box>
 
           {/* Quick Highlight Pills */}
           {highlightTags.length > 0 && (
             <Stack direction="row" spacing={0.6} flexWrap="wrap" sx={{ gap: 0.5 }}>
               {highlightTags.slice(0, 3).map((tag, idx) => (
-                <Chip
-                  key={idx}
-                  label={tag}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    bgcolor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    color: '#475569',
-                  }}
-                />
+                <Tooltip key={idx} title={`Verified Vehicle Highlight: ${tag}`} arrow>
+                  <Chip
+                    label={tag}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      bgcolor: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      color: '#475569',
+                      cursor: 'default',
+                    }}
+                  />
+                </Tooltip>
               ))}
             </Stack>
           )}
@@ -538,18 +683,25 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
         <Box sx={{ mt: 'auto', pt: 1.5 }}>
           <Divider sx={{ opacity: 0.7, mb: 1.5 }} />
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
+            sx={{ gap: 1 }}
+          >
             {/* Price block */}
-            <Box>
-              <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <Box sx={{ minWidth: 0, flexShrink: 1, pr: 0.5 }}>
+              <Typography sx={{ fontSize: '0.66rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Asking Price
               </Typography>
               <Typography
                 fontWeight={900}
                 sx={{
-                  fontSize: '1.12rem',
+                  fontSize: { xs: '1.02rem', sm: '1.08rem' },
                   color: '#7C3AED',
                   letterSpacing: '-0.02em',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {itemPrice != null && itemPrice !== '' ? formatCurrency(itemPrice) : 'Price on Request'}
@@ -558,27 +710,55 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
 
             {/* Actions block */}
             {locked ? (
-              <Button
-                component={RouterLink}
-                to={detailUrl}
-                size="small"
-                startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
-                sx={{
-                  borderRadius: '10px',
-                  fontWeight: 800,
-                  fontSize: '0.76rem',
-                  bgcolor: '#7C3AED',
-                  color: '#FFFFFF',
-                  px: 1.8,
-                  py: 0.7,
-                  boxShadow: 'none',
-                  '&:hover': { bgcolor: '#6D28D9' },
+              <Tooltip
+                arrow
+                placement="top"
+                enterDelay={120}
+                leaveDelay={200}
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: '#0F172A',
+                      color: '#F8FAFC',
+                      borderRadius: '14px',
+                      p: 1.5,
+                      boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                    },
+                  },
+                  arrow: { sx: { color: '#0F172A' } },
                 }}
+                title={renderHoverPreview()}
               >
-                Details
-              </Button>
+                <Button
+                  component={RouterLink}
+                  to={detailUrl}
+                  size="small"
+                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
+                  sx={{
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.76rem',
+                    bgcolor: '#7C3AED',
+                    color: '#FFFFFF',
+                    px: 1.6,
+                    py: 0.65,
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 8px rgba(124,58,237,0.25)',
+                    transition: 'all 0.18s ease',
+                    '&:hover': {
+                      bgcolor: '#6D28D9',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(124,58,237,0.35)',
+                    },
+                  }}
+                >
+                  Details
+                </Button>
+              </Tooltip>
             ) : (editUrl || onDelete) ? (
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={0.8} alignItems="center" sx={{ ml: 'auto', flexShrink: 0 }}>
                 {editUrl && (
                   <Button
                     component={RouterLink}
@@ -595,6 +775,7 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                       px: 1.4,
                       py: 0.6,
                       boxShadow: 'none',
+                      whiteSpace: 'nowrap',
                       '&:hover': { bgcolor: '#DBEAFE' },
                     }}
                   >
@@ -616,6 +797,7 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                       px: 1.4,
                       py: 0.6,
                       boxShadow: 'none',
+                      whiteSpace: 'nowrap',
                       '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' },
                     }}
                   >
@@ -624,10 +806,10 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                 )}
               </Stack>
             ) : (
-              <Stack direction="row" spacing={0.8} alignItems="center">
+              <Stack direction="row" spacing={0.7} alignItems="center" sx={{ ml: 'auto', flexShrink: 0 }}>
                 {/* WhatsApp Chat Button */}
                 {whatsappUrl && (
-                  <Tooltip title="Chat on WhatsApp">
+                  <Tooltip title="Chat with seller on WhatsApp">
                     <Box
                       component="a"
                       href={whatsappUrl}
@@ -637,25 +819,26 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 34,
-                        height: 34,
-                        borderRadius: '10px',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
                         background: '#DCFCE7',
                         color: '#15803D',
                         textDecoration: 'none',
                         cursor: 'pointer',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease',
                         '&:hover': { background: '#BBF7D0', transform: 'scale(1.05)' },
                       }}
                     >
-                      <WhatsAppIcon sx={{ fontSize: 18 }} />
+                      <WhatsAppIcon sx={{ fontSize: 17 }} />
                     </Box>
                   </Tooltip>
                 )}
 
                 {/* Call Button */}
                 {contactNumber && (
-                  <Tooltip title={`Call ${contactNumber}`}>
+                  <Tooltip title={`Call seller: ${contactNumber}`}>
                     <Box
                       component="a"
                       href={`tel:${contactNumber}`}
@@ -663,42 +846,71 @@ export default function VehicleCard({ item, editUrl, onDelete }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 34,
-                        height: 34,
-                        borderRadius: '10px',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
                         background: '#EEF2FF',
                         color: '#4361EE',
                         textDecoration: 'none',
                         cursor: 'pointer',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease',
                         '&:hover': { background: '#E0E7FF', transform: 'scale(1.05)' },
                       }}
                     >
-                      <PhoneRoundedIcon sx={{ fontSize: 17 }} />
+                      <PhoneRoundedIcon sx={{ fontSize: 16 }} />
                     </Box>
                   </Tooltip>
                 )}
 
-                {/* View Details Button */}
-                <Button
-                  component={RouterLink}
-                  to={detailUrl}
-                  size="small"
-                  startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
-                  sx={{
-                    borderRadius: '10px',
-                    fontWeight: 800,
-                    fontSize: '0.76rem',
-                    bgcolor: '#7C3AED',
-                    color: '#FFFFFF',
-                    px: 1.6,
-                    py: 0.7,
-                    boxShadow: 'none',
-                    '&:hover': { bgcolor: '#6D28D9' },
+                {/* View Details Button with Dynamic Hover Tooltip */}
+                <Tooltip
+                  arrow
+                  placement="top"
+                  enterDelay={120}
+                  leaveDelay={200}
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        bgcolor: '#0F172A',
+                        color: '#F8FAFC',
+                        borderRadius: '14px',
+                        p: 1.5,
+                        boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                      },
+                    },
+                    arrow: { sx: { color: '#0F172A' } },
                   }}
+                  title={renderHoverPreview()}
                 >
-                  Details
-                </Button>
+                  <Button
+                    component={RouterLink}
+                    to={detailUrl}
+                    size="small"
+                    startIcon={<VisibilityRoundedIcon sx={{ fontSize: '15px !important' }} />}
+                    sx={{
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.76rem',
+                      bgcolor: '#7C3AED',
+                      color: '#FFFFFF',
+                      px: 1.5,
+                      py: 0.65,
+                      minWidth: 'auto',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 8px rgba(124,58,237,0.25)',
+                      transition: 'all 0.18s ease',
+                      '&:hover': {
+                        bgcolor: '#6D28D9',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(124,58,237,0.35)',
+                      },
+                    }}
+                  >
+                    Details
+                  </Button>
+                </Tooltip>
               </Stack>
             )}
           </Stack>

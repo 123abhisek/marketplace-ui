@@ -20,7 +20,8 @@ import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
-import AddBoxRoundedIcon from "@mui/icons-material/AddBoxRounded";
+import AddHomeWorkRoundedIcon from "@mui/icons-material/AddHomeWorkRounded";
+import DirectionsCarFilledRoundedIcon from "@mui/icons-material/DirectionsCarFilledRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import CreditCardRoundedIcon from "@mui/icons-material/CreditCardRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -29,13 +30,8 @@ import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRou
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import ExploreRoundedIcon from "@mui/icons-material/ExploreRounded";
 
-const navBaseClass =
-  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all";
-const navInactiveClass =
-  "text-slate-700 hover:bg-slate-100 hover:text-slate-900";
-const navActiveClass = "bg-primary text-white shadow-sm";
 const sectionTitleClass =
-  "px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400";
+  "px-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-slate-400 select-none";
 
 function SidebarLink({ to, icon: Icon, label, end = false, onClick, badge }) {
   return (
@@ -44,15 +40,37 @@ function SidebarLink({ to, icon: Icon, label, end = false, onClick, badge }) {
       end={end}
       onClick={onClick}
       className={({ isActive }) =>
-        `${navBaseClass} ${isActive ? navActiveClass : navInactiveClass}`
+        `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-all duration-150 ${
+          isActive
+            ? "bg-[#0F766E] text-white shadow-sm shadow-teal-900/15"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+        }`
       }
     >
-      <Icon sx={{ fontSize: 18 }} />
-      <span className="flex-1">{label}</span>
-      {badge && (
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-          {badge}
-        </span>
+      {({ isActive }) => (
+        <>
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+              isActive
+                ? "bg-white/15 text-white"
+                : "bg-slate-100 text-slate-500 group-hover:bg-slate-200/80 group-hover:text-slate-800"
+            }`}
+          >
+            <Icon sx={{ fontSize: 17, color: "inherit" }} />
+          </span>
+          <span className="flex-1 truncate tracking-tight">{label}</span>
+          {badge && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider transition-colors ${
+                isActive
+                  ? "bg-white/20 text-white border border-white/30"
+                  : "bg-amber-100 text-amber-800 border border-amber-200"
+              }`}
+            >
+              {badge}
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   );
@@ -64,25 +82,25 @@ function SidebarContent({ onNavigate, user }) {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Logo & Account Status Header */}
-      <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
+      <div className="flex items-center gap-3 border-b border-slate-200/90 px-5 py-4 bg-white">
         <Stack
           component={RouterLink}
           to="/"
           direction="row"
           alignItems="center"
-          spacing={1}
+          spacing={1.2}
           sx={{ textDecoration: "none", flexShrink: 0 }}
         >
           <Box
             component="img"
             src="/icon.png"
             alt="EasyDeal"
-            sx={{ height: 38, width: "auto", objectFit: "contain" }}
+            sx={{ height: 36, width: "auto", objectFit: "contain" }}
           />
         </Stack>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="text-sm font-bold text-slate-900">EasyDeal</p>
+            <p className="text-sm font-extrabold text-slate-900 tracking-tight">EasyDeal</p>
             {isPremium ? (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-xs">
                 ⭐ PRO
@@ -93,18 +111,18 @@ function SidebarContent({ onNavigate, user }) {
               </span>
             )}
           </div>
-          <p className="text-xs font-medium text-slate-500 truncate">
+          <p className="text-[11px] font-medium text-slate-500 truncate">
             {isPremium ? "Premium Account" : "Standard Account"}
           </p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-5">
-        <div className="space-y-6">
+      <div className="flex-1 overflow-y-auto px-3.5 py-4">
+        <div className="space-y-4">
           {/* Overview */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <p className={sectionTitleClass}>Overview</p>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               <SidebarLink
                 to="/dashboard/home"
                 end
@@ -129,18 +147,18 @@ function SidebarContent({ onNavigate, user }) {
           </div>
 
           {/* Add Listing */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <p className={sectionTitleClass}>Add Listing</p>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               <SidebarLink
                 to="/dashboard/add-property"
-                icon={ApartmentRoundedIcon}
+                icon={AddHomeWorkRoundedIcon}
                 label="Add Property"
                 onClick={onNavigate}
               />
               <SidebarLink
                 to="/dashboard/add-vehicle"
-                icon={DirectionsCarRoundedIcon}
+                icon={DirectionsCarFilledRoundedIcon}
                 label="Add Vehicle"
                 onClick={onNavigate}
               />
@@ -148,9 +166,9 @@ function SidebarContent({ onNavigate, user }) {
           </div>
 
           {/* Browse */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <p className={sectionTitleClass}>Browse</p>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               <SidebarLink
                 to="/dashboard/properties"
                 icon={ApartmentRoundedIcon}
@@ -167,9 +185,9 @@ function SidebarContent({ onNavigate, user }) {
           </div>
 
           {/* Account */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <p className={sectionTitleClass}>Account</p>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               <SidebarLink
                 to="/dashboard/profile"
                 icon={PersonRoundedIcon}

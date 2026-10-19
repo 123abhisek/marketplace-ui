@@ -128,6 +128,43 @@ export function YesNoToggle({ value, onChange, size = "small" }) {
   );
 }
 
+/**
+ * Parses and computes regional land area equivalents for Acres and Guntas
+ */
+function getAcresGuntasHint(str) {
+  if (!str) return null;
+  const s = String(str).toLowerCase().trim();
+  const acreMatch = s.match(/([\d.]+)\s*(?:ac|acre|acres)\b/);
+  const guntaMatch = s.match(/([\d.]+)\s*(?:gun|gunta|guntas)\b/);
+
+  let totalAcres = 0;
+  let hasMatch = false;
+
+  if (acreMatch) {
+    totalAcres += parseFloat(acreMatch[1]) || 0;
+    hasMatch = true;
+  }
+  if (guntaMatch) {
+    totalAcres += (parseFloat(guntaMatch[1]) || 0) / 40;
+    hasMatch = true;
+  }
+
+  if (!hasMatch) {
+    const rawNum = parseFloat(s);
+    if (!isNaN(rawNum) && rawNum > 0) {
+      totalAcres = rawNum;
+      hasMatch = true;
+    }
+  }
+
+  if (hasMatch && totalAcres > 0) {
+    const totalGuntas = totalAcres * 40;
+    const sqft = totalAcres * 43560;
+    return `≈ ${Number(totalAcres.toFixed(2))} Acres (${Number(totalGuntas.toFixed(1))} Guntas) • ${Math.round(sqft).toLocaleString("en-IN")} sq. ft.`;
+  }
+  return null;
+}
+
 export default function DynamicPropertyFields({
   category,
   details = {},
@@ -424,6 +461,9 @@ export default function DynamicPropertyFields({
                 }
 
                 // Text field
+                const isAcresGuntas = field.name === "acres_guntas";
+                const hint = isAcresGuntas ? getAcresGuntasHint(val) : null;
+
                 return (
                   <Grid size={{ xs: 12, sm: 6 }} key={field.name}>
                     <Typography sx={{ fontWeight: 700, fontSize: "0.86rem", color: UI.text, mb: 0.75 }}>
@@ -443,6 +483,15 @@ export default function DynamicPropertyFields({
                         },
                       }}
                     />
+                    {hint ? (
+                      <Typography sx={{ fontSize: "0.75rem", color: "#0F766E", fontWeight: 700, mt: 0.5 }}>
+                        💡 {hint}
+                      </Typography>
+                    ) : field.helperText ? (
+                      <Typography sx={{ fontSize: "0.76rem", color: UI.muted, mt: 0.5 }}>
+                        {field.helperText}
+                      </Typography>
+                    ) : null}
                   </Grid>
                 );
               })}

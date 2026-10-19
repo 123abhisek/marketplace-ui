@@ -80,6 +80,13 @@ export const CATEGORY_CONFIG = {
   "Agricultural / Farm Land": {
     specificFields: [
       {
+        name: "acres_guntas",
+        label: "Land Area (Acres / Guntas)",
+        type: "text",
+        placeholder: "e.g. 2 Acres 15 Guntas or 1.5 Acres",
+        helperText: "Enter total land measurement in Acres and Guntas (1 Acre = 40 Guntas)",
+      },
+      {
         name: "soil",
         label: "Soil composition",
         type: "multiselect",
@@ -124,6 +131,13 @@ export const CATEGORY_CONFIG = {
 
   "Land": {
     specificFields: [
+      {
+        name: "acres_guntas",
+        label: "Land Area (Acres / Guntas)",
+        type: "text",
+        placeholder: "e.g. 1 Acre 20 Guntas or 5 Acres",
+        helperText: "Enter total land measurement in Acres and Guntas (1 Acre = 40 Guntas)",
+      },
       {
         name: "land_use",
         label: "Land use",

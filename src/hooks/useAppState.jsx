@@ -26,6 +26,7 @@ const DEFAULT_USER = {
   gender: "",
   dob: "",
   location: "",
+  address: "",
   state: "",
   city: "",
   pincode: "",
@@ -77,6 +78,7 @@ const normalizeUser = (u = {}, hasToken = true) => {
     u?.is_premium === true || u?.ispremium === true || u?.isPremium === true;
 
   const role = String(u?.role || "").toLowerCase();
+  const userAddress = u?.location || u?.address || u?.local_address || "";
 
   return {
     id: u?.id || null,
@@ -85,7 +87,8 @@ const normalizeUser = (u = {}, hasToken = true) => {
     mobile: u?.phone || u?.mobile || "",
     gender: u?.gender || "",
     dob: u?.dob || "",
-    location: u?.location || "",
+    location: userAddress,
+    address: userAddress,
     state: u?.state || "",
     city: u?.city || "",
     pincode: u?.pincode || "",
@@ -448,9 +451,42 @@ export function AppProvider({ children }) {
   }, [navigate]);
 
   const updateProfile = useCallback(
-    (data) => {
+    async (data) => {
+      const fullAddress = data.location || data.address || "";
+      const payload = {
+        name: data.name,
+        gender: data.gender,
+        dob: data.dob,
+        occupation: data.occupation,
+        location: fullAddress,
+        state: data.state,
+        city: data.city,
+        pincode: data.pincode,
+        phone: data.mobile || data.phone,
+      };
+
+      if (data.photo && typeof data.photo === "string" && data.photo.startsWith("data:")) {
+        payload.avatar_b64 = data.photo;
+      }
+
+      try {
+        if (tokenStore?.get?.()) {
+          await authService.updateProfile(payload);
+        }
+      } catch (err) {
+        console.warn("Could not sync profile with backend:", err);
+      }
+
       setUser((prev) => {
-        const updated = normalizeUser({ ...prev, ...data }, true);
+        const updated = normalizeUser(
+          {
+            ...prev,
+            ...data,
+            location: fullAddress,
+            address: fullAddress,
+          },
+          true
+        );
         saveUserToStorage(updated);
         return updated;
       });

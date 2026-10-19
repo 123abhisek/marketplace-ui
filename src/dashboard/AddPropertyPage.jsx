@@ -273,9 +273,17 @@ export default function AddPropertyPage() {
         });
 
         if (p.details && typeof p.details === "object" && Object.keys(p.details).length > 0) {
-          setPropertyDetails(p.details);
+          const loadedDetails = { ...p.details };
+          if (!loadedDetails.acres_guntas && p.land_area) {
+            loadedDetails.acres_guntas = p.land_area;
+          }
+          setPropertyDetails(loadedDetails);
         } else {
-          setPropertyDetails(getDefaultDetails(normalizePropertyType(p.property_type)));
+          const defaultDet = getDefaultDetails(normalizePropertyType(p.property_type));
+          if (p.land_area) {
+            defaultDet.acres_guntas = p.land_area;
+          }
+          setPropertyDetails(defaultDet);
         }
 
         if (Array.isArray(p.images) && p.images.length > 0) {
@@ -389,6 +397,9 @@ export default function AddPropertyPage() {
       if (propertyDetails?.facing) payload.facing = propertyDetails.facing;
       if (propertyDetails?.dimensions) payload.additional_dimensions_details = propertyDetails.dimensions;
       if (propertyDetails?.plot_area) payload.area = `${propertyDetails.plot_area} Sq. Ft.`;
+      if (propertyDetails?.acres_guntas) {
+        payload.land_area = String(propertyDetails.acres_guntas).trim();
+      }
       if (Array.isArray(propertyDetails?.suitable_crops) && propertyDetails.suitable_crops.length > 0) {
         payload.crops_grown = propertyDetails.suitable_crops.join(", ");
       }

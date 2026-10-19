@@ -13,6 +13,7 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Dialog,
   Divider,
   Grid,
   IconButton,
@@ -34,6 +35,8 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
@@ -101,6 +104,7 @@ export default function VehicleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeImg, setActiveImg] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [shortlisted, setShortlisted] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [userLocationInput, setUserLocationInput] = useState("");
@@ -800,26 +804,57 @@ export default function VehicleDetailPage() {
                   sx={{
                     position: "relative",
                     width: "100%",
-                    height: { xs: 280, sm: 380, md: 450 },
-                    bgcolor: "#1E293B",
+                    height: { xs: 280, sm: 380, md: 460, lg: 500 },
+                    bgcolor: "#0F172A",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
+                    cursor: isPremium && images.length > 0 ? "zoom-in" : "default",
+                  }}
+                  onClick={() => {
+                    if (isPremium && images.length > 0) setLightboxOpen(true);
                   }}
                 >
                   {isPremium ? (
-                    <Box
-                      component="img"
-                      src={images[activeImg] || PLACEHOLDER}
-                      alt={vehicle.title}
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transition: "all 0.3s ease",
-                      }}
-                    />
+                    <>
+                      {/* Ambient blurred backdrop so letterbox areas blend with photo colors */}
+                      <Box
+                        component="img"
+                        src={images[activeImg] || PLACEHOLDER}
+                        alt=""
+                        aria-hidden="true"
+                        sx={{
+                          position: "absolute",
+                          inset: -20,
+                          width: "calc(100% + 40px)",
+                          height: "calc(100% + 40px)",
+                          objectFit: "cover",
+                          filter: "blur(30px) brightness(0.65)",
+                          opacity: 0.65,
+                          transform: "scale(1.1)",
+                          pointerEvents: "none",
+                          zIndex: 1,
+                        }}
+                      />
+
+                      {/* Main sharp vehicle image - fitted completely to screen without cropping */}
+                      <Box
+                        component="img"
+                        src={images[activeImg] || PLACEHOLDER}
+                        alt={vehicle.title}
+                        sx={{
+                          position: "relative",
+                          zIndex: 2,
+                          width: "100%",
+                          height: "100%",
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          objectFit: "contain",
+                          transition: "all 0.3s ease",
+                        }}
+                      />
+                    </>
                   ) : (
                     // Non-Premium Lock Banner
                     <Box
@@ -900,12 +935,19 @@ export default function VehicleDetailPage() {
                       <Chip
                         icon={<CameraAltRoundedIcon sx={{ fontSize: "16px !important", color: "#fff" }} />}
                         label={`Photos (${images.length})`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxOpen(true);
+                        }}
+                        clickable
                         sx={{
                           bgcolor: "rgba(0,0,0,0.65)",
                           backdropFilter: "blur(6px)",
                           color: "#fff",
                           fontWeight: 700,
                           fontSize: "0.75rem",
+                          cursor: "pointer",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
                         }}
                       />
                     ) : (
@@ -925,7 +967,8 @@ export default function VehicleDetailPage() {
                     <Chip
                       icon={<MyLocationRoundedIcon sx={{ fontSize: "16px !important", color: "#fff" }} />}
                       label="Location"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         document.getElementById("location-map-section")?.scrollIntoView({ behavior: "smooth" });
                       }}
                       sx={{
@@ -939,14 +982,35 @@ export default function VehicleDetailPage() {
                     />
                   </Stack>
 
-                  {/* Overlaid Top-Right: Shortlist & Share */}
+                  {/* Overlaid Top-Right: Fullscreen, Shortlist & Share */}
                   <Stack
                     direction="row"
                     spacing={1}
                     sx={{ position: "absolute", top: 16, right: 16, zIndex: 5 }}
                   >
+                    {isPremium && (
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxOpen(true);
+                        }}
+                        title="View Fullscreen"
+                        sx={{
+                          bgcolor: "rgba(0,0,0,0.65)",
+                          backdropFilter: "blur(6px)",
+                          color: "#fff",
+                          p: 1,
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+                        }}
+                      >
+                        <ZoomInRoundedIcon fontSize="small" />
+                      </IconButton>
+                    )}
                     <IconButton
-                      onClick={() => setShortlisted(!shortlisted)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShortlisted(!shortlisted);
+                      }}
                       sx={{
                         bgcolor: "rgba(0,0,0,0.65)",
                         backdropFilter: "blur(6px)",
@@ -958,7 +1022,10 @@ export default function VehicleDetailPage() {
                       {shortlisted ? <FavoriteRoundedIcon fontSize="small" /> : <FavoriteBorderRoundedIcon fontSize="small" />}
                     </IconButton>
                     <IconButton
-                      onClick={handleShare}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare();
+                      }}
                       sx={{
                         bgcolor: "rgba(0,0,0,0.65)",
                         backdropFilter: "blur(6px)",
@@ -989,11 +1056,15 @@ export default function VehicleDetailPage() {
                   {isPremium && images.length > 1 && (
                     <>
                       <IconButton
-                        onClick={() => setActiveImg((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveImg((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+                        }}
                         sx={{
                           position: "absolute",
                           left: 12,
-                          bgcolor: "rgba(255,255,255,0.8)",
+                          zIndex: 6,
+                          bgcolor: "rgba(255,255,255,0.85)",
                           color: "#1E293B",
                           "&:hover": { bgcolor: "#fff" },
                         }}
@@ -1001,11 +1072,15 @@ export default function VehicleDetailPage() {
                         <ChevronLeftRoundedIcon />
                       </IconButton>
                       <IconButton
-                        onClick={() => setActiveImg((prev) => (prev < images.length - 1 ? prev + 1 : 0))}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveImg((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+                        }}
                         sx={{
                           position: "absolute",
                           right: 12,
-                          bgcolor: "rgba(255,255,255,0.8)",
+                          zIndex: 6,
+                          bgcolor: "rgba(255,255,255,0.85)",
                           color: "#1E293B",
                           "&:hover": { bgcolor: "#fff" },
                         }}
@@ -1025,7 +1100,7 @@ export default function VehicleDetailPage() {
                       gap: 1.5,
                       overflowX: "auto",
                       borderTop: `1px solid ${BORDER_COLOR}`,
-                      bgcolor: "#FAFAFA",
+                      bgcolor: "#F8FAFC",
                     }}
                   >
                     {images.map((img, idx) => (
@@ -1036,16 +1111,18 @@ export default function VehicleDetailPage() {
                         src={img}
                         alt={`thumb-${idx}`}
                         sx={{
-                          width: 72,
-                          height: 52,
+                          width: 76,
+                          height: 54,
                           borderRadius: "8px",
-                          objectFit: "cover",
+                          objectFit: "contain",
+                          bgcolor: "#0F172A",
                           cursor: "pointer",
                           border: activeImg === idx ? `2px solid ${BRAND_RED}` : `1px solid ${BORDER_COLOR}`,
                           opacity: activeImg === idx ? 1 : 0.65,
+                          p: 0.3,
                           transition: "all .15s",
                           flexShrink: 0,
-                          "&:hover": { opacity: 1 },
+                          "&:hover": { opacity: 1, transform: "scale(1.04)" },
                         }}
                       />
                     ))}
@@ -1834,6 +1911,144 @@ export default function VehicleDetailPage() {
           </Grid>
         </Container>
       </Box>
+
+      {/* Fullscreen Image Lightbox Dialog */}
+      <Dialog
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: "rgba(10, 15, 29, 0.96)",
+            backdropFilter: "blur(16px)",
+            color: "#fff",
+            borderRadius: { xs: 0, sm: "16px" },
+            m: { xs: 0, sm: 2 },
+            height: { xs: "100%", sm: "90vh" },
+            maxHeight: "94vh",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.7)",
+          },
+        }}
+      >
+        {/* Header bar */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ px: 2.5, py: 1.5, borderBottom: "1px solid rgba(255,255,255,0.12)" }}
+        >
+          <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", color: "#F1F5F9" }}>
+            {vehicle?.title} ({activeImg + 1} / {images.length})
+          </Typography>
+          <IconButton
+            onClick={() => setLightboxOpen(false)}
+            sx={{
+              color: "#fff",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+            }}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </Stack>
+
+        {/* Dialog Main Image Area */}
+        <Box
+          sx={{
+            flex: 1,
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: { xs: 1, sm: 2 },
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            component="img"
+            src={images[activeImg] || PLACEHOLDER}
+            alt={vehicle?.title}
+            sx={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              width: "auto",
+              height: "auto",
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
+          />
+
+          {images.length > 1 && (
+            <>
+              <IconButton
+                onClick={() => setActiveImg((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
+                sx={{
+                  position: "absolute",
+                  left: 16,
+                  bgcolor: "rgba(0,0,0,0.6)",
+                  color: "#fff",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+                }}
+              >
+                <ChevronLeftRoundedIcon fontSize="large" />
+              </IconButton>
+              <IconButton
+                onClick={() => setActiveImg((prev) => (prev < images.length - 1 ? prev + 1 : 0))}
+                sx={{
+                  position: "absolute",
+                  right: 16,
+                  bgcolor: "rgba(0,0,0,0.6)",
+                  color: "#fff",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+                }}
+              >
+                <ChevronRightRoundedIcon fontSize="large" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+
+        {/* Thumbnails at bottom of Lightbox */}
+        {images.length > 1 && (
+          <Box
+            sx={{
+              p: 1.5,
+              display: "flex",
+              gap: 1.2,
+              justifyContent: "center",
+              overflowX: "auto",
+              bgcolor: "rgba(0,0,0,0.5)",
+              borderTop: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            {images.map((img, idx) => (
+              <Box
+                key={idx}
+                component="img"
+                src={img}
+                alt=""
+                onClick={() => setActiveImg(idx)}
+                sx={{
+                  width: 64,
+                  height: 48,
+                  objectFit: "contain",
+                  bgcolor: "#0F172A",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  border: idx === activeImg ? `2px solid ${BRAND_RED}` : "1px solid rgba(255,255,255,0.2)",
+                  opacity: idx === activeImg ? 1 : 0.6,
+                  transition: "all 0.15s ease",
+                  "&:hover": { opacity: 1 },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+      </Dialog>
     </>
   );
 }
