@@ -233,6 +233,7 @@ export default function AddVehiclePage() {
       insuranceValidity: "Comprehensive",
       color: "White",
       state: "Karnataka",
+      district: "",
       rtoCode: "",
       kmDriven: "",
       localAddress: "",
@@ -263,13 +264,23 @@ export default function AddVehiclePage() {
       if (v) {
         let editLocal = v.local_address || "";
         let editCity = v.city || "";
-        if (!editLocal && !editCity && v.location) {
+        let editDistrict = v.district || "";
+        let editState = v.state || "Karnataka";
+
+        if (v.location) {
           const parts = v.location.split(",").map((s) => s.trim()).filter(Boolean);
-          if (parts.length > 1) {
-            editCity = parts[parts.length - 1];
-            editLocal = parts.slice(0, -1).join(", ");
-          } else {
-            editLocal = v.location;
+          if (parts.length >= 4) {
+            editState = parts[parts.length - 1];
+            editDistrict = parts[parts.length - 2];
+            editCity = parts[parts.length - 3];
+            if (!editLocal) editLocal = parts.slice(0, -3).join(", ");
+          } else if (parts.length === 3) {
+            editState = parts[2];
+            editDistrict = parts[1];
+            if (!editCity) editCity = parts[0];
+          } else if (parts.length === 2) {
+            if (!editDistrict) editDistrict = parts[0];
+            editState = parts[1];
           }
         }
 
@@ -285,7 +296,8 @@ export default function AddVehiclePage() {
           ownership: v.ownership || "1st Owner",
           insuranceValidity: v.insurance_validity || v.insuranceValidity || "Comprehensive",
           color: v.color || "White",
-          state: v.state || "Karnataka",
+          state: editState,
+          district: editDistrict,
           rtoCode: v.rto_code || "",
           kmDriven: v.km_driven !== null && v.km_driven !== undefined ? String(v.km_driven) : "",
           localAddress: editLocal,
@@ -361,9 +373,19 @@ export default function AddVehiclePage() {
       }
 
       const stateVal = String(data.state ?? "").trim() || "Karnataka";
-      const localAddr = String(data.localAddress ?? "").trim();
+      const districtVal = String(data.district ?? "").trim();
       const cityVal = String(data.city ?? "").trim();
-      const combinedLoc = [localAddr, cityVal, stateVal].filter(Boolean).join(", ");
+      const localAddr = String(data.localAddress ?? "").trim();
+
+      const effectiveCity = cityVal || districtVal;
+
+      const locParts = [
+        localAddr,
+        cityVal,
+        (districtVal && districtVal.toLowerCase() !== cityVal.toLowerCase() ? districtVal : null),
+        stateVal,
+      ].filter(Boolean).map((s) => s.trim()).filter(Boolean);
+      const combinedLoc = Array.from(new Set(locParts)).join(", ");
 
       const payload = {
         title: String(data.title ?? "").trim(),
@@ -379,7 +401,8 @@ export default function AddVehiclePage() {
         price: priceVal,
         contact: String(data.contactNumber ?? "").trim(),
         local_address: localAddr,
-        city: cityVal,
+        district: districtVal,
+        city: effectiveCity,
         location: combinedLoc,
         vehicle_number: String(data.vehicleNumber ?? "").trim(),
         rto_code: String(data.rtoCode ?? "").trim(),
@@ -656,6 +679,7 @@ export default function AddVehiclePage() {
                       setValue={setValue}
                       watch={watch}
                       stateFieldName="state"
+                      districtFieldName="district"
                       cityFieldName="city"
                       localAddressFieldName="localAddress"
                       UI={UI}

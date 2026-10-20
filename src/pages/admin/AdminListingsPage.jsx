@@ -18,6 +18,10 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import { CardSkeletonGrid } from "../../components/skeletons/AppSkeletons";
 import HomeWorkRoundedIcon from "@mui/icons-material/HomeWorkRounded";
@@ -32,7 +36,10 @@ import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import adminOrdersService from "../../services/adminOrdersApi";
+import { propertyService, vehicleService } from "../../services/api";
+import { useAppState } from "../../hooks/useAppState";
 
 const UI = {
   bg: "#f5f7fb",
@@ -167,7 +174,7 @@ function DetailItem({ icon, label, value, noWrap = false }) {
   );
 }
 
-function ListingCard({ item }) {
+function ListingCard({ item, onDelete }) {
   const type = getTypeConfig(item.type);
 
   return (
@@ -262,29 +269,50 @@ function ListingCard({ item }) {
 
           <DetailItem icon={<CalendarMonthRoundedIcon sx={{ fontSize: 16 }} />} label="Created" value={formatDate(item.created_at)} />
 
-          <Button
-            size="small"
-            component={RouterLink}
-            to={
-              String(item.type).toLowerCase() === "vehicle"
-                ? `/admin/vehicles/add?edit=${item.id}`
-                : `/admin/properties/add?edit=${item.id}`
-            }
-            startIcon={<EditRoundedIcon sx={{ fontSize: "16px !important" }} />}
-            sx={{
-              mt: 1,
-              width: "100%",
-              borderRadius: "12px",
-              fontWeight: 800,
-              fontSize: "0.78rem",
-              background: type.bg,
-              color: type.color,
-              border: `1px solid ${type.bg}`,
-              "&:hover": { opacity: 0.9, background: type.bg },
-            }}
-          >
-            Edit {type.label} Listing
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+            <Button
+              size="small"
+              component={RouterLink}
+              to={
+                String(item.type).toLowerCase() === "vehicle"
+                  ? `/admin/vehicles/add?edit=${item.id}`
+                  : `/admin/properties/add?edit=${item.id}`
+              }
+              startIcon={<EditRoundedIcon sx={{ fontSize: "16px !important" }} />}
+              sx={{
+                flex: 1,
+                borderRadius: "12px",
+                fontWeight: 800,
+                fontSize: "0.78rem",
+                background: type.bg,
+                color: type.color,
+                border: `1px solid ${type.bg}`,
+                "&:hover": { opacity: 0.9, background: type.bg },
+              }}
+            >
+              Edit {type.label}
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="error"
+              onClick={() => onDelete(item)}
+              startIcon={<DeleteOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
+              sx={{
+                borderRadius: "12px",
+                fontWeight: 800,
+                fontSize: "0.78rem",
+                borderColor: "rgba(239, 68, 68, 0.35)",
+                color: "#dc2626",
+                "&:hover": {
+                  borderColor: "#dc2626",
+                  backgroundColor: "rgba(239, 68, 68, 0.08)",
+                },
+              }}
+            >
+              Delete
+            </Button>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
@@ -292,11 +320,50 @@ function ListingCard({ item }) {
 }
 
 export default function AdminListingsPage() {
+  const { notify } = useAppState();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = (item) => {
+    setDeleteTarget(item);
+  };
+
+  const handleCloseDelete = () => {
+    if (!deleting) {
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const isVehicle = String(deleteTarget.type).toLowerCase() === "vehicle";
+      if (isVehicle) {
+        await vehicleService.deleteOne(deleteTarget.id);
+      } else {
+        await propertyService.deleteOne(deleteTarget.id);
+      }
+      setListings((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      if (notify) {
+        notify(`Deleted ${isVehicle ? "vehicle" : "property"} "${deleteTarget.title || 'listing'}" successfully.`);
+      }
+    } catch (err) {
+      const errMsg = err?.response?.data?.detail || err?.response?.detail || err?.message || "Failed to delete listing.";
+      setError(errMsg);
+      if (notify) {
+        notify(errMsg, "error");
+      }
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const loadListings = async () => {
     setLoading(true);
@@ -496,7 +563,7 @@ export default function AdminListingsPage() {
                     }}
                   >
                     {filteredListings.map((item) => (
-                      <ListingCard key={item.id} item={item} />
+                      <ListingCard key={item.id} item={item} onDelete={handleDeleteClick} />
                     ))}
                   </Box>
                 )}
@@ -505,6 +572,83 @@ export default function AdminListingsPage() {
           </Card>
         </Stack>
       </Box>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={handleCloseDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            p: 1,
+            width: "100%",
+            maxWidth: 440,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, fontSize: "1.15rem", pb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+          <DeleteOutlineRoundedIcon sx={{ color: "#dc2626", fontSize: 24 }} />
+          Delete Listing?
+        </DialogTitle>
+        <DialogContent sx={{ pb: 1.5 }}>
+          <Typography sx={{ color: UI.muted, fontSize: "0.9rem", mb: 1.5 }}>
+            Are you sure you want to permanently delete this listing from EasyDeal? This action cannot be undone.
+          </Typography>
+          {deleteTarget && (
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: "14px",
+                background: UI.surfaceSoft,
+                border: `1px solid ${UI.border}`,
+              }}
+            >
+              <Typography sx={{ fontWeight: 800, fontSize: "0.92rem", color: UI.text }}>
+                {deleteTarget.title || "Untitled listing"}
+              </Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: UI.muted, mt: 0.3 }}>
+                Type: {String(deleteTarget.type).toUpperCase()} • Price: {formatMoney(deleteTarget.price)}
+              </Typography>
+              {deleteTarget.location && (
+                <Typography sx={{ fontSize: "0.75rem", color: UI.faint, mt: 0.2 }}>
+                  {deleteTarget.location}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1, gap: 1 }}>
+          <Button
+            onClick={handleCloseDelete}
+            disabled={deleting}
+            variant="outlined"
+            sx={{
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 700,
+              color: UI.muted,
+              borderColor: UI.border,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            disabled={deleting}
+            variant="contained"
+            color="error"
+            startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineRoundedIcon />}
+            sx={{
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 800,
+              bgcolor: "#dc2626",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete Listing"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

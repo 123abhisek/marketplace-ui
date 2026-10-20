@@ -193,8 +193,9 @@ export default function AddPropertyPage() {
       title: "",
       propertyType: PROPERTY_TYPES[0].value,
       state: "Karnataka",
-      localAddress: "",
+      district: "",
       city: "",
+      localAddress: "",
       apartmentName: "",
       floor: "",
       rooms: "",
@@ -232,20 +233,31 @@ export default function AddPropertyPage() {
 
         let editLocal = p.local_address || "";
         let editCity = p.city || "";
-        if (!editLocal && !editCity && p.location) {
+        let editDistrict = p.district || "";
+        let editState = p.state || "Karnataka";
+
+        if (p.location) {
           const parts = p.location.split(",").map((s) => s.trim()).filter(Boolean);
-          if (parts.length > 1) {
-            editCity = parts[parts.length - 1];
-            editLocal = parts.slice(0, -1).join(", ");
-          } else {
-            editLocal = p.location;
+          if (parts.length >= 4) {
+            editState = parts[parts.length - 1];
+            editDistrict = parts[parts.length - 2];
+            editCity = parts[parts.length - 3];
+            if (!editLocal) editLocal = parts.slice(0, -3).join(", ");
+          } else if (parts.length === 3) {
+            editState = parts[2];
+            editDistrict = parts[1];
+            if (!editCity) editCity = parts[0];
+          } else if (parts.length === 2) {
+            if (!editDistrict) editDistrict = parts[0];
+            editState = parts[1];
           }
         }
 
         reset({
           title: p.title || "",
           propertyType: p.property_type || PROPERTY_TYPES[0].value,
-          state: p.state || "Karnataka",
+          state: editState,
+          district: editDistrict,
           localAddress: editLocal,
           city: editCity,
           apartmentName: p.apartment_name || "",
@@ -368,16 +380,29 @@ export default function AddPropertyPage() {
       const leaseDur = isLease && data.leaseDurationYears ? toFloatOrNull(data.leaseDurationYears) : null;
 
       const stateVal = toStr(data.state || "Karnataka");
-      const localAddr = toStr(data.localAddress);
+      const districtVal = toStr(data.district);
       const cityVal = toStr(data.city);
-      const combinedLoc = [localAddr, cityVal, stateVal].filter(Boolean).join(", ");
+      const localAddr = toStr(data.localAddress);
+
+      // Effective city: city name or fallback to district if city empty
+      const effectiveCity = cityVal || districtVal;
+
+      // Deduplicated combined location: [localAddr, cityVal, districtVal, stateVal]
+      const locParts = [
+        localAddr,
+        cityVal,
+        (districtVal && districtVal.toLowerCase() !== cityVal.toLowerCase() ? districtVal : null),
+        stateVal,
+      ].filter(Boolean).map((s) => s.trim()).filter(Boolean);
+      const combinedLoc = Array.from(new Set(locParts)).join(", ");
 
       const payload = {
         title: toStr(data.title),
         property_type: toStr(data.propertyType),
         state: stateVal,
+        district: districtVal,
         local_address: localAddr,
-        city: cityVal,
+        city: effectiveCity,
         location: combinedLoc,
         contact: toStr(data.contactNumber),
         price: priceVal,
@@ -555,6 +580,7 @@ export default function AddPropertyPage() {
                       setValue={setValue}
                       watch={watch}
                       stateFieldName="state"
+                      districtFieldName="district"
                       cityFieldName="city"
                       localAddressFieldName="localAddress"
                       UI={UI}

@@ -35,14 +35,17 @@ export default function LgdLocationSelector({
   setValue,
   watch,
   stateFieldName = "state",
+  districtFieldName = "district",
   cityFieldName = "city",
   localAddressFieldName = "localAddress",
   UI = DEFAULT_UI,
   showState = true,
+  districtRequired = true,
   cityRequired = true,
   localAddressRequired = true,
 }) {
   const currentState = watch ? watch(stateFieldName) : "Karnataka";
+  const currentDistrict = watch ? watch(districtFieldName) : "";
   const currentCity = watch ? watch(cityFieldName) : "";
 
   // Data states
@@ -119,15 +122,15 @@ export default function LgdLocationSelector({
     fetchDistrictsForState(code);
   }, [selectedStateObj, currentState, fetchDistrictsForState]);
 
-  // Find district code for current selected city
+  // Find district code for current selected district
   const selectedDistrictObj = useMemo(() => {
-    if (!currentCity || !districts.length) return null;
+    if (!currentDistrict || !districts.length) return null;
     return (
       districts.find(
-        (d) => d.name?.toLowerCase() === String(currentCity).toLowerCase()
+        (d) => d.name?.toLowerCase() === String(currentDistrict).toLowerCase()
       ) || null
     );
-  }, [districts, currentCity]);
+  }, [districts, currentDistrict]);
 
   // 3. Fetch Subdistricts / Taluks whenever District changes
   useEffect(() => {
@@ -156,7 +159,7 @@ export default function LgdLocationSelector({
     };
   }, [selectedDistrictObj]);
 
-  // 4. Debounced Global Search (e.g. for "ramgarh")
+  // 4. Debounced Global Search (e.g. for "kumta", "ramgarh", "indiranagar")
   useEffect(() => {
     const q = searchQuery.trim();
     if (q.length < 2) {
@@ -188,11 +191,11 @@ export default function LgdLocationSelector({
         (resObj.subdistricts || []).forEach((s) => {
           items.push({
             id: `subdistrict-${s.code}`,
-            type: "Taluk / Area",
+            type: "Taluk / City",
             name: s.name,
             stateCode: s.state_code,
             districtCode: s.district_code,
-            displayName: `${s.name} (Taluk / Subdistrict)`,
+            displayName: `${s.name} (Taluk / City)`,
           });
         });
         // Extract blocks
@@ -232,18 +235,19 @@ export default function LgdLocationSelector({
 
     if (item.type === "District") {
       if (setValue) {
-        setValue(cityFieldName, item.name, { shouldValidate: true, shouldDirty: true });
+        setValue(districtFieldName, item.name, { shouldValidate: true, shouldDirty: true });
+        setValue(cityFieldName, "", { shouldValidate: true, shouldDirty: true });
       }
     } else {
-      // Sub-district or block: set local address and find district
+      // Sub-district or city: set city and find district
       if (setValue) {
-        setValue(localAddressFieldName, item.name, { shouldValidate: true, shouldDirty: true });
+        setValue(cityFieldName, item.name, { shouldValidate: true, shouldDirty: true });
       }
       // If district code is provided, fetch district name
       if (item.districtCode) {
         const matchDistrict = districts.find((d) => String(d.code) === String(item.districtCode));
         if (matchDistrict && setValue) {
-          setValue(cityFieldName, matchDistrict.name, { shouldValidate: true, shouldDirty: true });
+          setValue(districtFieldName, matchDistrict.name, { shouldValidate: true, shouldDirty: true });
         }
       }
     }
@@ -252,20 +256,12 @@ export default function LgdLocationSelector({
     setSearchResults([]);
   };
 
-  const handleSubdistrictClick = (talukName) => {
+  const handleCityChipClick = (cityName) => {
     if (!setValue) return;
-    const existing = watch ? watch(localAddressFieldName) || "" : "";
-    if (existing && !existing.toLowerCase().includes(talukName.toLowerCase())) {
-      setValue(localAddressFieldName, `${talukName}, ${existing}`, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    } else if (!existing) {
-      setValue(localAddressFieldName, talukName, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
+    setValue(cityFieldName, cityName, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
@@ -282,7 +278,7 @@ export default function LgdLocationSelector({
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <SearchRoundedIcon sx={{ fontSize: 18, color: UI.primary }} />
           <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: UI.text }}>
-            Search Instant Location
+            Search Instant Location (Autofills State, District & City)
           </Typography>
         </Stack>
 
@@ -302,7 +298,7 @@ export default function LgdLocationSelector({
             <TextField
               {...params}
               size="small"
-              placeholder="Type to search any city, town, taluk or district across India (e.g. Ramgarh, Indiranagar, Udupi)..."
+              placeholder="Type to search any city, town, taluk or district across India (e.g. Kumta, Indiranagar, Udupi)..."
               InputProps={{
                 ...params.InputProps,
                 startAdornment: (
@@ -361,11 +357,11 @@ export default function LgdLocationSelector({
         />
       </Box>
 
-      {/* ── Dropdowns Grid (State & City / District) ── */}
-      <Grid container spacing={2.5}>
+      {/* ── Dropdowns Grid (State, District, City / Taluk) ── */}
+      <Grid container spacing={2}>
         {/* State Dropdown */}
         {showState && (
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Controller
               name={stateFieldName}
               control={control}
@@ -378,8 +374,9 @@ export default function LgdLocationSelector({
                   loading={loadingStates}
                   onChange={(_, newValue) => {
                     field.onChange(newValue || "");
-                    // Clear city when state changes
+                    // Clear district and city when state changes
                     if (setValue && newValue !== field.value) {
+                      setValue(districtFieldName, "", { shouldValidate: true });
                       setValue(cityFieldName, "", { shouldValidate: true });
                     }
                   }}
@@ -392,7 +389,7 @@ export default function LgdLocationSelector({
                       label="State *"
                       placeholder="Select or type State"
                       error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
+                      helperText={fieldState.error?.message || " "}
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -421,12 +418,12 @@ export default function LgdLocationSelector({
           </Grid>
         )}
 
-        {/* District / City Searchable Dropdown */}
-        <Grid size={{ xs: 12, sm: showState ? 6 : 12 }}>
+        {/* District Dropdown */}
+        <Grid size={{ xs: 12, sm: showState ? 6 : 6, md: 4 }}>
           <Controller
-            name={cityFieldName}
+            name={districtFieldName}
             control={control}
-            rules={cityRequired ? { required: "City / District is required" } : undefined}
+            rules={districtRequired ? { required: "District is required" } : undefined}
             render={({ field, fieldState }) => (
               <Autocomplete
                 freeSolo
@@ -435,6 +432,10 @@ export default function LgdLocationSelector({
                 loading={loadingDistricts}
                 onChange={(_, newValue) => {
                   field.onChange(newValue || "");
+                  // Clear city when district changes
+                  if (setValue && newValue !== field.value) {
+                    setValue(cityFieldName, "", { shouldValidate: true });
+                  }
                 }}
                 onInputChange={(_, newInputValue) => {
                   field.onChange(newInputValue);
@@ -442,10 +443,15 @@ export default function LgdLocationSelector({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="City / District *"
-                    placeholder="Search or pick City / District"
+                    label="District *"
+                    placeholder="Search or pick District"
                     error={!!fieldState.error}
-                    helperText={fieldState.error?.message || (districts.length > 0 ? `${districts.length} official districts available` : " ")}
+                    helperText={
+                      fieldState.error?.message ||
+                      (districts.length > 0
+                        ? `${districts.length} official districts in ${currentState}`
+                        : " ")
+                    }
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -456,6 +462,69 @@ export default function LgdLocationSelector({
                       endAdornment: (
                         <>
                           {loadingDistricts ? <CircularProgress color="inherit" size={18} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                        minHeight: "54px",
+                      },
+                    }}
+                  />
+                )}
+              />
+            )}
+          />
+        </Grid>
+
+        {/* City / Town / Taluk Dropdown */}
+        <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+          <Controller
+            name={cityFieldName}
+            control={control}
+            rules={cityRequired ? { required: "City / Taluk is required" } : undefined}
+            render={({ field, fieldState }) => (
+              <Autocomplete
+                freeSolo
+                options={subdistricts.map((s) => s.name)}
+                value={field.value || ""}
+                loading={loadingSubdistricts}
+                onChange={(_, newValue) => {
+                  field.onChange(newValue || "");
+                }}
+                onInputChange={(_, newInputValue) => {
+                  field.onChange(newInputValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="City / Town / Taluk *"
+                    placeholder={
+                      currentDistrict
+                        ? "Pick from list or enter City"
+                        : "Select District first or type city"
+                    }
+                    error={!!fieldState.error}
+                    helperText={
+                      fieldState.error?.message ||
+                      (subdistricts.length > 0
+                        ? `${subdistricts.length} cities/taluks in ${currentDistrict}`
+                        : currentDistrict
+                        ? "Pick from list or type city name"
+                        : "Select district to see cities")
+                    }
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PlaceRoundedIcon sx={{ fontSize: 20, color: UI.primary }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <>
+                          {loadingSubdistricts ? <CircularProgress color="inherit" size={18} /> : null}
                           {params.InputProps.endAdornment}
                         </>
                       ),
@@ -485,26 +554,34 @@ export default function LgdLocationSelector({
               }}
             >
               <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: UI.muted, mb: 1 }}>
-                Taluks / Sub-districts in {currentCity} (Click to add to Local Address):
+                Popular Cities / Taluks in {currentDistrict || "Selected District"} (Click to select City):
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.8 }}>
-                {subdistricts.map((sub) => (
-                  <Chip
-                    key={sub.code}
-                    label={sub.name}
-                    size="small"
-                    onClick={() => handleSubdistrictClick(sub.name)}
-                    clickable
-                    sx={{
-                      fontSize: "0.76rem",
-                      fontWeight: 600,
-                      bgcolor: "#fff",
-                      border: `1px solid ${UI.border}`,
-                      color: UI.text,
-                      "&:hover": { bgcolor: UI.primarySoft, borderColor: UI.primary, color: UI.primary },
-                    }}
-                  />
-                ))}
+                {subdistricts.map((sub) => {
+                  const isSelected =
+                    String(currentCity || "").trim().toLowerCase() === sub.name.toLowerCase();
+                  return (
+                    <Chip
+                      key={sub.code}
+                      label={sub.name}
+                      size="small"
+                      onClick={() => handleCityChipClick(sub.name)}
+                      clickable
+                      sx={{
+                        fontSize: "0.76rem",
+                        fontWeight: 600,
+                        bgcolor: isSelected ? UI.primary : "#fff",
+                        color: isSelected ? "#fff" : UI.text,
+                        border: `1px solid ${isSelected ? UI.primary : UI.border}`,
+                        "&:hover": {
+                          bgcolor: isSelected ? UI.primary : UI.primarySoft,
+                          borderColor: UI.primary,
+                          color: isSelected ? "#fff" : UI.primary,
+                        },
+                      }}
+                    />
+                  );
+                })}
               </Stack>
             </Box>
           </Grid>
@@ -521,7 +598,7 @@ export default function LgdLocationSelector({
                 {...field}
                 fullWidth
                 label="Local Address / Area / Street / Landmark *"
-                placeholder="e.g. 100ft Road, Near Metro Station, Indiranagar"
+                placeholder="e.g. 100ft Road, Near Bus Stand, Landmark"
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message || "Enter street name, building, floor, or nearby landmark"}
                 InputProps={{
