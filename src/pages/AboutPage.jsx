@@ -152,18 +152,17 @@ const CATEGORIES = [
 // ── Team ─────────────────────────────────────────────────────────────────────
 const TEAM = [
   {
-    name: "Shridhar Poojari",
-    role: "Founder & CEO",
+    name: "Mr Shridhar Poojari",
+    role: "Founder and CEO",
     initials: "SP",
     color: "#0f766e",
   },
   {
-    name: "Akshay",
-    role: "Head of Product",
-    initials: "A",
+    name: "Mr Akshay Acharya",
+    role: "Business Development Officer",
+    initials: "AA",
     color: "#7c3aed",
   },
-  
 ];
 
 // ── Testimonials ─────────────────────────────────────────────────────────────
@@ -790,13 +789,13 @@ export default function AboutPage() {
                 <Box
                   sx={{
                     ...centeredCardBase,
-                    width: { xs: 230, sm: 240 },
-                    height: 260,
+                    width: { xs: 240, sm: 260 },
+                    minHeight: 260,
                     flexShrink: 0,
                     p: 3,
                     bgcolor: "#ffffff",
                     border: `1px solid ${C.border}`,
-                    gap: 2,
+                    gap: 1.5,
                     boxShadow: "0 6px 20px rgba(15,23,42,0.04)",
                   }}
                 >
@@ -814,34 +813,37 @@ export default function AboutPage() {
                       letterSpacing: "-0.01em",
                       boxShadow: `0 8px 24px ${member.color}44`,
                       mx: "auto",
+                      mb: 0.5,
                     }}
                   >
                     {member.initials}
                   </Box>
 
-                  <Typography
-                    sx={{
-                      fontWeight: 800,
-                      fontSize: "1.05rem",
-                      color: C.text,
-                      textAlign: "center",
-                      lineHeight: 1.35,
-                      px: 1,
-                    }}
-                  >
-                    {member.name}
-                  </Typography>
+                  <Stack spacing={0.5} alignItems="center" sx={{ px: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1.05rem",
+                        color: C.text,
+                        textAlign: "center",
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {member.name}
+                    </Typography>
 
-                  {/* <Typography
-                    sx={{
-                      fontSize: "0.8rem",
-                      color: C.muted,
-                      fontWeight: 600,
-                      textAlign: "center",
-                    }}
-                  >
-                    {member.role}
-                  </Typography> */}
+                    <Typography
+                      sx={{
+                        fontSize: "0.82rem",
+                        color: C.muted,
+                        fontWeight: 600,
+                        textAlign: "center",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {member.role}
+                    </Typography>
+                  </Stack>
                 </Box>
               </Grid>
             ))}
