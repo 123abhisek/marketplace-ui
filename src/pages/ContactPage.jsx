@@ -642,7 +642,7 @@ Looking forward to discussing further. Thank you.`;
           >
             <StatPill value="24h" label="Average response time" />
             <StatPill value="98%" label="Satisfaction rate" />
-            <StatPill value="247" label="Online support available" />
+            <StatPill value="24/7" label="Online support available" />
           </Stack>
         </Container>
       </Box>
